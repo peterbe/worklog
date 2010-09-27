@@ -1,0 +1,810 @@
+/*
+Theme Name:     Paul Stamatiou Genesis Child Theme
+Theme URI:      http: //paulstamatiou.com/
+Description:    A Child Theme for the Genesis Theme Framework
+Author:         The Automattic Theme Team
+Author URI:     http: //themeshaper.com/
+Template:       genesis
+Version:        1.0
+*/
+
+/*@import url(http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold);
+@import url(http://fonts.googleapis.com/css?family=Droid+Serif:regular);*/
+
+/* =Reset default browser CSS. Based on work by Eric Meyer: http://meyerweb.com/eric/tools/css/reset/index.html
+-------------------------------------------------------------- */
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, font, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td {
+	border: 0;
+	font-family: inherit;
+	font-size: 100%;
+	font-style: inherit;
+	font-weight: inherit;
+	margin: 0;
+	outline: 0;
+	padding: 0;
+	vertical-align: baseline;
+	}
+
+/* remember to define focus styles! */
+	:focus {
+	outline: 0;
+}
+body {
+	background: #fff;
+	color: #333;
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+
+/* tables still need 'cellspacing="0"' in the markup */
+table {
+	border-collapse: separate;
+	border-spacing: 0;
+}
+caption, th, td {
+	font-weight: normal;
+	text-align: left;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: "";
+}
+blockquote, q {
+	quotes: "" "";
+}
+
+div.clear {
+    /*clear: both;*/
+}
+
+/* =Typography
+----------------------------------------------- */
+
+body {
+	background: #fff;
+}
+body, input, textarea {
+	color: #111;
+	font: 15px "droid-sans-1","droid-sans-2",Verdana,sans-serif;
+	line-height: 1.5;
+}
+
+/* Headings */
+h1,h2,h3,h4,h5,h6 {
+	clear: both;
+}
+h1, h2, h3 {
+	text-rendering: optimizelegibility;
+}
+h4, h5 {
+	font-weight: bold;
+}
+hr {
+	background-color: #ccc;
+	border: 0;
+	height: 1px;
+	margin-bottom: 1.5em;
+}
+
+/* Text elements */
+p {
+	margin-bottom: 1.5em;
+}
+ul, ol {
+	margin: 0 0 1.5em 1.5em;
+}
+ul {
+	list-style: square;
+}
+ol {
+	list-style-type: decimal;
+}
+ol ol {
+	list-style: upper-alpha;
+}
+ol ol ol {
+	list-style: lower-roman;
+}
+ol ol ol ol {
+	list-style: lower-alpha;
+}
+ul ul, ol ol, ul ol, ol ul {
+	margin-bottom: 0;
+}
+dl {
+	margin: 0 1.5em;
+}
+dt {
+	font-weight: bold;
+}
+dd {
+	margin-bottom: 1.5em;
+}
+strong {
+	font-weight: bold;
+}
+cite, em, i {
+	font-style: italic;
+}
+
+/*
+blockquote {
+	border-left: 1px solid #ddd;
+	color: #555;
+	font-family: "droid-serif-1","droid-serif-2", Georgia,serif;
+	margin: 0 0.75em;
+	padding-left: 0.75em;
+	text-shadow: 1px 1px 0 #fff;
+}
+pre {
+	background: #f4f4f4;
+	font: 14px "Courier 10 Pitch",Courier,monospace;
+	line-height: 1.5;
+	margin-bottom: 1.5em;
+	padding: 0.85em 1.5em;
+}
+code {
+	font: 14px Consolas,"Andale Mono",Monaco,Courier,"Courier New",Verdana,sans-serif;
+	background: #eee;
+}
+abbr, acronym {
+	border-bottom: 1px dotted #666;
+	cursor: help;
+}
+ins {
+	background: #fff9c0;
+	text-decoration: none;
+}
+sup,
+sub {
+	height: 0;
+	line-height: 1;
+	position: relative;
+	vertical-align: baseline;
+}
+sup {
+	bottom: 1ex;
+}
+sub {
+	top: .5ex;
+}
+*/
+
+input[type=text],
+textarea {
+	background: #eee;
+	border-color: #aaa #ddd #ddd #aaa;
+	border-style: solid;
+	border-width: 1px;
+}
+input[type=text]:focus,
+textarea:focus {
+	background: #fff;
+}
+textarea {
+	padding-left: 3px;
+	width: 98%;
+}
+input[type=text] {
+	padding: 3px;
+}
+
+/* Links */
+a,
+a:visited {
+	color: #14568A;
+}
+a:hover {
+	background: #e3f2f9;
+	text-decoration: none;
+}
+
+
+/* =Structure
+----------------------------------------------- */
+
+body {
+	background: #eee;
+}
+#wrap {
+	background: #fff;
+	border-color: #ccc #999 #999 #ccc;
+	border-style: solid;
+	-moz-border-radius: 15px;
+	border-radius: 15px;
+	border-width: 1px;
+	margin: 15px auto;
+	position: relative;
+	width: 95%;
+}
+#inner {
+	/*margin: 0 auto;*/
+	/*width: 1000px;*/
+}
+#sidebar,
+#sidebar-alt {
+	width: 180px;
+}
+#footer {
+	clear: both;
+}
+
+/*
+Genesis child themes need to accomodate multiple
+layout structures selected by the user from 
+"Genesis > Theme Settings" in the dashboard
+and the "Genesis Layout Options" module in 
+the Post and Page Edit screens.
+*/
+
+/* one sidebar, right of content */
+.content-sidebar #inner {
+}
+.content-sidebar #content {
+	float: left;
+	width: 70%;
+}
+.content-sidebar #sidebar {
+	float: right;
+	width: 25%;
+}
+
+/* one sidebar, left of content */
+.sidebar-content #inner {
+}
+.sidebar-content #content {
+	float: right;
+	width: 70%;
+}
+.sidebar-content #sidebar {
+	float: left;
+	width: 25%;
+}
+
+/* full-width content, no sidebars */
+.full-width-content #content-sidebar-wrap {
+}
+.full-width-content #header {/* The full width template uses the header  */
+		position: static;
+}
+.full-width-content #header .widget-area {/* The header widget area is available in the full-width template */
+		display: block;
+}
+
+/* Alignment */
+.alignleft {
+	display: inline;
+	float: left;
+	margin-right: 1.7em;
+}
+.alignright {
+	display: inline;
+	float: right;
+	margin-left: 1.7em;
+}
+.aligncenter,
+.center {
+	clear: both;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+
+
+/* =Header
+----------------------------------------------- */
+
+#header {
+	background: #e3f2f9;
+	float: left;
+	margin: 0 0 22px;
+	padding: 75px 0 12px;
+	width: 100%;
+}
+#title {
+	float: left;
+	margin: 0 0 0 25px;
+}
+#title a {
+	background: url(http://turbo.paulstamatiou.com/pstam-thesis-logo.png) no-repeat top left;
+	display: block;
+	text-indent: -9000px;
+	width: 361px;
+	height: 69px;
+}
+/*
+#description {
+	position: absolute;
+	left: -9000px;
+}
+#about_stammy {
+	float: right;
+	margin: -7px 22px 0 0;
+	width: 335px;
+}
+#about_stammy p {
+	color: #444;
+	font-size: 15px;
+	line-height: 1.5em;
+	margin-bottom: 0.75em;
+	text-shadow: 1px 1px 0 #fff;
+}
+#about_stammy a {
+	text-decoration: none;
+}
+#about_stammy .bubbleInfo {
+	padding-right: 4px;
+	position: relative;
+}
+#about_stammy .popup {
+	display: none;
+	position: absolute;
+	width: 230px;
+}
+*/
+#header .widget-area {
+	clear: both;
+	margin: 44px 30px 40px;
+	position: relative;
+	top: 22px;
+}
+
+
+/* =Menu
+----------------------------------------------- */
+
+#nav {
+	background: #14568a;
+	border: 6px solid #14568a;
+	-moz-border-radius: 4px 4px 0 0;
+	border-radius: 4px 4px 0 0;
+	border-width: 6px 0;
+	float: left;
+	margin: 0 0 0 -1px;
+	padding: 3px 0;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 1053px;
+	z-index: 100;
+}
+#nav ul {
+	list-style: none;
+	font-size: 14px;
+	font-weight: bold;
+	line-height: 18px;
+	letter-spacing: 1px;
+	margin: 0 0 0 30px;
+	text-transform: uppercase;
+	text-shadow: 1px 1px 1px #14568a;
+}
+#nav ul a {
+	color: #b9dbf0;
+	display: block;
+	margin: 0 16px 0px 0;
+	padding: 7px 8px;
+	text-decoration: none;
+}
+#nav ul a:hover,
+#nav ul li:hover > a {
+	background: #e3f2f9;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	color: #14568a;
+	text-shadow: 1px 1px 1px #ccc;
+}
+#nav li {
+	float: left;
+	position: relative;
+}
+#nav ul ul {
+	background: #e3f2f9;
+	-moz-border-radius: 0 4px 4px 4px;
+	border-radius: 0 4px 4px 4px;
+	box-shadow: 0 3px 3px rgba(0,0,0,0.2);
+	-moz-box-shadow: 0 3px 3px rgba(0,0,0,0.2);
+	-webkit-box-shadow: 0 3px 3px rgba(0,0,0,0.2);
+	display: none;
+	float: left;
+	font-weight: normal;
+	letter-spacing: 0;
+	margin: 0;
+	padding: 4px 0;
+	position: absolute;
+	text-transform: none;
+	top: 29px;
+	left: 0;
+	z-index: 99999;
+}
+#nav ul ul ul {
+	-moz-border-radius: 0;
+	border-radius: 0;
+	left: 100%;
+	top: 0;
+	padding: 0;
+}
+#nav ul ul li a {
+	color: #14568a;
+	height: auto;
+	line-height: 1em;
+	margin: 0;
+	padding: .5em 8px;
+	text-shadow: 1px 1px 1px #ccc;
+	width: 180px;
+}
+#nav ul ul a:hover {
+	background: #c4dbe9;
+	-moz-border-radius: 0;
+	border-radius: 0;
+}
+#nav ul li:hover > ul {
+	display: block;
+}
+#nav li.current_page_item a {
+	background: #E3F2F9;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	color: #000;
+	text-shadow: none;
+}
+#nav li.current_page_item a:hover,
+#nav ul licurrent_page_item:hover > a {
+	color: #000;
+	text-shadow: none;
+}
+#nav li.current_page_item ul a {
+	color: #14568a;
+}
+
+/* =Content
+----------------------------------------------- */
+
+/*
+.breadcrumb {
+	color: #444;
+	font-size: 11px;
+	letter-spacing: 0.05em;
+	margin: 0 0 22px;
+	text-transform: uppercase;
+}
+#archive-info {
+	background: #fdfcbc;
+	font-size: 12px;
+	letter-spacing: 2px;
+	margin: 0 0 22px;
+	text-transform: uppercase;
+}
+#archive-info p {
+	margin: 0;
+	padding: 11px;
+}
+#archive-info span {
+	color: #14568a;
+	display: block;
+	font-size: 19px;
+	letter-spacing: 0;
+	text-shadow: 1px 1px 1px #999;
+	text-transform: none;
+}
+.hentry {
+	border-bottom: 1px dotted #bbb;
+	margin: 0 0 1.5em;
+}
+.single .hentry,
+.page .hentry {
+	border-bottom: none;
+}
+.sticky {
+	background: #fdfcbc;
+	border-top: 4px solid #aa9c00;
+	border-bottom: none;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	padding: 15px 25px;
+}
+.entry-title,
+.error404 h1 {
+	color: #14568a;
+	font-size: 24px;
+	line-height: 32px;
+	text-shadow: 1px 1px 0px #ccc;
+}
+.error404 h1 {
+	margin: 0 0 22px;
+}
+.entry-title a {
+	text-decoration: none;
+}
+.post-info {
+	color: #888;
+	font-size: 14px;
+	letter-spacing: 0.05em;
+	margin: 0 1px;
+	text-shadow: 1px 1px 0 #eee;
+	text-transform: capitalize;
+}
+.post-info iframe {
+	position: relative;
+	top: -2px;
+}
+.entry-content {
+	margin: 22px 0 0 0;
+}
+.entry-content .center {
+	margin: 0 0 1.5em 0;
+}
+.entry-content .center small {
+	display: block;
+	padding: 0.75em 0;
+}
+.entry-content object {
+	margin: 0 0 0.75em 0;
+}
+.entry-content h2,
+.entry-content h3 {
+	font-size: 19px;
+	line-height: 1.158em;
+	margin: 1.737em 0 0.579em;
+}
+.entry-content h4 {
+	border-bottom: 1px solid #ccc;
+	color: #222;
+	font-size: 19px;
+	margin: 10px 0 15px;
+	text-shadow: 1px 1px 0 #ddd;
+}
+.entry-content small {
+	color: #444;
+	font-size: 13px;
+}
+.entry-content .cloud {
+	line-height: 1.8em;
+}
+.entry-content table {
+	border: 1px solid #ccc;
+	margin: 0 -1px 24px 0;
+	text-align: left;
+	width: 100%;
+}
+.entry-content tr th,
+.entry-content thead th {
+	font: 12px Helvetica,Arial,sans-serif;
+	font-weight: bold;
+	line-height: 18px;
+	padding: 9px 24px;
+}
+.entry-content tr td {
+	border-top: 1px solid #ccc;
+	padding: 0 24px 12px;
+}
+.entry-content tr.odd td {
+	background: #f2f7fc;
+}
+p.pages {
+	font-weight: bold;
+	word-spacing: .25em;
+}
+p.pages a {
+	font-weight: normal;
+	padding: 0.5em;
+}
+#gallery-1 .gallery-item {
+	width: auto !important;
+}
+.author-box {
+	background: #e3f2f9;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	float: left;
+	font-size: 13px;
+	margin: 0 0 22px 0;
+	padding: 10px;
+	width: 100%;
+}
+#content .author-box img.avatar {
+	background: #fff;
+	float: left;
+	margin: 0 10px 0 0;
+	padding: 2px;
+}
+.post-meta {
+	color: #666;
+	font-size: 13px;
+	margin: 0 0 22px 0;
+}
+p.taxonomy-people {
+	color: #666;
+	font-size: 13px;
+	padding: 0 0 6px;
+}
+.post-meta p {
+	margin: 0;
+}
+.to-comments span {
+	color: #111;
+	font-size: 22px;
+}
+.to-comments span.bracket {
+	color: #14568a;
+}
+.to-comments a {
+	color: #666;
+	text-decoration: none;
+}
+.to-comments a:hover {
+	color: #111;
+	text-decoration: underline;
+}
+
+*/
+
+
+/* Navigation */
+.navigation {
+	background: #eee;
+	border: 1px solid #ccc;
+	color: #666;
+	float: left;
+	line-height: 2;
+	margin: 0 0 22px;
+	padding: 10px;
+	width: 590px;
+}
+.navigation .alignright,
+.navigation .alignleft,
+.navigation span {
+	font-size: 10px;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+.navigation a {
+	text-decoration: none;
+}
+.navigation a:hover {
+	text-decoration: underline;
+	background: #e3f2f9;
+}
+
+
+/* =Teasers
+----------------------------------------------- */
+
+/*
+.teaser-box {
+	border-bottom: 1px dotted #bbb;
+	float: left;
+	margin: 0 0 1.5em;
+	width: 100%;
+}
+.teaser {
+	border-bottom: none;
+	float: left;
+	margin-bottom: 0;
+	width: 299px;
+}
+.teaser-box .even {
+	float: right;
+}
+.teaser .entry-title {
+	color: #14568a;
+	font-size: 16px;
+	line-height: 22px;
+	text-shadow: 1px 1px 1px #ccc;
+}
+.teaser .post-info {
+	font-size: 10px;
+	letter-spacing: 1px;
+	line-height: 18px;
+	text-transform: uppercase;
+}
+.teaser .post-info iframe {
+	display: none;
+}
+.teaser .entry-content {
+	font-size: 13px;
+	margin-top: 1em;
+}
+.teaser .post-meta {
+	display: none;
+}
+.teaser .to-comments {
+	float: left;
+}
+.teaser .to-comments,
+.teaser .to-comments span {
+	color: #888;
+	font-size: 10px;
+	letter-spacing: 1px;
+	line-height: 18px;
+	text-transform: uppercase;
+}
+.teaser .bracket {
+	display: none;
+}
+.teaser .to-comments a {
+	border-bottom: 1px solid #eee;
+}
+.teaser .to-comments a:hover {
+	text-decoration: none;
+}
+.read-full {
+	float: left;
+	font-size: 12px;
+	line-height: 18px;
+	margin: -1px 0 0 .5em;
+}
+.read-full a {
+	text-decoration: none;
+}
+.read-full a:hover {
+	text-decoration: underline;
+}
+*/
+
+
+
+
+
+/* =Footer
+----------------------------------------------- */
+
+/*
+.dont_leave {
+	background: #e3f2f9;
+	border-top: 1px solid #ccc;
+	clear: both;
+	padding: 20px 25px;
+}
+.dont_leave span {
+	color: #14568a;
+	font-size: 20px;
+}
+.dont_leave p a {
+	border-bottom: 1px solid #ccc;
+	color: #14568a;
+	font-size: 24px;
+	text-decoration: none;
+}
+.dont_leave p a:hover {
+	background: #14568a;
+	color: #fff;
+}
+.dont_leave p+p {
+	margin: 0;
+}
+.gototop {
+	position: absolute;
+	left: -9000px;
+}
+*/
+.creds {
+	-moz-border-radius: 0 0 10px 10px;
+	/*border-radius: 0 0 10px 10px;*/
+	background: #292E35;
+	/*border: 6px solid #292E35;*/
+	color: #fff;
+	font-size: 12px;
+	margin: 0 -1px 0;
+	padding: 13px 21px;
+}
+.creds p {
+	margin: 0;
+}
+.creds a {
+	color: #fff;
+}
+.creds a:hover {
+	background: #eee;
+	color: #14568a;
+}
