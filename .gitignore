@@ -1,0 +1,7 @@
+*~
+*.pyc
+.venv
+run_mongodb.sh
+start_mongod.sh
+db/
+mongodb

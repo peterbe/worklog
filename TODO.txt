@@ -1,0 +1,15 @@
+* (HIGH) Get stuck into this
+  http://github.com/facebook/tornado/blob/master/tornado/testing.py
+  
+* (HIGH) Test to include the add for and the edit form (and
+  preview/hover) into calendar.html and use jQuery to show/hide and
+  set values.
+
+* (LOW) Experiment with running mongodb in RAM for faster unit tests
+  http://www.phpmoadmin.com/mongodb-in-memory-database
+  
+* (MEDIUM) Look at this for ideas on how to use a log file
+  http://groups.google.com/group/python-tornado/browse_thread/thread/6d62aec54eb47015
+
+* (LOW) Fork and write a static_url() that takes multiple files and
+  combine them using timestamps instead
