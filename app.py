@@ -30,7 +30,7 @@ define("database_name", default="worklog", help="mongodb database name")
 
 
 class Application(tornado.web.Application):
-    def __init__(self):
+    def __init__(self, database_name=None):
         handlers = [
             (r"/", HomeHandler),
             (r"/events/tags(\.json|\.xml|\.txt)?", EventTagsHandler),
@@ -53,7 +53,8 @@ class Application(tornado.web.Application):
             login_url="/auth/login",
         )
         tornado.web.Application.__init__(self, handlers, **settings)
-
+        
+        #print database_name and database_name or options.database_name
         # Have one global connection to the blog DB across all handlers
         self.database_name = options.database_name
         self.con = Connection()
