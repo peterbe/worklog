@@ -141,7 +141,7 @@ function _day_clicked(date, allDay, jsEvent, view) {
 }
 
 function _event_clicked(event, jsEvent, view) {
-   var url = "/events";
+   var url = "/event/edit";
    var qtip_options = {
       content: {
            //text: "Please wait...",

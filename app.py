@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 from pymongo.objectid import InvalidId, ObjectId
+#from mongokit import DBRef
 from pprint import pprint
 from time import mktime
 import cStringIO
@@ -34,8 +35,9 @@ class Application(tornado.web.Application):
         handlers = [
             (r"/", HomeHandler),
             (r"/events/tags(\.json|\.xml|\.txt)?", EventTagsHandler),
+            (r"/events/stats(\.json|\.xml|\.txt)?", EventStatsHandler),
             (r"/events(\.json|\.xml|\.txt)?", EventsHandler),
-            (r"/event/(resize|move)", EventHandler),
+            (r"/event/(edit|resize|move)", EventHandler),
             #(r"/archive", ArchiveHandler),
             #(r"/feed", FeedHandler),
             #(r"/entry/([^/]+)", EntryHandler),
@@ -76,6 +78,20 @@ class BaseHandler(tornado.web.RequestHandler):
         if not guid: return None
         return self.db.users.User.one({'guid': guid})
     
+    def write_json(self, struct):
+        self.set_header("Content-Type", "text/javascript; charset=UTF-8")
+        self.write(tornado.escape.json_encode(struct))
+        
+    def write_xml(self, struct):
+        raise NotImplementedError
+    
+    def write_txt(self, str_):
+        self.set_header("Content-Type", "text/plain; charset=UTF-8") # doesn;t seem to work
+        self.write(str_)
+        
+        
+        
+    
 
 class HomeHandler(BaseHandler):
     def get(self):
@@ -105,24 +121,25 @@ class EventsHandler(BaseHandler):
         user = self.get_current_user()
         entries = []
         if user:
-            from mongokit import DBRef
             search = {'user.$id': user._id}
+            start = parse_datetime(self.get_argument('start'))
+            end = parse_datetime(self.get_argument('end'))
+            search['start'] = {'$gte': start}
+            search['start'] = {'$lte': end}
+            
             for entry in self.db.events.Event.find(search):
                 entries.append(self._transform_fullcalendar_event(entry, True))
             
         if format == '.json':
-            self.set_header("Content-Type", "text/javascript; charset=UTF-8")
-            self.write(tornado.escape.json_encode(entries))
+            self.write_json(entries)
         elif format == '.xml':
-            raise NotImplementedError
-        else:
-            assert format == '.txt'
+            self.write_json(dict(entries=entries))
+        elif format == '.txt':
             out = cStringIO.StringIO()
             for entry in entries:
                 pprint(entry, out)
                 out.write("\n")
-            self.set_header("Content-Type", "text/plain; charset=UTF-8") # doesn;t seem to work
-            self.write(out.getvalue())
+            self.write_txt(out.getvalue())
         
     def post(self, *args, **kwargs):
         title = self.get_argument("title")
@@ -162,8 +179,13 @@ class EventHandler(BaseHandler):
     
     def post(self, action):
         _id = self.get_argument('id')
-        days = int(self.get_argument('days'))
-        minutes = int(self.get_argument('minutes'))
+        
+        if action in ('move', 'resize'):
+            days = int(self.get_argument('days'))
+            minutes = int(self.get_argument('minutes'))
+        else:
+            assert action == 'edit'
+            title = self.get_argument('title')
         
         user = self.get_current_user()
         if not user:
@@ -189,6 +211,11 @@ class EventHandler(BaseHandler):
             event.start += datetime.timedelta(days=days, minutes=minutes)
             event.end += datetime.timedelta(days=days, minutes=minutes)
             event.save()
+        elif action == 'edit':
+            tags = list(set([x[1:] for x in re.findall('@\w+', title)]))
+            event.title = title
+            event.tags = tags
+            event.save()
         else:
             raise NotImplementedError
         
@@ -199,7 +226,6 @@ class EventTagsHandler(BaseHandler):
         tags = set()
         user = self.get_current_user()
         if user:
-            from mongokit import DBRef
             search = {'user.$id': user._id}
             # XXX: can search smarter
             for entry in self.db.events.find(search):
@@ -211,37 +237,39 @@ class EventTagsHandler(BaseHandler):
         tags = ['@%s' % x for x in tags]
         
         if format == '.json':
-            self.set_header("Content-Type", "text/javascript; charset=UTF-8")
-            self.write(tornado.escape.json_encode(dict(tags=tags)))
+            self.write_json(dict(tags=tags))
         elif format == '.xml':
+            self.write_xml(dict(tags=tags))
+        elif format == '.txt':
+            self.write_txt('\n'.join(tags))
+            
+            
+class EventStatsHandler(BaseHandler):
+    def get(self, format):
+        time_spent = {}
+        user = self.get_current_user()
+        if user:
+            search = {'user.$id': user._id}
+            # XXX: can search smarter
+            for entry in self.db.events.find(search):
+                tags.update(entry['tags'])
+                
+        if format == '.json':
+            self.write_json(dict(time_spent=time_spent))
+        elif format == '.xml':
+            self.write_xml(dict(time_spent=time_spent))
+        elif format == '.txt':
             raise NotImplementedError
-        else:
-            assert format == '.txt'
-            out = '\n'.join(tags)
-            self.set_header("Content-Type", "text/plain; charset=UTF-8") # doesn;t seem to work
-            self.write(out)
+            #self.write_txt(
         
 
-class EntryHandler(BaseHandler):
-    def get(self, slug):
-        entry = self.db.get("SELECT * FROM entries WHERE slug = %s", slug)
-        if not entry: raise tornado.web.HTTPError(404)
-        self.render("entry.html", entry=entry)
 
-
-class ArchiveHandler(BaseHandler):
-    def get(self):
-        entries = self.db.query("SELECT * FROM entries ORDER BY published "
-                                "DESC")
-        self.render("archive.html", entries=entries)
-
-
-class FeedHandler(BaseHandler):
-    def get(self):
-        entries = self.db.query("SELECT * FROM entries ORDER BY published "
-                                "DESC LIMIT 10")
-        self.set_header("Content-Type", "application/atom+xml")
-        self.render("feed.xml", entries=entries)
+#class FeedHandler(BaseHandler):
+#    def get(self):
+#        entries = self.db.query("SELECT * FROM entries ORDER BY published "
+#                                "DESC LIMIT 10")
+#        self.set_header("Content-Type", "application/atom+xml")
+#        self.render("feed.xml", entries=entries)
 
 
 class ComposeHandler(BaseHandler):
