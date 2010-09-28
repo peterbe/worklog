@@ -4,6 +4,7 @@
         <title>What have you done?</title>
         <link rel="stylesheet" type="text/css" href="{{ static_url("css/style.css") }}" />
         <link rel="stylesheet" type="text/css" href="{{ static_url("css/fullcalendar.css") }}" />
+        <link rel="stylesheet" type="text/css" href="{{ static_url("css/jquery.jqplot.min.css") }}" />
         <!--<link rel="stylesheet" type="text/css" href="{{ static_url("facebox.css") }}" />-->
         <link rel="stylesheet" type="text/css" href="{{ static_url("jquery-ui-1.8.5.draggable-resizable-autocomplete.css") }}" />
 	<style type="text/css">
@@ -35,6 +36,10 @@
 	  <div id="sidebar" class="widget-area">
 	    <div class="widget widget_text">
 	      SIDEBAR
+              <div class="plot" id="days-plot">
+              </div>
+              <div class="plot" id="hours-plot">
+              </div>              
 	    </div>
 	  </div>
 	</div>
@@ -53,11 +58,20 @@
     </div>
 
 
-
+<form id="add-form" method="post" style="display:none">
+  <div>
+    <input name="title" autocomplete="off" size="35">
+    <input type="hidden" name="all_day">
+    <input type="hidden" name="date">
+    <input type="submit" value="Save">
+  </div>
+</form>
 
 
 <script type="text/javascript" src="{{ static_url("jquery-1.4.2.min.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("fullcalendar.min.js") }}"></script>
+<script type="text/javascript" src="{{ static_url("jquery.jqplot.min.js") }}"></script>
+<script type="text/javascript" src="{{ static_url("jqplot.pieRenderer.min.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("calendar.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("jquery-ui-1.8.5.draggable-resizable-autocomplete.min.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("jquery.qtip-1.0.0-rc3.min.js") }}"></script>

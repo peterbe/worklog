@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #
-from pymongo.objectid import InvalidId, ObjectId
-#from mongokit import DBRef
 from pprint import pprint
+from collections import defaultdict
+from pymongo.objectid import InvalidId, ObjectId
 from time import mktime
 import cStringIO
 import datetime
@@ -246,18 +246,53 @@ class EventTagsHandler(BaseHandler):
             
 class EventStatsHandler(BaseHandler):
     def get(self, format):
-        time_spent = {}
+        days_spent = defaultdict(float)
+        hours_spent = defaultdict(float)
         user = self.get_current_user()
         if user:
             search = {'user.$id': user._id}
-            # XXX: can search smarter
-            for entry in self.db.events.find(search):
-                tags.update(entry['tags'])
+            
+            if self.get_argument('start', None):
+                start = parse_datetime(self.get_argument('start'))
+                search['start'] = {'$gte': start}
+            if self.get_argument('end', None):
+                end = parse_datetime(self.get_argument('end'))
+                search['start'] = {'$lte': end}
+            
+            for entry in self.db.events.Event.find(search):
+                if entry.all_day:
+                    days = 1 + (entry.end - entry.start).days
+                    if entry.tags:
+                        for tag in entry.tags:
+                            days_spent[tag] += days
+                    else:
+                        days_spent[u''] += days
+                    
+                else:
+                    hours = (entry.end - entry.start).seconds / 60.0 / 60
+                    if entry.tags:
+                        for tag in entry.tags:
+                            hours_spent[tag] += hours
+                    else:
+                        hours_spent[u''] += hours
+                
+                     
+        days_spent['<em>Untagged</em>'] = days_spent.pop('')
+        hours_spent['<em>Untagged</em>'] = hours_spent.pop('')
+        
+        # flatten as a list
+        days_spent = sorted(days_spent.items(), 
+                            lambda x, y: cmp(y[1], x[1]))
+        hours_spent = sorted([(x,y) for (x, y) in hours_spent.items() if y],
+                             lambda x, y: cmp(y[1], x[1]))
+        stats = dict(days_spent=days_spent,
+                     hours_spent=hours_spent)
+        #pprint(stats)
                 
         if format == '.json':
-            self.write_json(dict(time_spent=time_spent))
+            self.write_json(stats)
         elif format == '.xml':
-            self.write_xml(dict(time_spent=time_spent))
+            self.write_xml(stats)
         elif format == '.txt':
             raise NotImplementedError
             #self.write_txt(

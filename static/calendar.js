@@ -45,6 +45,15 @@ function __standard_qtip_options() {
 
 /* Return a jQuery type DOM form element */
 function get_add_form(action, date, all_day) {
+   var f = $('#add-form');
+   f.attr('action', action);
+   $('input[name="date"]', f).val(date.getTime());
+   if (all_day)
+     $('input[name="all_day"]', f).val('1');
+   else
+     $('input[name="all_day"]', f).val('');
+   return f;
+   
    var f = $('<form method="post"></form>').attr('action', action);
    var d = $('<div></div>');
    var t = $('<input name="title" id="id_title" size="35">');
@@ -135,9 +144,9 @@ function _day_clicked(date, allDay, jsEvent, view) {
    current_tooltip = $(this);
    current_tooltip.qtip(qtip_options);
    setTimeout(function() {
-      $('#id_title').focus();
-      __setup_tag_autocomplete($('#id_title'));
-   }, 1000);
+      $('input[name="title"]:visible').focus();
+      __setup_tag_autocomplete($('input[name="title"]:visible'));
+   }, 500);
 }
 
 function _event_clicked(event, jsEvent, view) {
@@ -162,13 +171,14 @@ function _event_clicked(event, jsEvent, view) {
    }, 500);   
 }
 
-function _event_resized(event,dayDelta,minuteDelta,revertFunc) {
+function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view) {
    //revertFunc();
    $.post("/event/resize", {days:dayDelta, minutes:minuteDelta, id:event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
       }
+      __display_sidebar_stats(view.start, view.end);
    });
 }
 
@@ -198,9 +208,6 @@ function __setup_tag_autocomplete(jelement) {
          if (extractLast(request.term).charAt(0) != '@')
            response( []);
          else {
-            L('last term', extractLast(request.term));
-            L(AVAILABLE_TAGS);
-            L($.ui.autocomplete.filter(AVAILABLE_TAGS, extractLast( request.term ) ));
             response( $.ui.autocomplete.filter(
                                                AVAILABLE_TAGS, extractLast( request.term ) ) );
          }
@@ -211,7 +218,6 @@ function __setup_tag_autocomplete(jelement) {
       },
       select: function( event, ui ) {
          var terms = split( this.value );
-         L("terms", terms);
          // remove the current input
          terms.pop();
          // add the selected item
@@ -221,6 +227,27 @@ function __setup_tag_autocomplete(jelement) {
          this.value = terms.join( " " );
          return false;
       }
+   });
+}
+
+function __display_sidebar_stats(start, end) {
+   $.getJSON('/events/stats.json', {start: start.getTime(), end: end.getTime()}, function(response) {
+      if (response.days_spent)
+        var days_pie = $.jqplot('days-plot', [response.days_spent], {
+             title: 'Days spent',
+             grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
+             seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:4, padding:10, border:false}},
+           legend:{show:true}
+        });
+
+      if (response.hours_spent)
+        var hours_pie = $.jqplot('hours-plot', [response.hours_spent], {
+             title: 'Hours spent',
+             grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
+             seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:4, padding:10, border:false}},
+           legend:{show:true}
+        });
+      
    });
 }
 
@@ -250,7 +277,10 @@ $(function() {
       eventClick: _event_clicked,
       dayClick: _day_clicked,
       eventResize: _event_resized,
-      eventDrop: _event_dropped
+      eventDrop: _event_dropped,
+      viewDisplay: function(view) {
+	 __display_sidebar_stats(view.start, view.end);
+      }
   });
    
    $('form').live('submit', function() {
@@ -282,6 +312,7 @@ $(function() {
       });
       return false;
    });
+   
    
    
    $.getJSON('/events/tags.json', function(response) {
