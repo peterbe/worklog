@@ -94,6 +94,7 @@ class BaseHandler(tornado.web.RequestHandler):
     
 
 class HomeHandler(BaseHandler):
+    
     def get(self):
         self.render("calendar.html")
 
