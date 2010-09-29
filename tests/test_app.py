@@ -53,9 +53,9 @@ class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
     def test_events(self):
         self.http_client.fetch(self.get_url('/events.json'), self.stop)
         response = self.wait()
-        self.assertTrue('text/javascript' in response.headers['Content-Type'])
+        self.assertTrue('application/json' in response.headers['Content-Type'])
         struct = json.loads(response.body)
-        self.assertEqual(struct, [])
+        self.assertEqual(struct, dict(events=[], tags=[]))
         
     def test_events_stats(self):
         # first load some events
@@ -83,13 +83,13 @@ class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
         self.assertFalse(db.users.User.find().count())
         
         # rendering the user settings form won't either
-        self.http_client.fetch(self.get_url('/user/settings'), self.stop)
+        self.http_client.fetch(self.get_url('/user/settings/'), self.stop)
         response = self.wait()
         self.assertEqual(response.code, 200)
         self.assertFalse(db.users.User.find().count())
         xsrf_regex = re.compile('name="_xsrf" value="(\w+)"')
         xsrf = xsrf_regex.findall(response.body)[0]
-        print xsrf
+        print repr(xsrf)
         
         # saving it will
         self.http_client.fetch(self.get_url('/user/settings/'), self.stop,

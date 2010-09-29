@@ -50,7 +50,7 @@ class ModelsTestCase(unittest.TestCase):
         
     def test_user_settings(self):
         user = self.db.users.User()
-        settings = self.db.users.UserSettings()
+        settings = self.db.user_settings.UserSettings()
         from mongokit import RequireFieldError
         self.assertRaises(RequireFieldError, settings.save)
         settings.user = user
@@ -58,5 +58,8 @@ class ModelsTestCase(unittest.TestCase):
         
         self.assertFalse(settings.monday_first)
         self.assertFalse(settings.hide_weekend)
+        
+        model = self.db.user_settings.UserSettings
+        self.assertEqual(model.find({'user.$id': user._id}).count(), 1)
         
         

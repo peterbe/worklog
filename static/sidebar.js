@@ -36,4 +36,20 @@ $(function() {
       var view = $('#calendar').fullCalendar('getView');
       display_sidebar_stats(view.start, view.end);
    }
+   
+   
+   $('a.user-settings').fancybox({
+      'width': '75%',
+      'height': '75%',
+      'autoScale'     : false,
+      'transitionIn': 'none',
+      'transitionOut': 'none',
+      //'type': 'iframe',
+      onClosed: function() {
+         location.href='/'; // works but not ideal
+      }
+   });
+   
+   
+   
 });

@@ -1,6 +1,6 @@
-* (HIGH) Implement FancyBox to show the user settings
-
 * (HIGH) Make editing better using $('#edit-form')
+
+* (MEDIUM) Style the user settings page a bit
 
 * (MEDIUM) Whoosh and Carrot
   http://github.com/ask/carrot

@@ -38,7 +38,7 @@ class Application(tornado.web.Application):
             (r"/events/stats(\.json|\.xml|\.txt)?", EventStatsHandler),
             (r"/events(\.json|\.js|\.xml|\.txt)?", EventsHandler),
             (r"/event/(edit|resize|move)", EventHandler),
-            (r"/user/settings/", UserSettingsHandler),
+            (r"/user/settings(.js|/)", UserSettingsHandler),
             #(r"/archive", ArchiveHandler),
             #(r"/feed", FeedHandler),
             #(r"/entry/([^/]+)", EntryHandler),
@@ -83,6 +83,7 @@ class BaseHandler(tornado.web.RequestHandler):
     def get_current_user_settings(self, user=None):
         if user is None:
             user = self.get_current_user()
+            
         if not user:
             raise ValueError("Can't get settings when there is no user")
         return self.db.user_settings.UserSettings.one({'user.$id': user._id})
@@ -301,7 +302,7 @@ class EventStatsHandler(BaseHandler):
         
 
 class UserSettingsHandler(BaseHandler):
-    def get(self):
+    def get(self, format=None):
         # default initials
         hide_weekend = False
         monday_first = False
@@ -313,15 +314,22 @@ class UserSettingsHandler(BaseHandler):
                 hide_weekend = user_settings.hide_weekend
                 monday_first = user_settings.monday_first
             else:
-                user_settings = self.db.users.UserSettings()
+                user_settings = self.db.user_settings.UserSettings()
                 user_settings.user = user
                 user_settings.save()
+
+        if format == '.js':
+            data = dict(hide_weekend=hide_weekend,
+                        monday_first=monday_first)
+            self.set_header("Content-Type", "text/javascript; charset=UTF-8")
+            self.set_header("Cache-Control", "public,max-age=0")
+            self.write('var SETTINGS=%s;' % tornado.escape.json_encode(data))
+        else:
+            _locals = locals()
+            _locals.pop('self')
+            self.render("user/settings.html", **_locals)
         
-        _locals = locals()
-        _locals.pop('self')
-        self.render("user/settings.html", **_locals)
-        
-    def post(self):
+    def post(self, format=None):
         user = self.get_current_user()
         if not user:
             user = self.db.users.User()
@@ -339,7 +347,8 @@ class UserSettingsHandler(BaseHandler):
         user_settings['monday_first'] = bool(self.get_argument('monday_first', None))
         user_settings['hide_weekend'] = bool(self.get_argument('hide_weekend', None))
         user_settings.save()
-        self.write("Awesome!")
+        self.redirect("/")
+        #self.render("user/settings-saved.html")
         
 
 #class FeedHandler(BaseHandler):
