@@ -1,4 +1,6 @@
+import re
 import datetime
+from urllib import urlencode
 from mongokit import Connection
 import simplejson as json
 from tornado.testing import LogTrapTestCase, AsyncHTTPTestCase
@@ -23,17 +25,19 @@ class CookieTestRequestHandler(RequestHandler):
 
 class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
     
-    _registered = False
     
+    _once = False
     def setUp(self):
         super(ApplicationTest, self).setUp()
-        return
-        con = Connection()
-        con.register([Event, User])
-        if not self._registered:
-            print "in _registered"
-            self._registered = True
-        print "set up"
+        if not self._once:
+            self._once = True
+            self._emptyCollections()
+        
+    def _emptyCollections(self):
+        db = self.get_db()
+        [db.drop_collection(x) for x 
+         in db.collection_names() 
+         if x not in ('system.indexes',)]
         
     def get_db(self):
         return self._app.con[self._app.database_name]
@@ -67,5 +71,39 @@ class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
         event1.all_day = True
         event1.save()
         
-        XXX unfinihsed
+        
+    def test_set_user_settings(self):
+        db = self.get_db()
+        assert not db.users.User.find().count()
+        
+        self.http_client.fetch(self.get_url('/'), self.stop)
+        response = self.wait()
+        
+        # rendering won't automatically create a user
+        self.assertFalse(db.users.User.find().count())
+        
+        # rendering the user settings form won't either
+        self.http_client.fetch(self.get_url('/user/settings'), self.stop)
+        response = self.wait()
+        self.assertEqual(response.code, 200)
+        self.assertFalse(db.users.User.find().count())
+        xsrf_regex = re.compile('name="_xsrf" value="(\w+)"')
+        xsrf = xsrf_regex.findall(response.body)[0]
+        print xsrf
+        
+        # saving it will
+        self.http_client.fetch(self.get_url('/user/settings/'), self.stop,
+                               method='POST',
+                               body=urlencode({'a':'A', '_xsrf': xsrf}))
+        response = self.wait()
+        self.assertEqual(response.code, 200)
+        self.assertTrue(db.users.User.find().count())        
+        self.assertTrue(db.users.UserSettings.find().count())
+
+        
+        
+        #self.assertTrue('Saturday' in response.body)
+        #self.assertTrue('Sunday' in response.body)
+        #print response.body.find('Monday'), response.body.find('Sunday')
+        
         

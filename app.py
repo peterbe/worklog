@@ -19,9 +19,10 @@ import unicodedata
 
 from tornado.options import define, options
 
-from models import Event, User
+from models import Event, User, UserSettings
 from utils import parse_datetime
 
+define("debug", default=False, help="run in debug mode", type=bool)
 define("port", default=8000, help="run on the given port", type=int)
 define("database_name", default="worklog", help="mongodb database name")
 #define("mysql_host", default="127.0.0.1:3306", help="blog database host")
@@ -34,10 +35,10 @@ class Application(tornado.web.Application):
     def __init__(self, database_name=None):
         handlers = [
             (r"/", HomeHandler),
-            (r"/events/tags(\.json|\.xml|\.txt)?", EventTagsHandler),
             (r"/events/stats(\.json|\.xml|\.txt)?", EventStatsHandler),
-            (r"/events(\.json|\.xml|\.txt)?", EventsHandler),
+            (r"/events(\.json|\.js|\.xml|\.txt)?", EventsHandler),
             (r"/event/(edit|resize|move)", EventHandler),
+            (r"/user/settings/", UserSettingsHandler),
             #(r"/archive", ArchiveHandler),
             #(r"/feed", FeedHandler),
             #(r"/entry/([^/]+)", EntryHandler),
@@ -53,14 +54,15 @@ class Application(tornado.web.Application):
             xsrf_cookies=True,
             cookie_secret="11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
             login_url="/auth/login",
+            debug=options.debug,
         )
         tornado.web.Application.__init__(self, handlers, **settings)
         
         #print database_name and database_name or options.database_name
         # Have one global connection to the blog DB across all handlers
-        self.database_name = options.database_name
+        self.database_name = database_name and database_name or options.database_name
         self.con = Connection()
-        self.con.register([Event, User])
+        self.con.register([Event, User, UserSettings])
         #self.db = Connection()
         
         #self.db = tornado.database.Connection(
@@ -75,11 +77,21 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def get_current_user(self):
         guid = self.get_secure_cookie("guid")
-        if not guid: return None
-        return self.db.users.User.one({'guid': guid})
+        if guid:
+            return self.db.users.User.one({'guid': guid})
+        
+    def get_current_user_settings(self, user=None):
+        if user is None:
+            user = self.get_current_user()
+        if not user:
+            raise ValueError("Can't get settings when there is no user")
+        return self.db.user_settings.UserSettings.one({'user.$id': user._id})
     
-    def write_json(self, struct):
-        self.set_header("Content-Type", "text/javascript; charset=UTF-8")
+    def write_json(self, struct, javascript=False):
+        if javascript:
+            self.set_header("Content-Type", "text/javascript; charset=UTF-8")
+        else:
+            self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(tornado.escape.json_encode(struct))
         
     def write_xml(self, struct):
@@ -116,11 +128,12 @@ class EventsHandler(BaseHandler):
                     data[key] = timestamp
             
         return data
-        
-        
+    
     def get(self, format=None):
         user = self.get_current_user()
-        entries = []
+        events = []
+        tags = set()
+        
         if user:
             search = {'user.$id': user._id}
             start = parse_datetime(self.get_argument('start'))
@@ -128,18 +141,29 @@ class EventsHandler(BaseHandler):
             search['start'] = {'$gte': start}
             search['start'] = {'$lte': end}
             
-            for entry in self.db.events.Event.find(search):
-                entries.append(self._transform_fullcalendar_event(entry, True))
-            
-        if format == '.json':
-            self.write_json(entries)
+            for event in self.db.events.Event.find(search):
+                events.append(self._transform_fullcalendar_event(event, True))
+                tags.update(event['tags'])
+                
+        tags = list(tags)
+        tags.sort(lambda x, y: cmp(x.lower(), y.lower()))
+        tags = ['@%s' % x for x in tags]
+        data = dict(events=events,
+                    tags=tags)
+
+        if format in ('.json', '.js'):
+            self.write_json(data, javascript=format=='.js')
         elif format == '.xml':
-            self.write_json(dict(entries=entries))
+            self.write_json(data)
         elif format == '.txt':
             out = cStringIO.StringIO()
-            for entry in entries:
-                pprint(entry, out)
+            out.write('ENTRIES\n')
+            for event in events:
+                pprint(event, out)
                 out.write("\n")
+            out.write('TAGS\n')
+            out.write('\n'.join(tags))
+            out.write("\n")
             self.write_txt(out.getvalue())
         
     def post(self, *args, **kwargs):
@@ -222,28 +246,6 @@ class EventHandler(BaseHandler):
         
         return self.write("thanks")
     
-class EventTagsHandler(BaseHandler):
-    def get(self, format):
-        tags = set()
-        user = self.get_current_user()
-        if user:
-            search = {'user.$id': user._id}
-            # XXX: can search smarter
-            for entry in self.db.events.find(search):
-                tags.update(entry['tags'])
-                
-        tags = list(tags)
-        tags.sort(lambda x, y: cmp(x.lower(), y.lower()))
-        
-        tags = ['@%s' % x for x in tags]
-        
-        if format == '.json':
-            self.write_json(dict(tags=tags))
-        elif format == '.xml':
-            self.write_xml(dict(tags=tags))
-        elif format == '.txt':
-            self.write_txt('\n'.join(tags))
-            
             
 class EventStatsHandler(BaseHandler):
     def get(self, format):
@@ -258,8 +260,8 @@ class EventStatsHandler(BaseHandler):
                 search['start'] = {'$gte': start}
             if self.get_argument('end', None):
                 end = parse_datetime(self.get_argument('end'))
-                search['start'] = {'$lte': end}
-            
+                search['end'] = {'$lte': end}
+                
             for entry in self.db.events.Event.find(search):
                 if entry.all_day:
                     days = 1 + (entry.end - entry.start).days
@@ -276,16 +278,15 @@ class EventStatsHandler(BaseHandler):
                             hours_spent[tag] += hours
                     else:
                         hours_spent[u''] += hours
-                
                      
-        days_spent['<em>Untagged</em>'] = days_spent.pop('')
-        hours_spent['<em>Untagged</em>'] = hours_spent.pop('')
+        if '' in days_spent:
+            days_spent['<em>Untagged</em>'] = days_spent.pop('')
+        if '' in hours_spent:
+            hours_spent['<em>Untagged</em>'] = hours_spent.pop('')
         
         # flatten as a list
-        days_spent = sorted(days_spent.items(), 
-                            lambda x, y: cmp(y[1], x[1]))
-        hours_spent = sorted([(x,y) for (x, y) in hours_spent.items() if y],
-                             lambda x, y: cmp(y[1], x[1]))
+        days_spent = sorted(days_spent.items())
+        hours_spent = sorted([(x,y) for (x, y) in hours_spent.items() if y])
         stats = dict(days_spent=days_spent,
                      hours_spent=hours_spent)
         #pprint(stats)
@@ -299,6 +300,47 @@ class EventStatsHandler(BaseHandler):
             #self.write_txt(
         
 
+class UserSettingsHandler(BaseHandler):
+    def get(self):
+        # default initials
+        hide_weekend = False
+        monday_first = False
+        
+        user = self.get_current_user()
+        if user:
+            user_settings = self.get_current_user_settings(user)
+            if user_settings:
+                hide_weekend = user_settings.hide_weekend
+                monday_first = user_settings.monday_first
+            else:
+                user_settings = self.db.users.UserSettings()
+                user_settings.user = user
+                user_settings.save()
+        
+        _locals = locals()
+        _locals.pop('self')
+        self.render("user/settings.html", **_locals)
+        
+    def post(self):
+        user = self.get_current_user()
+        if not user:
+            user = self.db.users.User()
+            self.set_secure_cookie("guid", str(user.guid), expires_days=100)
+            
+        user_settings = self.get_current_user_settings(user)
+        if user_settings:
+            hide_weekend = user_settings.hide_weekend
+            monday_first = user_settings.monday_first
+        else:
+            user_settings = self.db.user_settings.UserSettings()
+            user_settings.user = user
+            user_settings.save()
+                
+        user_settings['monday_first'] = bool(self.get_argument('monday_first', None))
+        user_settings['hide_weekend'] = bool(self.get_argument('hide_weekend', None))
+        user_settings.save()
+        self.write("Awesome!")
+        
 
 #class FeedHandler(BaseHandler):
 #    def get(self):

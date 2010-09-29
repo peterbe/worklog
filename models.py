@@ -34,6 +34,25 @@ class User(BaseDocument):
       {'fields': 'guid',
        'unique': True},
     ]
+    
+class UserSettings(BaseDocument):
+    structure = {
+      'user': User,
+      'monday_first': bool,
+      'hide_weekend': bool,
+    }
+    use_autorefs = True
+    
+    required_fields = ['user']
+    default_values = {
+      'monday_first': False,
+      'hide_weekend': False,
+    }
+    
+    indexes = [
+      {'fields': 'user',
+       'unique': True},
+    ]
 
 class Event(BaseDocument):
     structure = {

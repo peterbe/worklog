@@ -6,7 +6,6 @@ function L() {
 
 
 
-
 function __standard_qtip_options() {
   return {
      position: {
@@ -178,7 +177,7 @@ function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view
          alert(response.error);
          revertFunc();
       }
-      __display_sidebar_stats(view.start, view.end);
+      display_sidebar_stats_wrapped(view.start, view.end);
    });
 }
 
@@ -230,48 +229,52 @@ function __setup_tag_autocomplete(jelement) {
    });
 }
 
-function __display_sidebar_stats(start, end) {
-   $.getJSON('/events/stats.json', {start: start.getTime(), end: end.getTime()}, function(response) {
-      if (response.days_spent)
-        var days_pie = $.jqplot('days-plot', [response.days_spent], {
-             title: 'Days spent',
-             grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
-             seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:4, padding:10, border:false}},
-           legend:{show:true}
-        });
 
-      if (response.hours_spent)
-        var hours_pie = $.jqplot('hours-plot', [response.hours_spent], {
-             title: 'Hours spent',
-             grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
-             seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:4, padding:10, border:false}},
-           legend:{show:true}
-        });
-      
-   });
-}
 
 var AVAILABLE_TAGS = [];
 
 $(function() {
+   var defaultView = 'month';
+   if (location.hash.search('#week') == 0)
+     defaultView = 'agendaWeek';
+   else if (location.hash.search('#day') == 0)
+     defaultView = 'agendaDay';
+   var today = new Date();
+   var year = today.getFullYear();
+   var month = today.getMonth();
+   var day = undefined;
+   var hash_code_regex = /(\d{4}),(\d{1,2}),(\d{1,2})/;
+   if (hash_code_regex.test(location.hash)) {
+      var _match = location.hash.match(hash_code_regex);
+      year = parseInt(_match[1]);
+      month = parseInt(_match[2]) - 1;
+      day = parseInt(_match[3]);
+      L('year', year);
+   }
+   
    $('#calendar').fullCalendar({
-      events: '/events.json',
-       /*
+      //events: '/events.json',
       events: function(start, end, callback) {
  	var url = '/events.json?start=' + start.getTime() + '&end=' + end.getTime();
  	$.getJSON(url, function(response) {
- 	   if (response.guid && response.guid != $.cookie('guid'))
- 	     $.cookie('guid', response.guid, { expires: 77, path: '/'});
- 	   callback(response.events);
- 	});
-      },*/
+           callback(response.events);
+           if (response.tags)
+             $.each(response.tags, function(i, tag) {
+                if ($.inArray(tag, AVAILABLE_TAGS)==-1)
+                  AVAILABLE_TAGS.push(tag);
+             });
+        });
+      },
        
       header: {
            left: 'prev,next today',
-      center: 'title',
-      right: 'month,agendaWeek,agendaDay'
+           center: 'title',
+           right: 'month,agendaWeek,agendaDay'
       },
-      //defaultView: 'agendaWeek',
+      year: year,
+      month: month,
+      date: day,
+      defaultView: defaultView,
       editable: true,
       firstDay: 1,
       eventClick: _event_clicked,
@@ -279,7 +282,13 @@ $(function() {
       eventResize: _event_resized,
       eventDrop: _event_dropped,
       viewDisplay: function(view) {
-	 __display_sidebar_stats(view.start, view.end);
+	 display_sidebar_stats_wrapped(view.start, view.end);
+         
+         var href = '#' +view.name.replace('agenda','').toLowerCase();
+         href += "," + view.start.getFullYear();
+         href += "," + (view.start.getMonth() + 1);
+         href += "," + view.start.getDate();
+         location.href = href;
       }
   });
    
@@ -308,6 +317,7 @@ $(function() {
 	    if (current_tooltip)
 	      current_tooltip.qtip("hide");
 	    // close any open qtip
+            $('#calendar').fullCalendar('render');
 	 }
       });
       return false;
@@ -315,9 +325,19 @@ $(function() {
    
    
    
-   $.getJSON('/events/tags.json', function(response) {
-      AVAILABLE_TAGS = response.tags;
-   });
+   //$.getJSON('/events/tags.json', function(response) {
+   //   AVAILABLE_TAGS = response.tags;
+   //});
    
    
 });
+
+// Because this file is loaded before stats.js
+// We can't yet use display_sidebar_stats() since that function might not yet
+// have been created. So until then we will use a function to avoid a
+// 'display_sidebar_stats is not defined' error
+display_sidebar_stats_wrapped = function(start, end) {
+   if (typeof display_sidebar_stats != 'undefined')
+     display_sidebar_stats(start, end);
+   
+};

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>User settings</title>
+    </head>
+    <body>
+    
+<h2>User settings</h2>    
+<form action="." method="post">
+
+  <ol>
+    <li>
+      <label for="id_monday_first">Monday first day of the week?</label>
+      <input type="checkbox" id="id_monday_first" name="monday_first" {% if monday_first %}checked{% end %}>
+    </li>
+    
+    <li>
+      <label for="id_hide_weekend">Hide weekend?</label>
+      <input type="checkbox" id="id_hide_weekend" name="hide_weekend" {% if hide_weekend %}checked{% end %}>
+    </li>    
+  </ol>
+  
+  <div>
+    <input type="submit" value="Save">
+  </div>
+  
+{{ xsrf_form_html() }}
+</form>
+    
+    </body>
+</html>    
