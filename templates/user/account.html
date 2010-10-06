@@ -1,0 +1,34 @@
+<form action="/user/login/" method="post" class="login">
+<p><strong>Yes!</strong>
+I have a login.</p>
+
+<div>
+<input name="email" value="">
+<input type="hidden" name="placeholdervalue" value="email" class="placeholdervalue">
+<input type="password" name="password" value="">
+<input type="submit" value="Log in">
+</div>
+{{ xsrf_form_html() }}
+</form>
+
+<form action="/user/account/" method="post">
+<p><strong>No</strong>
+But I would like one.</p>
+
+<div>
+<label>E-mail:</label>
+<input name="email" value=""><br>
+<label>Choose a password:</label>
+<input type="password" name="password" value=""><br>
+
+<label>First name:</label>
+<input name="first_name" value=""><br>
+
+<label>Last name:</label>
+<input name="last_name" value=""><br>
+
+<input type="submit" value="Create account">
+</div>
+
+{{ xsrf_form_html() }}
+</form>

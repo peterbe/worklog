@@ -1,3 +1,4 @@
+from hashlib import md5
 import uuid
 import datetime
 from mongokit import Document
@@ -67,7 +68,39 @@ class Event(BaseDocument):
     use_autorefs = True
     required_fields = ['user', 'title', 'all_day', 'start', 'end']
 
+    
     indexes = [
       {'fields': ['user', 'start', 'end']},
     ]    
     
+class Share(BaseDocument):
+    structure = {
+      'user': User,
+      'key': unicode,
+      'tags': [unicode],
+      'users': [User],
+    }
+    default_values = {
+      'key': lambda:unicode(md5(unicode(uuid.uuid4())).hexdigest()),
+    }
+    
+    use_autorefs = True
+    required_fields = ['user']
+
+    indexes = [
+      {'fields': ['user']},
+      {'fields': ['key'], 'unique': True},
+    ]
+    
+    @classmethod
+    def generate_new_key(cls, collection, min_length=6):
+        new_key = unicode(md5(unicode(uuid.uuid4())).hexdigest()[:min_length])
+        while collection.Share.find(dict(key=new_key)).count():
+            new_key = unicode(md5(unicode(uuid.uuid4())).hexdigest()[:min_length])
+        return new_key
+        
+        
+        
+        
+    
+      

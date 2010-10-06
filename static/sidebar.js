@@ -37,6 +37,22 @@ $(function() {
       display_sidebar_stats(view.start, view.end);
    }
    
+   $('a.account').fancybox({
+      'width': '75%',
+      'height': '75%',
+      'autoScale'     : false,
+      'transitionIn': 'none',
+      'transitionOut': 'none',
+      onComplete: function(array, index, opts) {
+         $.lazy({
+            src: '/static/account.js',
+            name: 'account',
+            dependencies: { css: ['/static/css/account.css'] }//,
+            //cache: true //?????? what is this?
+         });
+      }
+   });
+
    
    $('a.user-settings').fancybox({
       'width': '75%',
@@ -49,6 +65,18 @@ $(function() {
          location.href='/'; // works but not ideal
       }
    });
+   
+   $('a.share').fancybox({
+      'width': '75%',
+      'height': '75%',
+      'autoScale'     : false,
+      'transitionIn': 'none',
+      'transitionOut': 'none'
+      //'type': 'iframe',
+      //onClosed: function() {
+      //   location.href='/'; // works but not ideal
+      //}
+   });   
    
    
    

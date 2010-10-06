@@ -1,0 +1,21 @@
+<h2>Share your calendar</h2>
+
+
+
+<form action="/share/">
+
+<div>
+  <p>
+  Give this URL to friends and family and they'll be able to view 
+  (but not edit) your calendar:<br/>
+  <input name="share_url" id="share_url" value="{{ full_share_url }}">
+  <script type="text/javascript">
+  setTimeout(function() {
+    document.getElementById('share_url').focus();
+  }, 100);
+  </script>
+  </p>
+</div>
+
+</form>
+

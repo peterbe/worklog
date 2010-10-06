@@ -53,10 +53,10 @@ function get_add_form(action, date, all_day) {
      $('input[name="all_day"]', f).val('');
    return f;
    
+   /*
    var f = $('<form method="post"></form>').attr('action', action);
    var d = $('<div></div>');
    var t = $('<input name="title" id="id_title" size="35">');
-   //__setup_tag_autocomplete(t);
    d.append(t);
    d.append($('<input type="submit" value="Save">'));
    if (all_day)
@@ -64,9 +64,48 @@ function get_add_form(action, date, all_day) {
    d.append($('<input type="hidden" name="date">').val(date.getTime()));
    f.append(d);
    return f;
+    */
 }
-
-function get_edit_form(action, id, title) {
+/*
+function get_edit_form(action, id, title, url) {
+   var f = $('#edit-form');
+   f.attr('action', action);
+   
+   // reset anything if the edit form has been used before
+   $('.edit-url:visible', f).hide();
+   $('.see-url:visible', f).hide();
+   $('a.delete:hidden', f).show();
+   $('.confirmation', f).hide();
+   
+   $('input[name="title"]', f).val(title);
+   $('input[name="id"]', f).val(id);
+   if (url) {
+      $('input[name="url"]', f).val(url);
+      $('.see-url', f).html('').append(
+        $('<a href="#"></a>').text(url).click(function() {
+           window.open=url;
+        })
+      ).show();
+   } else {
+      $('.edit-url', f).show();
+   }
+   $('a.delete', f).click(function() {
+      var parent = $(this).parents('div.delete');
+      $('.confirmation', parent).show();
+      $(this).hide();
+      $('.delete-confirm', parent).click(function() {
+         return false;
+      });
+      $('.delete-cancel', parent).click(function() {
+         $('div.delete .confirmation:visible').hide(400);
+         $(this).show(500);
+         return false;
+      });
+      return false;
+   });
+   
+   return f;
+   
    var f = $('<form method="post"></form>').attr('action', action);
    var d = $('<div></div>');
    d.append($('<input name="title" id="id_title" size="35">').val(title));
@@ -75,7 +114,9 @@ function get_edit_form(action, id, title) {
    f.append(d);
    return f;
 }
+*/
 
+/*
 function OOOOLLLLDDD____event_clicked(calEvent, jsEvent, view) {
         //alert('Event: ' + calEvent.title);
         //alert('Coordinates: ' + jsEvent.pageX + ',' + jsEvent.pageY);
@@ -124,6 +165,7 @@ function OOOOLLLLDDD____event_clicked(calEvent, jsEvent, view) {
    });
   
 }
+*/
 
 var current_tooltip;
 function _day_clicked(date, allDay, jsEvent, view) {
@@ -137,6 +179,14 @@ function _day_clicked(date, allDay, jsEvent, view) {
            //  text: "Adding new event",
 	   //  button: "Cancel"
 	   //}
+      },
+      api: {
+        onShow: function(event) {
+           $('form:visible').submit(function() {
+              _setup_ajaxsubmit(this);
+              return false;
+           });
+        }
       }
    };
    qtip_options = $.extend(qtip_options, __standard_qtip_options());
@@ -149,25 +199,46 @@ function _day_clicked(date, allDay, jsEvent, view) {
 }
 
 function _event_clicked(event, jsEvent, view) {
-   var url = "/event/edit";
+   var url = "/event/edit?id=" + event.id;
    var qtip_options = {
       content: {
-           //text: "Please wait...",
-	   text: get_edit_form(url, event.id, event.title)
-	   //url: url//,
+           text: "Please wait...",
+	   //text: get_edit_form(url, event.id, event.title, event.url)
+	   url: url,
 	   //title: {
            //  text: "Adding new event",
 	   //  button: "Cancel"
 	   //}
+      },
+      api: {
+          onContentUpdate: function() {
+	     $('form.edit').submit(function() {
+		_setup_ajaxsubmit(this, event.id);
+		return false;
+	     });
+             $('input[name="title"]').focus();
+             if (!$('input[name="url"]').val()) {
+                $('input[name="url"]')
+                  .addClass('placeholdervalue')
+                  .val($('input[name="placeholdervalue"]').val());
+             }
+             
+             $('input[name="url"]').bind('focus', function() {
+                if ($(this).val() == $('input[name="placeholdervalue"]').val()) {
+                   $(this).val('').removeClass('placeholdervalue');
+                }
+             }).bind('blur', function() {
+                if (!$.trim($(this).val()))
+                  $('input[name="url"]')
+                    .addClass('placeholdervalue')
+                      .val($('input[name="placeholdervalue"]').val());
+             });
+          }
       }
    };
    qtip_options = $.extend(qtip_options, __standard_qtip_options());
    current_tooltip = $(this);
    current_tooltip.qtip(qtip_options);
-   setTimeout(function() {
-      $('#id_title').focus();
-      
-   }, 500);   
 }
 
 function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view) {
@@ -229,7 +300,72 @@ function __setup_tag_autocomplete(jelement) {
    });
 }
 
+function _setup_ajaxsubmit(element, event_id) {
+   
+      $(element).ajaxSubmit({
+         beforeSubmit: function(arr, form, options) {
+	    var _all_good = true;
+	    $.each(arr, function(i, e) {
+	       if (e.name=='task')
+		 if (!$.trim(e.value)) {
+		    _all_good = false;
+		 }
+	    });
+	    return _all_good;
+	 },
+         success: function(response) {
+	    if (response.error)
+	      alert(response.error);
 
+	    // close any open qtip
+	    if (current_tooltip) {
+               current_tooltip.qtip("hide");
+            }
+            
+ 	    //if (response.event) {
+            //   $('#calendar').fullCalendar('removeEvents', event_id);
+            //   $('#calendar').fullCalendar('renderEvent', response.event, false);
+            //}
+            if (response.tags)
+              $.each(response.tags, function(i, tag) {
+                if ($.inArray(tag, AVAILABLE_TAGS)==-1)
+                   AVAILABLE_TAGS.push(tag);
+              });
+	    
+            if (!response.error) {
+               $('#calendar').fullCalendar('refetchEvents');
+               $('#calendar').fullCalendar('render');
+            }
+	 }
+      });   
+}
+
+/* In a "share" we can expect there to be a name,
+ * a className and a key so that that particular share can be hidden
+ */
+var colors = '#5C8D87,#994499,#6633CC,#B08B59,#DD4477,#22AA99,#668CB3,#DD5511,#D6AE00,#668CD9,#3640AD'.split(',');
+var described_classNames = new Array();
+function __display_current_sharers(sharers) {
+   var container = $('#current-sharers ul');
+   var any = false;
+   $.each(sharers, function(i, share) {
+      L(share.className);
+      var className = share.className;
+      described_classNames.push(className);
+      var color = colors[$.inArray(className, described_classNames)];
+      
+      container.append($('<li></li>')
+                       .css('background-color', color)
+                       .append($('<a href="#"></a>')
+                               .text(share.full_name)));
+      $('.' + className + ', .fc-agenda .' + className + ' .fc-event-time, .' + className + ' a'
+          ).css('background-color', color).css('border-color', color);
+      
+      any = true;
+   })
+   if (any)
+     $('#current-sharers').show();
+}
 
 var AVAILABLE_TAGS = [];
 
@@ -249,7 +385,6 @@ $(function() {
       year = parseInt(_match[1]);
       month = parseInt(_match[2]) - 1;
       day = parseInt(_match[3]);
-      L('year', year);
    }
    
    $('#calendar').fullCalendar({
@@ -258,6 +393,8 @@ $(function() {
  	var url = '/events.json?start=' + start.getTime() + '&end=' + end.getTime();
  	$.getJSON(url, function(response) {
            callback(response.events);
+           if (response.sharers)
+             __display_current_sharers(response.sharers);
            if (response.tags)
              $.each(response.tags, function(i, tag) {
                 if ($.inArray(tag, AVAILABLE_TAGS)==-1)
@@ -293,36 +430,9 @@ $(function() {
       }
   });
    
-   $('form').live('submit', function() {
-      $(this).ajaxSubmit({
-         beforeSubmit: function(arr, form, options) {
-	    var _all_good = true;
-	    $.each(arr, function(i, e) {
-	       if (e.name=='task')
-		 if (!$.trim(e.value)) {
-		    _all_good = false;
-		 }
-	    });
-	    return _all_good;
-	 },
-         success: function(response) {
-	    if (response.error)
-	      alert(response.error);
-	    if (response.event) 
-               $('#calendar').fullCalendar('renderEvent', response.event, false);
-            if (response.tags)
-              $.each(response.tags, function(i, tag) {
-                if ($.inArray(tag, AVAILABLE_TAGS)==-1)
-                   AVAILABLE_TAGS.push(tag);
-              });
-	    if (current_tooltip)
-	      current_tooltip.qtip("hide");
-	    // close any open qtip
-            $('#calendar').fullCalendar('render');
-	 }
-      });
-      return false;
-   });
+//   $('form').live('submit', function() {
+//      return false;
+//   });
    
    
    

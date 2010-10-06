@@ -1,0 +1,34 @@
+<form class="edit" action="/event/edit" method="post">
+  <div>
+    <input type="hidden" name="id" value="{{ event._id }}">
+    <input name="title" autocomplete="off" size="35" value="{{ event.title }}">
+    <input type="submit" value="Save">
+  </div>
+  
+  <div class="edit-url" {% if event.url %}style="display:none"{% end %}>
+    {% if event.url %}
+    <input name="url" size="35" value="{{ event.url }}">
+    {% else %}
+    <input name="url" size="35" value="">
+    {% end %}
+    <input type="hidden" name="placeholdervalue" value="URL: (optional)">
+  </div>
+  
+  {% if event.url %}
+  <div class="see-url">
+    <a href="{{ event.url }}" onclick="window.open('{{ event.url }}');return false">{{ event.url }}</a>
+  </div>
+  {% end %}
+  
+  <div class="delete">
+    <p>
+    <a href="#" class="delete">Delete?</a>
+      <span class="confirmation" style="display:none">Are you sure?
+        <a href="#" class="delete-confirm">Yes</a>
+        <a href="#" class="delete-cancel">No</a>
+      </span>
+    </p>
+  </div>
+  
+{{ xsrf_form_html() }}
+</form>

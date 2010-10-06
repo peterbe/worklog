@@ -1,6 +1,14 @@
-* (HIGH) Make editing better using $('#edit-form')
+* (HIGH) Why doesn't account.js load when you call $.lazy....??
 
-* (MEDIUM) Style the user settings page a bit
+* (HIGH) Make it impossible to share until you've created a full account
+
+* (HIGH) Validation on creating account
+
+* (HIGH) Ability to log in
+
+* (HIGH) Ability to hide shared calendars
+
+* (MEDIUM) Google OAuth login
 
 * (MEDIUM) Whoosh and Carrot
   http://github.com/ask/carrot

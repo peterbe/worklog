@@ -19,8 +19,8 @@ import unicodedata
 
 from tornado.options import define, options
 
-from models import Event, User, UserSettings
-from utils import parse_datetime
+from models import Event, User, UserSettings, Share
+from utils import parse_datetime, encrypt_password
 
 define("debug", default=False, help="run in debug mode", type=bool)
 define("port", default=8000, help="run on the given port", type=int)
@@ -39,6 +39,8 @@ class Application(tornado.web.Application):
             (r"/events(\.json|\.js|\.xml|\.txt)?", EventsHandler),
             (r"/event/(edit|resize|move)", EventHandler),
             (r"/user/settings(.js|/)", UserSettingsHandler),
+            (r"/user/account/", AccountHandler),
+            (r"/share/$", SharingHandler),
             #(r"/archive", ArchiveHandler),
             #(r"/feed", FeedHandler),
             #(r"/entry/([^/]+)", EntryHandler),
@@ -62,7 +64,7 @@ class Application(tornado.web.Application):
         # Have one global connection to the blog DB across all handlers
         self.database_name = database_name and database_name or options.database_name
         self.con = Connection()
-        self.con.register([Event, User, UserSettings])
+        self.con.register([Event, User, UserSettings, Share])
         #self.db = Connection()
         
         #self.db = tornado.database.Connection(
@@ -103,23 +105,15 @@ class BaseHandler(tornado.web.RequestHandler):
         self.write(str_)
         
         
-        
-    
-
-class HomeHandler(BaseHandler):
-    
-    def get(self):
-        self.render("calendar.html")
-
-
-class EventsHandler(BaseHandler):
-
-    def _transform_fullcalendar_event(self, obj, serialize=False):
+    def transform_fullcalendar_event(self, obj, serialize=False, className=None):
         data = dict(title=obj.title, 
                     start=obj.start,
                     end=obj.end,
                     allDay=obj.all_day,
                     id=str(obj._id))
+            
+        if className:
+            data['className'] = className
             
         if serialize:
             for key, value in data.items():
@@ -130,27 +124,97 @@ class EventsHandler(BaseHandler):
             
         return data
     
+    def case_correct_tags(self, tags, user):
+        # XXX: work on this
+        pass
+        #for tag in tags:
+        #    for event in self.db.
+        
+    
+
+class HomeHandler(BaseHandler):
+    
+    def get(self):
+        if self.get_argument('share', None):
+            shared_keys = self.get_secure_cookie('shares', None)
+            if not shared_keys:
+                shared_keys = []
+            
+            key = self.get_argument('share')
+            share = self.db.shares.Share.one(dict(key=key))
+            if share.key not in shared_keys:
+                shared_keys.append(share.key)
+            self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=7)
+            self.redirect('/')
+
+        user = self.get_secure_cookie('user')
+        user_name = None
+        if user:
+            user = self.db.users.User.one(dict(guid=user))
+            if user.first_name:
+                user_name = user.first_name
+            elif user.email:
+                user_name = user.email
+            else:
+                user_name = "Someonewithoutaname"
+                
+            
+        self.render("calendar.html", user=user, user_name=user_name)
+
+
+class EventsHandler(BaseHandler):
+
+    
     def get(self, format=None):
         user = self.get_current_user()
         events = []
+        sharers = []
         tags = set()
-        
+
+        start = parse_datetime(self.get_argument('start'))
+        end = parse_datetime(self.get_argument('end'))
+        search = {}
+        search['start'] = {'$gte': start}
+        search['start'] = {'$lte': end}
+
         if user:
-            search = {'user.$id': user._id}
-            start = parse_datetime(self.get_argument('start'))
-            end = parse_datetime(self.get_argument('end'))
-            search['start'] = {'$gte': start}
-            search['start'] = {'$lte': end}
-            
+            search['user.$id'] = user._id
             for event in self.db.events.Event.find(search):
-                events.append(self._transform_fullcalendar_event(event, True))
+                events.append(self.transform_fullcalendar_event(event, True))
                 tags.update(event['tags'])
+                
+        shares = self.get_secure_cookie('shares')
+        if not shares: 
+            shares = []
+        for key in [x for x in shares.split(',') if x]:
+            for share in self.db.shares.Share.find(dict(key=key)):
+                search['user.$id'] = share.user._id
+                className = 'share-%s' % share.user._id
+                full_name = u"%s %s" % (share.user.first_name, share.user.last_name)
+                full_name = full_name.strip()
+                if not full_name:
+                    full_name = share.user.email
+                sharers.append(dict(className=className,
+                                    full_name=full_name,
+                                    key=share.key))
+                                    
+                for event in self.db.events.Event.find(search):
+                    events.append(
+                      self.transform_fullcalendar_event(
+                        event, 
+                        True,
+                        className=className))
+                    tags.update(event['tags'])
                 
         tags = list(tags)
         tags.sort(lambda x, y: cmp(x.lower(), y.lower()))
         tags = ['@%s' % x for x in tags]
         data = dict(events=events,
                     tags=tags)
+                    
+        if sharers:
+            sharers.sort(lambda x,y: cmp(x['full_name'], y['full_name']))
+            data['sharers'] = sharers
 
         if format in ('.json', '.js'):
             self.write_json(data, javascript=format=='.js')
@@ -176,8 +240,11 @@ class EventsHandler(BaseHandler):
         
         tags = list(set([x[1:] for x in re.findall('@\w+', title)]))
         
+        
         user = self.get_current_user()
-        if not user:
+        if user:
+            self.case_correct_tags(tags, user)
+        else:
             user = self.db.users.User()
             user.save()
             
@@ -192,7 +259,7 @@ class EventsHandler(BaseHandler):
         
         self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         
-        fullcalendar_event = self._transform_fullcalendar_event(event, serialize=True)
+        fullcalendar_event = self.transform_fullcalendar_event(event, serialize=True)
         
         self.set_header("Content-Type", "application/json")
         self.write(tornado.escape.json_encode(
@@ -245,7 +312,31 @@ class EventHandler(BaseHandler):
         else:
             raise NotImplementedError
         
-        return self.write("thanks")
+        return self.write_json(dict(event=self.transform_fullcalendar_event(event, True)))
+    
+    def get(self, action):
+        assert action == 'edit'
+        
+        _id = self.get_argument('id')
+       
+        user = self.get_current_user()
+        if not user:
+            return self.write(dict(error="Not logged in (no cookie)"))
+        
+        try:
+            search = {
+              'user.$id': user._id,
+              '_id': ObjectId(_id),
+            }
+        except InvalidId:
+            raise tornado.web.HTTPError(404, "Invalid ID")
+        
+        event = self.db.events.Event.one(search)
+        if not event:
+            raise tornado.web.HTTPError(404, "Can't find the event")
+        
+        print event
+        self.render('event/edit.html', event=event)
     
             
 class EventStatsHandler(BaseHandler):
@@ -350,7 +441,66 @@ class UserSettingsHandler(BaseHandler):
         self.redirect("/")
         #self.render("user/settings-saved.html")
         
+class SharingHandler(BaseHandler):
+    
+    def get(self):
+        user = self.get_current_user()
+        if not user:
+            return self.write("You don't have anything in your calendar yet")
+            
+        
+        shares = self.db.shares.Share.find({'user.$id': user._id})
+        count = shares.count()
+        if count:
+            if count == 1:
+                share = list(shares)[0]
+            else:
+                raise NotImplementedError
+        else:
+            share = self.db.shares.Share()
+            share.user = user
+            # might up this number in the future
+            share.key = Share.generate_new_key(self.db.shares, min_length=7)
+            share.save()
+            
+        share_url = "/?share=%s" % share.key
+        full_share_url = '%s://%s%s' % (self.request.protocol, 
+                                        self.request.host,
+                                        share_url)
+        self.render("sharing/share.html", full_share_url=full_share_url, shares=shares)
 
+        
+class AccountHandler(BaseHandler):
+    def get(self):
+        self.render("user/account.html")
+        
+    def post(self):
+        email = self.get_argument('email', None)
+        password = self.get_argument('password', None)
+        first_name = self.get_argument('first_name', u'')
+        last_name = self.get_argument('last_name', u'')
+        
+        if not email:
+            return self.write("Error. No email provided")
+        if not password:
+            return self.write("Error. No password provided")
+        
+        user = self.get_current_user()
+        if not user:
+            user = self.db.users.User()
+            user.save()
+        user.email = email
+        user.password = encrypt_password(password)
+        user.first_name = first_name
+        user.last_name = last_name
+        user.save()
+        
+        self.set_secure_cookie("guid", str(user.guid), expires_days=100)
+        self.set_secure_cookie("user", str(user.guid), expires_days=100)
+            
+        self.redirect('/')
+        
+    
 #class FeedHandler(BaseHandler):
 #    def get(self):
 #        entries = self.db.query("SELECT * FROM entries ORDER BY published "

@@ -17,9 +17,28 @@
 	#calendar { 
 	margin: 10px;
 	}
+        input.placeholdervalue { color:#ccc; }
+        #settings-box {
+          margin-top:50px;
+        }
+        #login {
+          {% if user %}
+          background-image:url('{{ static_url("images/locked.gif") }}');
+          {% else %}
+          background-image:url('{{ static_url("images/key.gif") }}');
+          {% end %}
+        }
 	</style>
     </head>
     <body class="content-sidebar">
+    <div id="login">
+      {% if user %}
+      <p><a href="/user/account/" class="account">Hi {{ user_name }}</a></p>
+      {% else %}
+      <p><a href="/user/account/" class="account">Got one of those fancy login accounts?</a></p>
+      {% end %}
+    </div>
+    
     <div id="wrap">
     
       <!--
@@ -37,16 +56,26 @@
 	  </div>
 	  <div id="sidebar" class="widget-area">
 	    <div class="widget widget_text">
-	      SIDEBAR
+              
+              <div class="" id="settings-box">
+	        <p>
+                  <a class="user-settings" href="/user/settings/">Change your settings</a>
+                  <br>
+                  <a class="share" href="/share/">Share your calendar</a>
+                </p>
+              </div>
+              
+              <div id="current-sharers" style="display:none">
+                <p><strong>Sharers</strong></p>
+                <ul>
+                </ul>
+              </div>
+
               <div class="plot" id="days-plot">
               </div>
               <div class="plot" id="hours-plot">
               </div>
-              
-              <div class="" id="settings-box">
-	        <p><a class="user-settings" href="/user/settings/">Change your settings</a>
-		</p>
-              </div>	      
+
 	      
 	    </div>
 	  </div>
@@ -73,7 +102,35 @@
     <input type="hidden" name="date">
     <input type="submit" value="Save">
   </div>
+  {{ xsrf_form_html() }}
+ 
 </form>
+
+<!--
+<form id="edit-form" method="post" style="display:none">
+  <div>
+    <input type="hidden" name="id">
+    <input name="title" autocomplete="off" size="35">
+    <input type="submit" value="Save">
+  </div>
+  
+  <div class="edit-url" style="display:none">
+    <input name="url" size="35">
+  </div>
+  <div class="see-url" style="display:none">
+  </div>
+  
+  <div class="delete">
+    <p>
+    <a href="#" class="delete">Delete?</a>
+      <span class="confirmation">Are you sure?
+        <a href="#" class="delete-confirm">Yes</a>
+        <a href="#" class="delete-cancel">No</a>
+      </span>
+    </p>
+  </div>  
+</form>
+-->
 
 <!-- perhaps better to load directly into template -->
 <script type="text/javascript" src="/user/settings.js"></script>
@@ -86,7 +143,7 @@
 
 <script type="text/javascript" src="{{ static_url("jquery.jqplot.min.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("jqplot.pieRenderer.min.js") }}"></script>
-<!--<script type="text/javascript" src="{{ static_url("jquery.lazy.js") }}"></script>-->
+<script type="text/javascript" src="{{ static_url("jquery.lazy.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("jquery.fancybox-1.3.1.pack.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("sidebar.js") }}"></script>
 

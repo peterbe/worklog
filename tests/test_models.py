@@ -1,7 +1,7 @@
 import datetime
 #import sys; sys.path.insert(0, '..')
 import unittest
-from models import User, Event, UserSettings
+from models import User, Event, UserSettings, Share
 
 class ModelsTestCase(unittest.TestCase):
     _once = False
@@ -10,7 +10,7 @@ class ModelsTestCase(unittest.TestCase):
             self._once = True
             from mongokit import Connection
             con = Connection()
-            con.register([User, Event, UserSettings])
+            con.register([User, Event, UserSettings, Share])
             self.db = con.test
             self._emptyCollections()
             
@@ -61,5 +61,21 @@ class ModelsTestCase(unittest.TestCase):
         
         model = self.db.user_settings.UserSettings
         self.assertEqual(model.find({'user.$id': user._id}).count(), 1)
+        
+    def test_create_share(self):
+        user = self.db.users.User()
+        share = self.db.shares.Share()
+        share.user = user
+        share.save()
+        
+        self.assertEqual(share.tags, [])
+        
+        new_key = Share.generate_new_key(self.db.shares, min_length=4)
+        self.assertTrue(len(new_key) == 4)
+        share.key = new_key
+        share.save()
+        
+        self.assertTrue(self.db.shares.Share.one(dict(key=new_key)))
+        
         
         

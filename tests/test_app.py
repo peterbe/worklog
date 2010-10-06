@@ -9,18 +9,18 @@ from tornado.web import RequestHandler, _O
 import app
 from models import Event, User
 
-class CookieTestRequestHandler(RequestHandler):
-    # stub out enough methods to make the secure_cookie functions work
-    def __init__(self):
-        # don't call super.__init__
-        self._cookies = {}
-        self.application = _O(settings=dict(cookie_secret='0123456789'))
-
-    def get_cookie(self, name):
-        return self._cookies.get(name)
-
-    def set_cookie(self, name, value, expires_days=None):
-        self._cookies[name] = value
+#class CookieTestRequestHandler(RequestHandler):
+#    # stub out enough methods to make the secure_cookie functions work
+#    def __init__(self):
+#        # don't call super.__init__
+#        self._cookies = {}
+#        self.application = _O(settings=dict(cookie_secret='0123456789'))
+#
+#    def get_cookie(self, name):
+#        return self._cookies.get(name)
+#
+#    def set_cookie(self, name, value, expires_days=None):
+#        self._cookies[name] = value
 
 
 class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
@@ -105,5 +105,12 @@ class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
         #self.assertTrue('Saturday' in response.body)
         #self.assertTrue('Sunday' in response.body)
         #print response.body.find('Monday'), response.body.find('Sunday')
+        
+    def test_share_calendar(self):
+        db = self.get_db()
+        
+        self.http_client.fetch(self.get_url('/'), self.stop)
+        response = self.wait()
+        
         
         

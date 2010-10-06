@@ -808,3 +808,59 @@ p.taxonomy-people {
 	background: #eee;
 	color: #14568a;
 }
+
+
+#login {
+  background-color:#57554E;
+  /*background-image:url("/css");*/
+  background-position:15px center;
+  background-repeat:no-repeat;
+  color:#DBDBDA;
+  /*display:none;*/
+  font-weight:bold;
+  padding:4px 20px 12px 40px;
+  position:fixed;
+  right:10px;
+  top:0;
+  width:245px;
+  z-index:99999;
+  border-radius-bottomleft: 15px;
+  border-radius-bottomright: 15px;
+  -moz-border-radius-bottomleft:10px;
+  -moz-border-radius-bottomright:10px;
+  -webkit-border-radius:0 0 10px 10px;
+}
+
+#login p {
+  color:#DBDBDA;
+  /*display:none;*/
+  font-size:12px;
+  font-weight:normal;
+  line-height:100%;
+  margin:5px 0 0;
+}
+#login p a {
+  color:#DBDBDA;
+}
+#login p a:hover {
+  background-color:#57554E;
+}
+
+/* Sharing */
+#share_url {
+  width:400px;
+  font-size:16px;
+}
+
+#current-sharers ul {
+  list-style:none;
+}
+#current-sharers li {
+  padding:2px 6px;
+  width:80%;
+  -moz-border-radius: 3px;
+  
+}
+#current-sharers li a {
+  color:white;
+}
