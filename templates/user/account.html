@@ -1,19 +1,30 @@
-<form action="/user/login/" method="post" class="login">
+<form action="/auth/login/" method="post" class="login">
 <p><strong>Yes!</strong>
 I have a login.</p>
 
 <div>
-<input name="email" value="">
+<label>Email:</label>
+<input name="email" value=""><br>
 <input type="hidden" name="placeholdervalue" value="email" class="placeholdervalue">
+<label>Password:</label>
 <input type="password" name="password" value="">
 <input type="submit" value="Log in">
 </div>
 {{ xsrf_form_html() }}
 </form>
 
-<form action="/user/account/" method="post">
+<form action="/user/signup/" method="post" id="signup">
 <p><strong>No</strong>
 But I would like one.</p>
+
+<div id="invalid-anything" style="display:none; margin-left:10px; color:red">
+  <p>There are still some errors in the form. Please have a look.</p>
+</div>
+
+<div id="invalid-email" style="display:none; margin-left:10px">
+  <p>Unfortunately that email is already used by someone else.<br>
+  You perhaps? <a href="/user/account/password/forgotten/">Click here if you forgot your password</a></p>
+</div>
 
 <div>
 <label>E-mail:</label>

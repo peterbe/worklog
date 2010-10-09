@@ -238,6 +238,10 @@ body {
 #footer {
 	clear: both;
 }
+#footer .creds a {
+        margin-left:10px;
+	margin-right:10px;
+}
 
 /*
 Genesis child themes need to accomodate multiple
@@ -469,6 +473,35 @@ the Post and Page Edit screens.
 
 /* =Content
 ----------------------------------------------- */
+
+#content_inner {
+  padding:30px 60px 100px 60px;
+}
+#content_inner h1 {
+	color: #292E35;
+	font-size: 28px;
+	line-height: 32px;
+	text-shadow: 1px 1px 0px #ccc;
+	margin-bottom: 20px;
+}
+#content_inner h2,
+#content_inner h3 {
+	font-size: 19px;
+	line-height: 1.158em;
+	margin: 1.737em 0 0.579em;
+}
+#content_inner h4 {
+	border-bottom: 1px solid #ccc;
+	color: #222;
+	font-size: 19px;
+	margin: 10px 0 15px;
+	text-shadow: 1px 1px 0 #ddd;
+}
+#content_inner small {
+	color: #444;
+	font-size: 13px;
+}
+
 
 /*
 .breadcrumb {
@@ -845,6 +878,10 @@ p.taxonomy-people {
 #login p a:hover {
   background-color:#57554E;
 }
+#login p a.log-out {
+  float:right;
+  font-size:10px;
+}
 
 /* Sharing */
 #share_url {
@@ -873,3 +910,16 @@ p.taxonomy-people {
 #fancybox-inner form {
   margin-bottom: 20px;
 }
+
+
+/* Form validation */
+ul.errormsgs li {
+  color:red;
+}
+
+input.error {
+  border:1px solid red;
+}
+
+label.error { color:red; }
+label.valid { color:green; }

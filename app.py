@@ -3,7 +3,7 @@
 from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import InvalidId, ObjectId
-from time import mktime
+from time import mktime, sleep
 import cStringIO
 import datetime
 import os.path
@@ -41,21 +41,23 @@ class Application(tornado.web.Application):
             (r"/user/settings(.js|/)", UserSettingsHandler),
             (r"/user/account/", AccountHandler),
             (r"/share/$", SharingHandler),
+            (r"/user/signup/", SignupHandler),
             #(r"/archive", ArchiveHandler),
             #(r"/feed", FeedHandler),
             #(r"/entry/([^/]+)", EntryHandler),
             #(r"/compose", ComposeHandler),
-            (r"/auth/login", AuthLoginHandler),
-            (r"/auth/logout", AuthLogoutHandler),
+            (r"/auth/login/", AuthLoginHandler),
+            (r"/auth/logout/", AuthLogoutHandler),
+            (r"/help/(\w*)", HelpHandler),
         ]
         settings = dict(
-            title=u"Worklog",
-            template_path=os.path.join(os.path.dirname(__file__), "templates"),
-            static_path=os.path.join(os.path.dirname(__file__), "static"),
-            #ui_modules={"Entry": EntryModule},
-            xsrf_cookies=True,
-            cookie_secret="11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
-            login_url="/auth/login",
+            title = u"Donecal",
+            template_path = os.path.join(os.path.dirname(__file__), "templates"),
+            static_path = os.path.join(os.path.dirname(__file__), "static"),
+            ui_modules = {"Settings": SettingsModule},
+            xsrf_cookies = True,
+            cookie_secret = "11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
+            login_url = "/auth/login",
             debug=options.debug,
         )
         tornado.web.Application.__init__(self, handlers, **settings)
@@ -129,27 +131,16 @@ class BaseHandler(tornado.web.RequestHandler):
         #for tag in tags:
         #    for event in self.db.
         
+        
+    def find_user(self, email):
+        return self.db.users.User.one(dict(email=\
+         re.compile(re.escape(email), re.I)))
+         
+    def has_user(self, email):
+        return bool(self.find_user(email))
     
-
-class HomeHandler(BaseHandler):
-    
-    def get(self):
-        if self.get_argument('share', None):
-            shared_keys = self.get_secure_cookie('shares')
-            if not shared_keys:
-                shared_keys = []
-            else:
-                shared_keys = [x.strip() for x in shared_keys.split(',')
-                               if x.strip() and self.db.shares.Share.one(dict(key=x))]
-            
-            key = self.get_argument('share')
-            share = self.db.shares.Share.one(dict(key=key))
-            if share.key not in shared_keys:
-                shared_keys.append(share.key)
-                
-            self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=70)
-            self.redirect('/')
-
+    def get_base_options(self):
+        options = {}
         # default settings
         settings = dict(hide_weekend=False,
                         monday_first=False)
@@ -172,6 +163,43 @@ class HomeHandler(BaseHandler):
                 settings['hide_weekend'] = user_settings.hide_weekend
                 settings['monday_first'] = user_settings.monday_first
                 
+        options['user'] = user
+        options['user_name'] = user_name
+        options['settings'] = settings
+        
+        
+        return options
+
+        
+    
+
+class HomeHandler(BaseHandler):
+    
+    def get(self):
+        if self.get_argument('share', None):
+            shared_keys = self.get_secure_cookie('shares')
+            if not shared_keys:
+                shared_keys = []
+            else:
+                shared_keys = [x.strip() for x in shared_keys.split(',')
+                               if x.strip() and self.db.shares.Share.one(dict(key=x))]
+            
+            key = self.get_argument('share')
+            share = self.db.shares.Share.one(dict(key=key))
+            if share.key not in shared_keys:
+                shared_keys.append(share.key)
+                
+            self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=70)
+            self.redirect('/')
+
+        # default settings
+        options = self.get_base_options()
+        
+        user = options['user']
+        
+        if user:
+                
+            
             hidden_shares = self.get_secure_cookie('hidden_shares')
             if not hidden_shares: 
                 hidden_shares = ''
@@ -182,14 +210,19 @@ class HomeHandler(BaseHandler):
                 hidden_shares.append(dict(key=share.key,
                                           className=className))
 
-            settings['hidden_shares'] = hidden_shares
+            options['settings']['hidden_shares'] = hidden_shares
         
         self.render("calendar.html", 
-          user=user, 
-          user_name=user_name,
-          settings_json=tornado.escape.json_encode(settings)
+          #
+          **options
         )
 
+        
+class SettingsModule(tornado.web.UIModule):
+    def render(self, settings):
+        return self.render_string("modules/settings.html",
+           settings_json=tornado.escape.json_encode(settings),
+         )
 
 class EventsHandler(BaseHandler):
 
@@ -290,7 +323,7 @@ class EventsHandler(BaseHandler):
         event.end = date
         event.save()
         
-        self.set_secure_cookie("guid", str(user.guid), expires_days=100)
+        self.set_secure_cookie("guid", str(user.guid), expires_days=14)
         
         fullcalendar_event = self.transform_fullcalendar_event(event, serialize=True)
         
@@ -533,9 +566,27 @@ class AccountHandler(BaseHandler):
     def get(self):
         self.render("user/account.html")
         
+        
+
+class SignupHandler(BaseHandler):
+    
+          
+    def get(self):
+        
+        if self.get_argument('validate_email', None):
+            # some delay to make brute-force testing boring
+            sleep(0.5)
+            
+            email = self.get_argument('validate_email').strip()
+            if self.has_user(email):
+                result = dict(error='taken')
+            else:
+                result = dict(ok=True)
+            self.write_json(result)
+            
     def post(self):
-        email = self.get_argument('email', None)
-        password = self.get_argument('password', None)
+        email = self.get_argument('email')
+        password = self.get_argument('password')
         first_name = self.get_argument('first_name', u'')
         last_name = self.get_argument('last_name', u'')
         
@@ -543,6 +594,12 @@ class AccountHandler(BaseHandler):
             return self.write("Error. No email provided")
         if not password:
             return self.write("Error. No password provided")
+        
+        if self.has_user(email):
+            return self.write("Error. Email already taken")
+        
+        if len(password) < 4:
+            return self.write("Error. Password too short")
         
         user = self.get_current_user()
         if not user:
@@ -558,8 +615,8 @@ class AccountHandler(BaseHandler):
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
             
         self.redirect('/')
+
         
-    
 #class FeedHandler(BaseHandler):
 #    def get(self):
 #        entries = self.db.query("SELECT * FROM entries ORDER BY published "
@@ -634,17 +691,49 @@ class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
             author_id = author["id"]
         self.set_secure_cookie("user", str(author_id))
         self.redirect(self.get_argument("next", "/"))
-
+        
+    def post(self):
+        email = self.get_argument('email')
+        password = self.get_argument('password')
+        user = self.find_user(email)
+        if not user:
+            # The reason for this sleep is that if a hacker tries every single
+            # brute-force email address he can think of he would be able to 
+            # get quick responses and test many passwords. Try to put some break
+            # on that. 
+            sleep(0.5)
+            return self.write("Error. No user by that email address")
+        
+        if not user.check_password(password):
+            return self.write("Error. Incorrect password")
+            
+        self.set_secure_cookie("guid", str(user.guid), expires_days=100)
+        self.set_secure_cookie("user", str(user.guid), expires_days=100)
+        
+        self.redirect("/")
+        
 
 class AuthLogoutHandler(BaseHandler):
     def get(self):
         self.clear_cookie("user")
+        self.clear_cookie("shares")
+        self.clear_cookie("guid")
+        self.clear_cookie("hidden_shares")
         self.redirect(self.get_argument("next", "/"))
 
 
-class EntryModule(tornado.web.UIModule):
-    def render(self, entry):
-        return self.render_string("modules/entry.html", entry=entry)
+class HelpHandler(BaseHandler):
+    
+    def get(self, page):
+        options = self.get_base_options()
+        self.application.settings['template_path']
+        if page == '':
+            page = 'index'
+        filename = "help/%s.html" % page.lower()
+        if os.path.isfile(os.path.join(self.application.settings['template_path'],
+                                       filename)):
+            return self.render(filename, **options)
+        raise tornado.web.HTTPError(404, "Unknown page")
 
 
 def main():

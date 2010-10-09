@@ -36,6 +36,31 @@ class User(BaseDocument):
        'unique': True},
     ]
     
+    def check_password(self, raw_password):
+        """
+        Returns a boolean of whether the raw_password was correct. Handles
+        encryption formats behind the scenes.
+        """
+        # Backwards-compatibility check. Older passwords won't include the
+        # algorithm or salt.
+        if '$' not in self.password:
+            is_correct = (self.password == get_hexdigest('md5', '', raw_password))
+            if is_correct:
+                # Convert the password to the new, more secure format.
+                self.set_password(raw_password)
+                self.save()
+            return is_correct
+        if '$bcrypt$' in self.password:
+            import bcrypt
+            salt = self.password
+
+            hashed = self.password.split('$bcrypt$')[-1].encode('utf8')
+            #print "Hashed", hashed
+            return hashed == bcrypt.hashpw(raw_password, hashed)
+        else:
+            return check_password(raw_password, self.password)
+        
+    
 class UserSettings(BaseDocument):
     structure = {
       'user': User,

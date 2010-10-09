@@ -43,8 +43,9 @@ $(function() {
 
    $.getScript(JS_URLS.fancybox, function() {
       $('a.account').fancybox({
-         'width': '75%',
-         'height': '75%',
+         'autoDimensions': false,
+         'width'         : 500,
+         'height'        : 300,
          'transitionIn': 'none',
          'transitionOut': 'none',
          onComplete: function(array, index, opts) {
@@ -55,7 +56,6 @@ $(function() {
       $('a.user-settings').fancybox({
          'width': '75%',
          'height': '75%',
-         'autoScale'     : false,
          'scrolling': 'no',
          'transitionIn': 'none',
          'transitionOut': 'none',

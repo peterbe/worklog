@@ -1,12 +1,9 @@
-* (HIGH) Make it impossible to share until you've created a full account
+* (HIGH) Move $('a.account') stuff from sidebar.js into something more
+  generic.
 
-* (HIGH) Validation on creating account
+* (HIGH) LAUNCH!
 
-* (HIGH) Ability to log in
-
-* (HIGH) Ability to hide shared calendars
-
-* (MEDIUM) Google OAuth login
+* (MEDIUM) Google OpenID login
 
 * (MEDIUM) Whoosh and Carrot
   http://github.com/ask/carrot

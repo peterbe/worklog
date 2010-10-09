@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{% block title %}Donecal{% end %}</title>
+	<link rel="Shortcut Icon" href="{{ static_url("images/favicon.ico") }}" type="image/x-icon">
+        <link rel="stylesheet" type="text/css" href="{{ static_url("css/style.css") }}">
+        {% block extracss %}{% end %}
+    </head>
+    <body class="content-sidebar">
+    <div id="login">
+      {% if user %}
+      <p><a href="/user/account/" class="account">Hi {{ user_name }}</a>
+      <a href="/auth/logout/" class="log-out">log out</a></p>
+      {% else %}
+      <p><a href="/user/account/" class="account">Got one of those fancy login accounts?</a></p>
+      {% end %}
+    </div>
+    
+    <div id="wrap">
+    
+      <!--
+      <div id="header">
+        <div class="wrap">
+	  <h1 id="title">DoneCal</h1>
+	</div>
+      </div>
+      -->
+      
+      <div id="inner">
+        <div id="content-sidebar-wrap">
+	  <div id="content">
+            {% block content %}
+            <div id="content_inner">
+            {% block content_inner %}
+            {% end %}
+            </div>
+            {% end %}
+	  </div>
+	  <div id="sidebar" class="widget-area">
+            {% block sidebar %}{% end %}
+	  </div>
+	</div>
+      </div>
+      
+      
+      <div id="footer">
+        <div class="wrap">
+	  <div class="creds">
+	    <p>&copy; <a href="/help/About">About</a>
+	    <a href="/help/">Help</a>
+	    <a href="/help/API">Developers' API</a>
+	    </p>
+	  </div>
+	</div>
+      </div>
+      
+      
+    </div>
+
+
+{{ modules.Settings(settings) }}
+
+<!-- basics needed to render the calendar -->
+{% block jquery %}
+<script type="text/javascript" src="{{ static_url("jquery-1.4.2.min.js") }}"></script>
+{% end %}
+
+{% block extrajs %}
+{% end %}
+
+    </body>
+</html>
