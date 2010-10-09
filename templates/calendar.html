@@ -1,9 +1,5 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>What have you done?</title>
-	<link rel="Shortcut Icon" href="{{ static_url("images/favicon.ico") }}" type="image/x-icon">
-        <link rel="stylesheet" type="text/css" href="{{ static_url("css/style.css") }}">
+{% extends "base.html" %}
+{% block extra_head %}
         <link rel="stylesheet" type="text/css" href="{{ static_url("css/fullcalendar.css") }}">
         <link rel="stylesheet" type="text/css" href="{{ static_url("css/jquery.jqplot.min.css") }}">
         <link rel="stylesheet" type="text/css" href="{{ static_url("jquery-ui-1.8.5.draggable-resizable-autocomplete.css") }}">
@@ -32,33 +28,13 @@
 	  float:right;
 	}
 	</style>
-    </head>
-    <body class="content-sidebar">
-    <div id="login">
-      {% if user %}
-      <p><a href="/user/account/" class="account">Hi {{ user_name }}</a>
-      <a href="/auth/logout/" class="log-out">log out</a></p>
-      {% else %}
-      <p><a href="/user/account/" class="account">Got one of those fancy login accounts?</a></p>
-      {% end %}
-    </div>
-    
-    <div id="wrap">
-    
-      <!--
-      <div id="header">
-        <div class="wrap">
-	  <h1 id="title">DoneCal</h1>
-	</div>
-      </div>
-      -->
-      
-      <div id="inner">
-        <div id="content-sidebar-wrap">
-	  <div id="content">
+{% end %}
+
+{% block content %}
             <div id="calendar"></div>
-	  </div>
-	  <div id="sidebar" class="widget-area">
+{% end %}	    
+	  
+{% block sidebar %}
 	    <div class="widget widget_text">
               
               <div class="" id="settings-box">
@@ -82,26 +58,6 @@
 
 	      
 	    </div>
-	  </div>
-	</div>
-      </div>
-      
-      
-      <div id="footer">
-        <div class="wrap">
-	  <div class="creds">
-	    <p>&copy; <a href="/help/About">About</a>
-	    <a href="/help/">Help</a>
-	    <a href="/help/API">Developers' API</a>
-	    </p>
-	  </div>
-	</div>
-      </div>
-      
-      
-    </div>
-
-
 <form id="add-form" method="post" style="display:none">
   <div>
     <input name="title" autocomplete="off" size="35">
@@ -113,10 +69,14 @@
  
 </form>
 
+{% end %}	    
+
+
+
 {{ modules.Settings(settings) }}
 
-<!-- basics needed to render the calendar -->
-<script type="text/javascript" src="{{ static_url("jquery-1.4.2.min.js") }}"></script>
+
+{% block extrajs %}
 <script type="text/javascript" src="{{ static_url("fullcalendar.min.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("calendar.js") }}"></script>
 
@@ -128,6 +88,4 @@
 <script type="text/javascript" src="{{ static_url("jquery-ui-1.8.5.draggable-resizable-autocomplete.min.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("jquery.qtip-1.0.0-rc3.min.js") }}"></script>
 <!--<script type="text/javascript" src="{{ static_url("jquery.form.js") }}"></script>-->
-
-    </body>
-</html>
+{% end %}

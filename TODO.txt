@@ -3,6 +3,10 @@
 
 * (HIGH) LAUNCH!
 
+* (MEDIUM) Write Help page
+* (MEDIUM) Write API help page
+* (MEDIUM) Finish links on about.html
+
 * (MEDIUM) Google OpenID login
 
 * (MEDIUM) Whoosh and Carrot
