@@ -1,5 +1,3 @@
-* (HIGH) Why doesn't account.js load when you call $.lazy....??
-
 * (HIGH) Make it impossible to share until you've created a full account
 
 * (HIGH) Validation on creating account

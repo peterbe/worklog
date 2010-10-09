@@ -12,7 +12,7 @@ function __standard_qtip_options() {
         corner: {
         target: 'bottomMiddle',
         tooltip: 'topMiddle'
-     }, 
+     },
      adjust: {
         screen: true
      }
@@ -20,7 +20,7 @@ function __standard_qtip_options() {
    show: {
       when: 'click',
       ready: true,
-      solo:true
+      solo: true
    },
    hide: 'unfocus',
    style: {
@@ -31,7 +31,7 @@ function __standard_qtip_options() {
              color: '#3366CC'
         },
          title: {
-            background:'#3366CC',
+            background: '#3366CC',
               color: '#fff'
          },
         background: '#7094db',
@@ -49,10 +49,10 @@ function get_add_form(action, date, all_day) {
    $('input[name="date"]', f).val(date.getTime());
    if (all_day)
      $('input[name="all_day"]', f).val('1');
-   else
+   else;
      $('input[name="all_day"]', f).val('');
    return f;
-   
+
    /*
    var f = $('<form method="post"></form>').attr('action', action);
    var d = $('<div></div>');
@@ -70,13 +70,13 @@ function get_add_form(action, date, all_day) {
 function get_edit_form(action, id, title, url) {
    var f = $('#edit-form');
    f.attr('action', action);
-   
+
    // reset anything if the edit form has been used before
    $('.edit-url:visible', f).hide();
    $('.see-url:visible', f).hide();
    $('a.delete:hidden', f).show();
    $('.confirmation', f).hide();
-   
+
    $('input[name="title"]', f).val(title);
    $('input[name="id"]', f).val(id);
    if (url) {
@@ -103,9 +103,9 @@ function get_edit_form(action, id, title, url) {
       });
       return false;
    });
-   
+
    return f;
-   
+
    var f = $('<form method="post"></form>').attr('action', action);
    var d = $('<div></div>');
    d.append($('<input name="title" id="id_title" size="35">').val(title));
@@ -130,7 +130,7 @@ function OOOOLLLLDDD____event_clicked(calEvent, jsEvent, view) {
               //   text: calEvent.title,
               //   button: 'Close'
               //}
-           }, 
+           },
       position: {
          corner: {
             target: 'bottomMiddle',
@@ -163,13 +163,13 @@ function OOOOLLLLDDD____event_clicked(calEvent, jsEvent, view) {
         //width: 470 // Set the tooltip width
       }
    });
-  
+
 }
 */
 
 var current_tooltip;
 function _day_clicked(date, allDay, jsEvent, view) {
-   var url = "/events";
+   var url = '/events';
    var qtip_options = {
       content: {
            //text: "Please wait...",
@@ -199,12 +199,12 @@ function _day_clicked(date, allDay, jsEvent, view) {
 }
 
 function _event_clicked(event, jsEvent, view) {
-   var url = "/event/edit?id=" + event.id;
+   var url = '/event/edit?id=' + event.id;
    var qtip_options = {
       content: {
-           text: "Please wait...",
+           text: 'Please wait...',
 	   //text: get_edit_form(url, event.id, event.title, event.url)
-	   url: url,
+	   url: url
 	   //title: {
            //  text: "Adding new event",
 	   //  button: "Cancel"
@@ -222,7 +222,7 @@ function _event_clicked(event, jsEvent, view) {
                   .addClass('placeholdervalue')
                   .val($('input[name="placeholdervalue"]').val());
              }
-             
+
              $('input[name="url"]').bind('focus', function() {
                 if ($(this).val() == $('input[name="placeholdervalue"]').val()) {
                    $(this).val('').removeClass('placeholdervalue');
@@ -243,7 +243,7 @@ function _event_clicked(event, jsEvent, view) {
 
 function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view) {
    //revertFunc();
-   $.post("/event/resize", {days:dayDelta, minutes:minuteDelta, id:event.id}, function(response) {
+   $.post('/event/resize', {days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
@@ -253,60 +253,65 @@ function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view
 }
 
 function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc) {
-   $.post("/event/move", {days:dayDelta, minutes:minuteDelta, id:event.id}, function(response) {
+   $.post('/event/move', {days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
       }
-   });   
+   });
 }
 
 function __setup_tag_autocomplete(jelement) {
-   function split( val ) {
-      return val.split( /\s+/ );
+   function split(val ) {
+      return val.split(/\s+/);
    }
-   function extractLast( term ) {
-      return split( term ).pop();
+   function extractLast(term ) {
+      return split(term).pop();
    }
 
    jelement.autocomplete({
       minLength: 1,
       delay: 100,
-      source: function( request, response ) {
+      source: function(request, response ) {
          // delegate back to autocomplete, but extract the last term
-         
+
          if (extractLast(request.term).charAt(0) != '@')
-           response( []);
+           response([]);
          else {
-            response( $.ui.autocomplete.filter(
-                                               AVAILABLE_TAGS, extractLast( request.term ) ) );
+            response($.ui.autocomplete.filter(
+                                               AVAILABLE_TAGS, extractLast(request.term)));
          }
       },
       focus: function() {
          // prevent value inserted on focus
          return false;
       },
-      select: function( event, ui ) {
-         var terms = split( this.value );
+      select: function(event, ui ) {
+         var terms = split(this.value);
          // remove the current input
          terms.pop();
          // add the selected item
-         terms.push( ui.item.value );
+         terms.push(ui.item.value);
          // add placeholder to get the comma-and-space at the end
-         terms.push( "" );
-         this.value = terms.join( " " );
+         terms.push('');
+         this.value = terms.join(' ');
          return false;
       }
    });
 }
 
 function _setup_ajaxsubmit(element, event_id) {
-   
+   $.getScript(JS_URLS.jquery_form, function() {
+      __inner_setup_ajaxsubmit(element, event_id);
+   });
+}
+function __inner_setup_ajaxsubmit(element, event_id) {
+
       $(element).ajaxSubmit({
          beforeSubmit: function(arr, form, options) {
 	    var _all_good = true;
 	    $.each(arr, function(i, e) {
-	       if (e.name=='task')
+	       if (e.name == 'task')
 		 if (!$.trim(e.value)) {
 		    _all_good = false;
 		 }
@@ -319,25 +324,45 @@ function _setup_ajaxsubmit(element, event_id) {
 
 	    // close any open qtip
 	    if (current_tooltip) {
-               current_tooltip.qtip("hide");
+               current_tooltip.qtip('hide');
             }
-            
+
  	    //if (response.event) {
             //   $('#calendar').fullCalendar('removeEvents', event_id);
             //   $('#calendar').fullCalendar('renderEvent', response.event, false);
             //}
             if (response.tags)
               $.each(response.tags, function(i, tag) {
-                if ($.inArray(tag, AVAILABLE_TAGS)==-1)
+                if ($.inArray(tag, AVAILABLE_TAGS) == -1)
                    AVAILABLE_TAGS.push(tag);
               });
-	    
+
             if (!response.error) {
                $('#calendar').fullCalendar('refetchEvents');
                $('#calendar').fullCalendar('render');
             }
 	 }
-      });   
+      });
+}
+
+var _share_toggles = {};
+function __hide_share(share) {
+   if (_share_toggles[share.className]) {
+      $('li.' + share.className, '#current-sharers').fadeTo(300, 0.4);
+      $('div.' + share.className, '#calendar').fadeOut(300);
+      _share_toggles[share.className] = false;
+      SETTINGS.hidden_shares.push(share);
+   } else {
+      $('li.' + share.className, '#current-sharers').fadeTo(300, 1.0);
+      $('div.' + share.className, '#calendar').fadeIn(300);
+      _share_toggles[share.className] = true;
+      SETTINGS.hidden_shares = $.grep(SETTINGS.hidden_shares, function(element) {
+         return element != share;
+      });
+     
+   }
+   $.post('/share/', {key:share.key});
+   return _share_toggles[share.className];
 }
 
 /* In a "share" we can expect there to be a name,
@@ -349,22 +374,53 @@ function __display_current_sharers(sharers) {
    var container = $('#current-sharers ul');
    var any = false;
    $.each(sharers, function(i, share) {
-      L(share.className);
+
       var className = share.className;
-      described_classNames.push(className);
+      var is_new = false;
+      if ($.inArray(className, described_classNames) == -1) {
+	 is_new = true;
+	 described_classNames.push(className);
+      }
       var color = colors[$.inArray(className, described_classNames)];
       
-      container.append($('<li></li>')
-                       .css('background-color', color)
-                       .append($('<a href="#"></a>')
-                               .text(share.full_name)));
+      if (is_new) {
+	 _share_toggles[share.className] = true;
+	 container.append($('<li></li>')
+			  .addClass(className)
+			  .css('background-color', color)
+			  .append($('<a href="#"></a>')
+				  .text('hide')
+				  .addClass('share-hider')
+				  .bind('click', function() {
+				     if (__hide_share(share))
+				       $(this).text('hide');
+				     else
+				       $(this).text('show');
+					
+				     return false;
+				  }))
+			  .append($('<a href="#"></a>')
+				  .text(share.full_name)));
+      }
+
+
       $('.' + className + ', .fc-agenda .' + className + ' .fc-event-time, .' + className + ' a'
           ).css('background-color', color).css('border-color', color);
       
       any = true;
-   })
-   if (any)
-     $('#current-sharers').show();
+   });
+   if (any) {
+      if (SETTINGS.hidden_shares) {
+         $.each(SETTINGS.hidden_shares, function(i, share) {
+            _share_toggles[share.className] = false;
+            $('li.' + share.className, '#current-sharers').fadeTo(0, 0.4);
+            $('div.' + share.className, '#calendar').fadeOut(0);
+            $('li.' + share.className + ' a.share-hider', '#current-sharers').text('show');
+         });
+      }
+      
+      $('#current-sharers').show();
+   }
 }
 
 var AVAILABLE_TAGS = [];
@@ -386,7 +442,7 @@ $(function() {
       month = parseInt(_match[2]) - 1;
       day = parseInt(_match[3]);
    }
-   
+
    $('#calendar').fullCalendar({
       //events: '/events.json',
       events: function(start, end, callback) {
@@ -397,12 +453,19 @@ $(function() {
              __display_current_sharers(response.sharers);
            if (response.tags)
              $.each(response.tags, function(i, tag) {
-                if ($.inArray(tag, AVAILABLE_TAGS)==-1)
+                if ($.inArray(tag, AVAILABLE_TAGS) == -1)
                   AVAILABLE_TAGS.push(tag);
              });
+           //if (response.hidden_shares)
+           //  $.each(response.hidden_shares, function(i, share) {
+           //     _share_toggles[share.className] = true;
+           //     $('li.' + share.className, '#current-sharers').fadeTo(300, 0.4);
+           //     
+           //  });
+             
         });
       },
-       
+
       header: {
            left: 'prev,next today',
            center: 'title',
@@ -413,34 +476,26 @@ $(function() {
       date: day,
       defaultView: defaultView,
       editable: true,
-      firstDay: SETTINGS.monday_first ? 1:0,
+      aspectRatio: 1.5, // 1.35 is default
+      firstDay: SETTINGS.monday_first ? 1 : 0,
       weekends: !SETTINGS.hide_weekend,
       eventClick: _event_clicked,
       dayClick: _day_clicked,
       eventResize: _event_resized,
       eventDrop: _event_dropped,
       viewDisplay: function(view) {
+         
+         
 	 display_sidebar_stats_wrapped(view.start, view.end);
          
-         var href = '#' +view.name.replace('agenda','').toLowerCase();
-         href += "," + view.start.getFullYear();
-         href += "," + (view.start.getMonth() + 1);
-         href += "," + view.start.getDate();
+         var href = '#' + view.name.replace('agenda', '').toLowerCase();
+         href += ',' + view.start.getFullYear();
+         href += ',' + (view.start.getMonth() + 1);
+         href += ',' + view.start.getDate();
          location.href = href;
       }
   });
-   
-//   $('form').live('submit', function() {
-//      return false;
-//   });
-   
-   
-   
-   //$.getJSON('/events/tags.json', function(response) {
-   //   AVAILABLE_TAGS = response.tags;
-   //});
-   
-   
+
 });
 
 // Because this file is loaded before stats.js
@@ -448,7 +503,7 @@ $(function() {
 // have been created. So until then we will use a function to avoid a
 // 'display_sidebar_stats is not defined' error
 display_sidebar_stats_wrapped = function(start, end) {
-   if (typeof display_sidebar_stats != 'undefined')
+   if (typeof jqplot_loaded != 'undefined' && jqplot_loaded)
      display_sidebar_stats(start, end);
-   
+
 };

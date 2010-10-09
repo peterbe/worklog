@@ -105,15 +105,14 @@ class BaseHandler(tornado.web.RequestHandler):
         self.write(str_)
         
         
-    def transform_fullcalendar_event(self, obj, serialize=False, className=None):
+    def transform_fullcalendar_event(self, obj, serialize=False, **kwargs):
         data = dict(title=obj.title, 
                     start=obj.start,
                     end=obj.end,
                     allDay=obj.all_day,
                     id=str(obj._id))
             
-        if className:
-            data['className'] = className
+        data.update(**kwargs)
             
         if serialize:
             for key, value in data.items():
@@ -136,19 +135,28 @@ class HomeHandler(BaseHandler):
     
     def get(self):
         if self.get_argument('share', None):
-            shared_keys = self.get_secure_cookie('shares', None)
+            shared_keys = self.get_secure_cookie('shares')
             if not shared_keys:
                 shared_keys = []
+            else:
+                shared_keys = [x.strip() for x in shared_keys.split(',')
+                               if x.strip() and self.db.shares.Share.one(dict(key=x))]
             
             key = self.get_argument('share')
             share = self.db.shares.Share.one(dict(key=key))
             if share.key not in shared_keys:
                 shared_keys.append(share.key)
-            self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=7)
+                
+            self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=70)
             self.redirect('/')
+
+        # default settings
+        settings = dict(hide_weekend=False,
+                        monday_first=False)
 
         user = self.get_secure_cookie('user')
         user_name = None
+        
         if user:
             user = self.db.users.User.one(dict(guid=user))
             if user.first_name:
@@ -158,8 +166,29 @@ class HomeHandler(BaseHandler):
             else:
                 user_name = "Someonewithoutaname"
                 
-            
-        self.render("calendar.html", user=user, user_name=user_name)
+            # override possible settings
+            user_settings = self.get_current_user_settings(user)
+            if user_settings:
+                settings['hide_weekend'] = user_settings.hide_weekend
+                settings['monday_first'] = user_settings.monday_first
+                
+            hidden_shares = self.get_secure_cookie('hidden_shares')
+            if not hidden_shares: 
+                hidden_shares = ''
+            hidden_keys = [x for x in hidden_shares.split(',') if x]
+            hidden_shares = []
+            for share in self.db.shares.Share.find({'key':{'$in':hidden_keys}}):
+                className = 'share-%s' % share.user._id
+                hidden_shares.append(dict(key=share.key,
+                                          className=className))
+
+            settings['hidden_shares'] = hidden_shares
+        
+        self.render("calendar.html", 
+          user=user, 
+          user_name=user_name,
+          settings_json=tornado.escape.json_encode(settings)
+        )
 
 
 class EventsHandler(BaseHandler):
@@ -185,7 +214,7 @@ class EventsHandler(BaseHandler):
                 
         shares = self.get_secure_cookie('shares')
         if not shares: 
-            shares = []
+            shares = ''
         for key in [x for x in shares.split(',') if x]:
             for share in self.db.shares.Share.find(dict(key=key)):
                 search['user.$id'] = share.user._id
@@ -203,8 +232,12 @@ class EventsHandler(BaseHandler):
                       self.transform_fullcalendar_event(
                         event, 
                         True,
-                        className=className))
+                        className=className,
+                        editable=False))
                     tags.update(event['tags'])
+                    
+        
+
                 
         tags = list(tags)
         tags.sort(lambda x, y: cmp(x.lower(), y.lower()))
@@ -215,7 +248,7 @@ class EventsHandler(BaseHandler):
         if sharers:
             sharers.sort(lambda x,y: cmp(x['full_name'], y['full_name']))
             data['sharers'] = sharers
-
+            
         if format in ('.json', '.js'):
             self.write_json(data, javascript=format=='.js')
         elif format == '.xml':
@@ -335,7 +368,6 @@ class EventHandler(BaseHandler):
         if not event:
             raise tornado.web.HTTPError(404, "Can't find the event")
         
-        print event
         self.render('event/edit.html', event=event)
     
             
@@ -447,7 +479,10 @@ class SharingHandler(BaseHandler):
         user = self.get_current_user()
         if not user:
             return self.write("You don't have anything in your calendar yet")
-            
+        
+        if not (user.email or user.first_name or user.last_name):
+            self.render("sharing/cant-share-yet.html")
+            return 
         
         shares = self.db.shares.Share.find({'user.$id': user._id})
         count = shares.count()
@@ -468,6 +503,30 @@ class SharingHandler(BaseHandler):
                                         self.request.host,
                                         share_url)
         self.render("sharing/share.html", full_share_url=full_share_url, shares=shares)
+        
+    def post(self):
+        """toggle the hiding of a shared key"""
+        key = self.get_argument('key')
+        shares = self.get_secure_cookie('shares')
+        if not shares: 
+            shares = ''
+        keys = [x for x in shares.split(',') if x]
+        if keys:
+            keys = [x.key for x in self.db.shares.Share.find({'key':{'$in':keys}})]
+        if key not in keys:
+            raise tornado.web.HTTPError(404, "Not a key that has been shared with you")
+        
+        hidden_shares = self.get_secure_cookie('hidden_shares')
+        if not hidden_shares: 
+            hidden_shares = ''
+        hidden_keys = [x for x in hidden_shares.split(',') if x]
+        if key in hidden_keys:
+            hidden_keys.remove(key)
+        else:
+            hidden_keys.insert(0, key)
+        self.set_secure_cookie('hidden_shares', ','.join(hidden_keys), expires_days=70)
+        
+        self.write('Ok')
 
         
 class AccountHandler(BaseHandler):

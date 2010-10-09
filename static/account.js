@@ -15,7 +15,8 @@ e.bind('focus', function() {
 });
 
 
-$.getJSON('/user/account.json', function(response) {
-   if (response.email)
-     $('input[name="email"]').val(response.email);
-});
+//$.getJSON('/user/account.json', function(response) {
+//   if (response.email)
+//     $('input[name="email"]').val(response.email);
+//});
+
