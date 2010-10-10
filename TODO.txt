@@ -3,6 +3,8 @@
 
 * (HIGH) LAUNCH!
 
+* (MEDIUM) Improve test coverage
+
 * (MEDIUM) Write Help page
 * (MEDIUM) Write API help page
 * (MEDIUM) Finish links on about.html
