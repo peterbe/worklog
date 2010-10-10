@@ -58,7 +58,7 @@ class User(BaseDocument):
             #print "Hashed", hashed
             return hashed == bcrypt.hashpw(raw_password, hashed)
         else:
-            return check_password(raw_password, self.password)
+            raise NotImplementedError("No checking clear text passwords")
         
     
 class UserSettings(BaseDocument):

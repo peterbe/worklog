@@ -31,6 +31,12 @@ class ModelsTestCase(unittest.TestCase):
         
         inst = self.db.users.User.one()
         assert inst.guid
+        from utils import encrypt_password
+        inst.password = encrypt_password('secret')
+        inst.save()
+        
+        self.assertFalse(inst.check_password('Secret'))
+        self.assertTrue(inst.check_password('secret'))
         
     def test_create_event(self):
         user = self.db.users.User()

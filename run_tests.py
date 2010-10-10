@@ -4,6 +4,7 @@ import unittest
 TEST_MODULES = [
     'tests.test_app',
     'tests.test_models',
+    'tests.test_utils',
 ]
 
 def all():

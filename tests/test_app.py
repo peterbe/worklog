@@ -1,3 +1,4 @@
+from time import mktime, time
 import re
 import datetime
 from urllib import urlencode
@@ -43,16 +44,38 @@ class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
         return self._app.con[self._app.database_name]
     
     def get_app(self):
-        return app.Application(database_name='test') # consider passing a different database name
+        return app.Application(database_name='test', xsrf_cookies=False) # consider passing a different database name
+    
+    def _get_xsrf(self, response):
+        return re.findall('_xsrf=(\w+);', response.headers['Set-Cookie'])[0]
     
     def test_homepage(self):
         self.http_client.fetch(self.get_url('/'), self.stop)
         response = self.wait()
         self.assertTrue('id="calendar"' in response.body)
         
-    def test_events(self):
-        self.http_client.fetch(self.get_url('/events.json'), self.stop)
+    def test_posting_events(self):
+        today = datetime.date.today()
+        data = {'title': "Foo", 
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        self.http_client.fetch(self.get_url('/events'), self.stop,
+                               method='POST',
+                               body=urlencode(data))
         response = self.wait()
+        struct = json.loads(response.body)
+        
+    def test_events(self):
+        url = '/events.json'
+        start = datetime.datetime(2010, 10, 1)
+        end = datetime.datetime(2010, 11, 1) - datetime.timedelta(days=1)
+        start = mktime(start.timetuple())
+        end = mktime(end.timetuple())
+        url += '?start=%d&end=%d' % (start, end)
+        self.http_client.fetch(self.get_url(url), self.stop)
+        response = self.wait()
+        self.assertEqual(response.code, 200)
+        
         self.assertTrue('application/json' in response.headers['Content-Type'])
         struct = json.loads(response.body)
         self.assertEqual(struct, dict(events=[], tags=[]))
@@ -76,9 +99,6 @@ class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
         db = self.get_db()
         assert not db.users.User.find().count()
         
-        self.http_client.fetch(self.get_url('/'), self.stop)
-        response = self.wait()
-        
         # rendering won't automatically create a user
         self.assertFalse(db.users.User.find().count())
         
@@ -87,20 +107,22 @@ class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
         response = self.wait()
         self.assertEqual(response.code, 200)
         self.assertFalse(db.users.User.find().count())
-        xsrf_regex = re.compile('name="_xsrf" value="(\w+)"')
-        xsrf = xsrf_regex.findall(response.body)[0]
-        print repr(xsrf)
+        #xsrf = self._get_xsrf(response)
+        #print repr(xsrf)
         
+        self.get_app().settings['xsrf_cookies'] = False
+
         # saving it will
+        #data = {'a':'A', '_xsrf': xsrf}
+        data = {}
         self.http_client.fetch(self.get_url('/user/settings/'), self.stop,
                                method='POST',
-                               body=urlencode({'a':'A', '_xsrf': xsrf}))
+                               body=urlencode(data))
         response = self.wait()
         self.assertEqual(response.code, 200)
         self.assertTrue(db.users.User.find().count())        
         self.assertTrue(db.users.UserSettings.find().count())
 
-        
         
         #self.assertTrue('Saturday' in response.body)
         #self.assertTrue('Sunday' in response.body)

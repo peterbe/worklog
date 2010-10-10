@@ -25,6 +25,7 @@ from utils import parse_datetime, encrypt_password
 define("debug", default=False, help="run in debug mode", type=bool)
 define("port", default=8000, help="run on the given port", type=int)
 define("database_name", default="worklog", help="mongodb database name")
+define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 #define("mysql_host", default="127.0.0.1:3306", help="blog database host")
 #define("mysql_database", default="blog", help="blog database name")
 #define("mysql_user", default="blog", help="blog database user")
@@ -32,7 +33,7 @@ define("database_name", default="worklog", help="mongodb database name")
 
 
 class Application(tornado.web.Application):
-    def __init__(self, database_name=None):
+    def __init__(self, database_name=None, xsrf_cookies=True):
         handlers = [
             (r"/", HomeHandler),
             (r"/events/stats(\.json|\.xml|\.txt)?", EventStatsHandler),
@@ -51,13 +52,13 @@ class Application(tornado.web.Application):
             (r"/help/(\w*)", HelpHandler),
         ]
         settings = dict(
-            title = u"Donecal",
-            template_path = os.path.join(os.path.dirname(__file__), "templates"),
-            static_path = os.path.join(os.path.dirname(__file__), "static"),
-            ui_modules = {"Settings": SettingsModule},
-            xsrf_cookies = True,
-            cookie_secret = "11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
-            login_url = "/auth/login",
+            title=u"Donecal",
+            template_path=os.path.join(os.path.dirname(__file__), "templates"),
+            static_path=os.path.join(os.path.dirname(__file__), "static"),
+            ui_modules={"Settings": SettingsModule},
+            xsrf_cookies=xsrf_cookies,
+            cookie_secret="11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
+            login_url="/auth/login",
             debug=options.debug,
         )
         tornado.web.Application.__init__(self, handlers, **settings)
@@ -489,6 +490,7 @@ class UserSettingsHandler(BaseHandler):
         user = self.get_current_user()
         if not user:
             user = self.db.users.User()
+            user.save()
             self.set_secure_cookie("guid", str(user.guid), expires_days=100)
             
         user_settings = self.get_current_user_settings(user)
@@ -739,11 +741,15 @@ class HelpHandler(BaseHandler):
 def main():
     tornado.options.parse_command_line()
     http_server = tornado.httpserver.HTTPServer(Application())
-    http_server.listen(options.port)
-    # Re-read and consider pre-forking
-    # http://groups.google.com/group/python-tornado/browse_thread/thread/357e6637f881e9f0
+    print "Starting tornado on port", options.port
+    if options.prefork:
+        print "\tpre-forking"
+        http_server.bind(options.port)
+        http_server.start()
+    else:
+        http_server.listen(options.port)
+    
     try:
-        print "Starting tornado on port", options.port
         tornado.ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
         pass
