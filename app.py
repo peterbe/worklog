@@ -127,10 +127,25 @@ class BaseHandler(tornado.web.RequestHandler):
         return data
     
     def case_correct_tags(self, tags, user):
-        # XXX: work on this
-        pass
-        #for tag in tags:
-        #    for event in self.db.
+        # the new correct case for these tags is per the parameter 'tags'
+        # We need to change all other tags that are spelled with a different
+        # case to this style 
+        base_search = {
+          'user.$id': user._id,
+        }
+        for tag in tags:
+            search = dict(base_search, 
+                          tags=re.compile(re.escape(tag), re.I))
+            for event in self.db.events.Event.find(search):
+                checked_tags = []
+                for t in event.tags:
+                    if t != tag and t.lower() == tag.lower():
+                        checked_tags.append(tag)
+                    else:
+                        checked_tags.append(t)
+                if event.tags != checked_tags:
+                    event.tags = checked_tags
+                    event.save()
         
         
     def find_user(self, email):
@@ -199,8 +214,6 @@ class HomeHandler(BaseHandler):
         user = options['user']
         
         if user:
-                
-            
             hidden_shares = self.get_secure_cookie('hidden_shares')
             if not hidden_shares: 
                 hidden_shares = ''
@@ -307,7 +320,6 @@ class EventsHandler(BaseHandler):
         
         tags = list(set([x[1:] for x in re.findall('@\w+', title)]))
         
-        
         user = self.get_current_user()
         if user:
             self.case_correct_tags(tags, user)
@@ -324,7 +336,11 @@ class EventsHandler(BaseHandler):
         event.end = date
         event.save()
         
-        self.set_secure_cookie("guid", str(user.guid), expires_days=14)
+        if not self.get_secure_cookie('user'):
+            # if you're not logged in, set a cookie for the user so that
+            # this person can save the events without having a proper user
+            # account.
+            self.set_secure_cookie("guid", str(user.guid), expires_days=14)
         
         fullcalendar_event = self.transform_fullcalendar_event(event, serialize=True)
         
