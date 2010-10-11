@@ -6,18 +6,25 @@ To run the unit tests
 
 You can either run the tests one-off like this:
 
-        ./runtests.py
-	
+        ./run_tests.sh
+
 Or keep it running waiting for changes:
 
-        ./runtests.py --autoreload
+        ./run_tests.sh --autoreload
 	
 To run the tests of an individual test module, you can do this:
 
-        ./runtests.py tests.test_models
+        ./run_tests.sh tests.test_models
         or
-        ./runtests.py tests.test_models.ModelsTestCase
+        ./run_tests.sh tests.test_models.ModelsTestCase
         or 
-        ./runtests.py tests.test_models.ModelsTestCase.test_create_user
+        ./run_tests.sh tests.test_models.ModelsTestCase.test_create_user
         
-        
+To run the coverage tests
+-------------------------
+
+You start it like this:
+
+        ./run_coverage_tests.sh
+	
+It will cancel the report if the tests don't pass.	
