@@ -4,6 +4,33 @@
 
 <h1>Developers' API</h1>
 
-<p>More to come...</p>
+<p>To begin with, to use the API you need to know your unique user key (also known as <code>guid</code>)</p>
+
+{% if guid %}
+  <p>
+  {% if user_name %}
+  For you, {{ user_name }},
+  {% else %}
+  For you, 
+  {% end %}
+  it's <code style="font-size:16px;font-weight:bold;">{{ guid }}</code>
+  </p>
+{% else %}
+  <p>You will get a <code>guid</code> once you've created some events in the calendar or
+   if you have created an account and logged in.</p>
+  
+{% end %}
+
+<h3>To get your events</h3>
+
+<p><strong>URL:</strong>
+<code>/api/events[.json|.xml|.txt]?start=$timestamp_start&$timstamp_end</code>
+</p>
+
+<p><strong>Example:</strong></p>
+
+<pre>$ curl "{{ base_url }}/api/events.json?guid={{ sample_guid }}&start={{ sample_start_timestamp }}&end={{ sample_end_timestamp }}"
+{"events": [], "tags": []}</pre>
+
 
 {% end %}

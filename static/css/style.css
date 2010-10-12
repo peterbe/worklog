@@ -137,14 +137,10 @@ cite, em, i {
 	font-style: italic;
 }
 
-/*
-blockquote {
-	border-left: 1px solid #ddd;
-	color: #555;
-	font-family: "droid-serif-1","droid-serif-2", Georgia,serif;
-	margin: 0 0.75em;
-	padding-left: 0.75em;
-	text-shadow: 1px 1px 0 #fff;
+code {
+	font: 14px "Courier 10 Pitch",Courier,monospace;
+	background: #eee;
+        padding:1px 3px;
 }
 pre {
 	background: #f4f4f4;
@@ -153,9 +149,14 @@ pre {
 	margin-bottom: 1.5em;
 	padding: 0.85em 1.5em;
 }
-code {
-	font: 14px Consolas,"Andale Mono",Monaco,Courier,"Courier New",Verdana,sans-serif;
-	background: #eee;
+/*
+blockquote {
+	border-left: 1px solid #ddd;
+	color: #555;
+	font-family: "droid-serif-1","droid-serif-2", Georgia,serif;
+	margin: 0 0.75em;
+	padding-left: 0.75em;
+	text-shadow: 1px 1px 0 #fff;
 }
 abbr, acronym {
 	border-bottom: 1px dotted #666;

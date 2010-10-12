@@ -24,8 +24,31 @@ from models import Event, User
 #    def set_cookie(self, name, value, expires_days=None):
 #        self._cookies[name] = value
 
+class HTTPClientMixin(object):
+
+    def get(self, url, data=None, headers=None):
+        if data is not None:
+            if isinstance(data, dict):
+                data = urlencode(data)
+            if '?' in url:
+                url += '&%s' % data
+            else:
+                url += '?%s' % data
+        return self._fetch(url, 'GET', headers=headers)
+    
+    def post(self, url, data, headers=None):
+        if data is not None:
+            if isinstance(data, dict):
+                data = urlencode(data)
+        return self._fetch(url, 'POST', data, headers)
+    
+    def _fetch(self, url, method, data=None, headers=None):
+        self.http_client.fetch(self.get_url(url), self.stop, method=method,
+                               body=data, headers=headers)
+        return self.wait()
+    
         
-class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
+class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase, HTTPClientMixin):
     
     
     _once = False
@@ -47,24 +70,6 @@ class ApplicationTest(AsyncHTTPTestCase, LogTrapTestCase):
     def get_app(self):
         return app.Application(database_name='test', xsrf_cookies=False) # consider passing a different database name
     
-    def get(self, url, data=None, headers=None):
-        if data is not None:
-            if isinstance(data, dict):
-                data = urlencode(data)
-            if '?' in url:
-                url += '&%s' % data
-            else:
-                url += '?%s' % data
-        self.http_client.fetch(self.get_url(url), self.stop, headers=headers)
-        return self.wait()
-    
-    def post(self, url, data, headers=None):
-        if data is not None:
-            if isinstance(data, dict):
-                data = urlencode(data)
-        self.http_client.fetch(self.get_url(url), self.stop, method='POST',
-                               body=data, headers=headers)
-        return self.wait()
     
     def _get_xsrf(self, response):
         return re.findall('_xsrf=(\w+);', response.headers['Set-Cookie'])[0]

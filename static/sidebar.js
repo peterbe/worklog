@@ -41,18 +41,6 @@ $(function() {
       });
    });
 
-   $.getScript(JS_URLS.fancybox, function() {
-      $('a.account').fancybox({
-         'autoDimensions': false,
-         'width'         : 500,
-         'height'        : 300,
-         'transitionIn': 'none',
-         'transitionOut': 'none',
-         onComplete: function(array, index, opts) {
-            $.getScript(JS_URLS.account);
-         }
-      });
-
       $('a.user-settings').fancybox({
          'width': '75%',
          'height': '75%',
@@ -86,6 +74,5 @@ $(function() {
          }
       });
       
-   });
       
 });

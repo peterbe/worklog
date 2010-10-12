@@ -1,6 +1,3 @@
-* (HIGH) Move $('a.account') stuff from sidebar.js into something more
-  generic.
-
 * (HIGH) LAUNCH!
 
 * (MEDIUM) Improve test coverage

@@ -38,6 +38,7 @@ class Application(tornado.web.Application):
             (r"/", HomeHandler),
             (r"/events/stats(\.json|\.xml|\.txt)?", EventStatsHandler),
             (r"/events(\.json|\.js|\.xml|\.txt)?", EventsHandler),
+            (r"/api/events(\.json|\.js|\.xml|\.txt)?", APIEventsHandler),
             (r"/event/(edit|resize|move)", EventHandler),
             (r"/user/settings(.js|/)", UserSettingsHandler),
             (r"/user/account/", AccountHandler),
@@ -55,7 +56,9 @@ class Application(tornado.web.Application):
             title=u"Donecal",
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "static"),
-            ui_modules={"Settings": SettingsModule},
+            ui_modules={'Settings': SettingsModule,
+                        'Footer': FooterModule,
+                        },
             xsrf_cookies=xsrf_cookies,
             cookie_secret="11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
             login_url="/auth/login",
@@ -186,7 +189,21 @@ class BaseHandler(tornado.web.RequestHandler):
         
         return options
 
-        
+class APIHandlerMixin(object):
+    
+    def check_guid(self):
+        guid = self.get_argument('guid', None)
+        if guid:
+            if self.db.users.one({'guid':guid}):
+                return True
+            else:
+                self.write("guid not recognized")
+        else:
+            self.write("guid not supplied")
+            
+        self.set_status(403)
+        self.set_header('Content-Type', 'text/plain')
+        return False
     
 
 class HomeHandler(BaseHandler):
@@ -237,9 +254,14 @@ class SettingsModule(tornado.web.UIModule):
         return self.render_string("modules/settings.html",
            settings_json=tornado.escape.json_encode(settings),
          )
+         
+class FooterModule(tornado.web.UIModule):
+    def render(self):
+        return self.render_string("modules/footer.html",
+          calendar_link=self.request.path != '/'
+         )
 
 class EventsHandler(BaseHandler):
-
     
     def get(self, format=None):
         user = self.get_current_user()
@@ -299,7 +321,7 @@ class EventsHandler(BaseHandler):
         if format in ('.json', '.js'):
             self.write_json(data, javascript=format=='.js')
         elif format == '.xml':
-            self.write_json(data)
+            self.write_xml(data)
         elif format == '.txt':
             out = cStringIO.StringIO()
             out.write('ENTRIES\n')
@@ -350,7 +372,15 @@ class EventsHandler(BaseHandler):
                tags=['@%s' % x for x in tags],
            )))
         
-        
+class APIEventsHandler(EventsHandler, APIHandlerMixin):
+    
+    def get(self, format=None):
+        if not self.check_guid():
+            return 
+            
+            
+        return super(APIEventsHandler, self).get(format=format)
+           
 class EventHandler(BaseHandler):
     
     def post(self, action):
@@ -750,6 +780,25 @@ class HelpHandler(BaseHandler):
         filename = "help/%s.html" % page.lower()
         if os.path.isfile(os.path.join(self.application.settings['template_path'],
                                        filename)):
+            if page == 'API':
+                user = self.get_current_user()
+                options['base_url'] = '%s://%s' % (self.request.protocol, 
+                                                   self.request.host)
+                options['sample_guid'] = '6a971ed0-7105-49a4-9deb-cf1e44d6c718'
+                options['guid'] = None
+                if user:
+                    options['guid'] = user.guid
+                    options['sample_guid'] = user.guid
+                
+                t = datetime.date.today()
+                first = datetime.date(t.year, t.month, 1)
+                if t.month == 12:
+                    last = datetime.date(t.year + 1, 1, 1)
+                else:
+                    last = datetime.date(t.year, t.month + 1, 1)
+                last -= datetime.timedelta(days=1)
+                options['sample_start_timestamp'] = int(mktime(first.timetuple()))
+                options['sample_end_timestamp'] = int(mktime(last.timetuple()))
             return self.render(filename, **options)
         raise tornado.web.HTTPError(404, "Unknown page")
 
