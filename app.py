@@ -112,7 +112,7 @@ class BaseHandler(tornado.web.RequestHandler):
         
         
     def transform_fullcalendar_event(self, obj, serialize=False, **kwargs):
-        data = dict(title=obj.title, 
+        data = dict(title=obj.title,
                     start=obj.start,
                     end=obj.end,
                     allDay=obj.all_day,
@@ -347,7 +347,10 @@ class EventsHandler(BaseHandler):
     def post(self, format=None):#, *args, **kwargs):
         user = self.get_current_user()
         
-        event = self.create_event(user)
+        if not user:
+            user = self.db.users.User()
+            user.save()
+        event, created = self.create_event(user)
         
         if not self.get_secure_cookie('user'):
             # if you're not logged in, set a cookie for the user so that
@@ -375,12 +378,7 @@ class EventsHandler(BaseHandler):
           "Neither date or (start and end) supplied")
         
         tags = list(set([x[1:] for x in re.findall('@[\w-]+', title)]))
-        
-        if user:
-            self.case_correct_tags(tags, user)
-        else:
-            user = self.db.users.User()
-            user.save()
+        self.case_correct_tags(tags, user)
         
         event = self.db.events.Event.one({
           'user.$id': user._id,
