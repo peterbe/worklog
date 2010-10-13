@@ -24,7 +24,7 @@
 <h3>To get your events</h3>
 
 <p><strong>URL:</strong>
-<code>/api/events[.json|.xml|.txt]?start=$timestamp_start&$timstamp_end</code>
+<code>/api/events[.json|.xml|.txt]?guid=$guid&start=$timestamp_start&end=$timstamp_end</code>
 </p>
 
 <p><strong>Example:</strong></p>
@@ -32,5 +32,28 @@
 <pre>$ curl "{{ base_url }}/api/events.json?guid={{ sample_guid }}&start={{ sample_start_timestamp }}&end={{ sample_end_timestamp }}"
 {"events": [], "tags": []}</pre>
 
+<p><strong>Note:</strong>
+The format (<code>.json</code>, <code>.xml</code> or <code>.txt</code>) is optional and defaults to <code>.json</code> if omitted.</p>
+
+<h3>To post an event</h3>
+
+<p><strong>URL:</strong>
+<code>/api/events[.json|.xml|.txt]?guid=$guid&title=$title&date=$timestamp_date&all_day=$bool</code>
+<br>or...<br>
+<code>/api/events[.json|.xml|.txt]?guid=$guid&title=$title&start=$timestamp_start&end=$timestamp_end[&all_day=$bool]</code>
+</p>
+
+<p><strong>Example:</strong></p>
+<pre>$ curl -X POST -f guid={{ sample_guid }} -f title="@api test" date={{ sample_start_timestamp }} -f all_day=true \
+ {{ base_url }}/api/events
+{"event": {"start": {{ sample_start_timestamp }},
+           "end": {{ sample_start_timestamp }},
+           "id": "4cb4f9f16da681526e000004",
+           "allDay": true},
+ "tags": ["@api"]}
+</pre>
+
+<p><strong>Note:</strong>
+The format (<code>.json</code>, <code>.xml</code> or <code>.txt</code>) is optional and defaults to <code>.json</code> if omitted.</p>
 
 {% end %}

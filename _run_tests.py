@@ -12,4 +12,6 @@ def all():
 
 if __name__ == '__main__':
     import tornado.testing
+    #import cProfile, pstats
+    #cProfile.run('tornado.testing.main()')
     tornado.testing.main()

@@ -20,7 +20,7 @@ import unicodedata
 from tornado.options import define, options
 
 from models import Event, User, UserSettings, Share
-from utils import parse_datetime, encrypt_password
+from utils import parse_datetime, encrypt_password, niceboolean
 
 define("debug", default=False, help="run in debug mode", type=bool)
 define("port", default=8000, help="run on the given port", type=int)
@@ -119,6 +119,8 @@ class BaseHandler(tornado.web.RequestHandler):
                     id=str(obj._id))
             
         data.update(**kwargs)
+        if getattr(obj, 'url', None):
+            data['url'] = obj.url
             
         if serialize:
             for key, value in data.items():
@@ -197,11 +199,12 @@ class APIHandlerMixin(object):
             if self.db.users.one({'guid':guid}):
                 return True
             else:
+                self.set_status(403)
                 self.write("guid not recognized")
         else:
+            self.set_status(404)
             self.write("guid not supplied")
             
-        self.set_status(403)
         self.set_header('Content-Type', 'text/plain')
         return False
     
@@ -265,6 +268,13 @@ class EventsHandler(BaseHandler):
     
     def get(self, format=None):
         user = self.get_current_user()
+        shares = self.get_secure_cookie('shares')
+        
+        data = self.get_events_data(user, shares)
+        self.write_events_data(data, format)
+        
+        
+    def get_events_data(self, user, shares):
         events = []
         sharers = []
         tags = set()
@@ -273,7 +283,7 @@ class EventsHandler(BaseHandler):
         end = parse_datetime(self.get_argument('end'))
         search = {}
         search['start'] = {'$gte': start}
-        search['start'] = {'$lte': end}
+        search['end'] = {'$lte': end}
 
         if user:
             search['user.$id'] = user._id
@@ -281,7 +291,6 @@ class EventsHandler(BaseHandler):
                 events.append(self.transform_fullcalendar_event(event, True))
                 tags.update(event['tags'])
                 
-        shares = self.get_secure_cookie('shares')
         if not shares: 
             shares = ''
         for key in [x for x in shares.split(',') if x]:
@@ -304,9 +313,6 @@ class EventsHandler(BaseHandler):
                         className=className,
                         editable=False))
                     tags.update(event['tags'])
-                    
-        
-
                 
         tags = list(tags)
         tags.sort(lambda x, y: cmp(x.lower(), y.lower()))
@@ -314,10 +320,14 @@ class EventsHandler(BaseHandler):
         data = dict(events=events,
                     tags=tags)
                     
+                    
         if sharers:
             sharers.sort(lambda x,y: cmp(x['full_name'], y['full_name']))
             data['sharers'] = sharers
             
+        return data
+            
+    def write_events_data(self, data, format):
         if format in ('.json', '.js'):
             self.write_json(data, javascript=format=='.js')
         elif format == '.xml':
@@ -325,29 +335,61 @@ class EventsHandler(BaseHandler):
         elif format == '.txt':
             out = cStringIO.StringIO()
             out.write('ENTRIES\n')
-            for event in events:
+            for event in data['events']:
                 pprint(event, out)
                 out.write("\n")
             out.write('TAGS\n')
-            out.write('\n'.join(tags))
+            out.write('\n'.join(data['tags']))
             out.write("\n")
             self.write_txt(out.getvalue())
         
-    def post(self, *args, **kwargs):
-        title = self.get_argument("title")
-        date = self.get_argument("date")
-        date = parse_datetime(date)
         
-        all_day = bool(self.get_argument("all_day", False))
-        
-        tags = list(set([x[1:] for x in re.findall('@\w+', title)]))
-        
+    def post(self, format=None):#, *args, **kwargs):
         user = self.get_current_user()
+        
+        event = self.create_event(user)
+        
+        if not self.get_secure_cookie('user'):
+            # if you're not logged in, set a cookie for the user so that
+            # this person can save the events without having a proper user
+            # account.
+            self.set_secure_cookie("guid", str(user.guid), expires_days=14)
+        
+        self.write_event(event, format)
+        
+           
+    def create_event(self, user):
+        title = self.get_argument("title")
+        
+        all_day = niceboolean(self.get_argument("all_day", False))
+        if self.get_argument("date", None):
+            date = self.get_argument("date")
+            date = parse_datetime(date)
+            start = end = date
+            all_day = True
+        elif self.get_argument('start', None) and self.get_argument('end', None):
+            start = parse_datetime(self.get_argument('start'))
+            end = parse_datetime(self.get_argument('end'))
+        else:
+            raise tornado.web.HTTPError(404, 
+          "Neither date or (start and end) supplied")
+        
+        tags = list(set([x[1:] for x in re.findall('@[\w-]+', title)]))
+        
         if user:
             self.case_correct_tags(tags, user)
         else:
             user = self.db.users.User()
             user.save()
+        
+        event = self.db.events.Event.one({
+          'user.$id': user._id,
+          'title': title,
+          'start': start,
+          'end': end
+        })
+        if event:
+            return event, False
             
         event = self.db.events.Event()
         event.user = self.db.users.User(user)
@@ -358,19 +400,21 @@ class EventsHandler(BaseHandler):
         event.end = date
         event.save()
         
-        if not self.get_secure_cookie('user'):
-            # if you're not logged in, set a cookie for the user so that
-            # this person can save the events without having a proper user
-            # account.
-            self.set_secure_cookie("guid", str(user.guid), expires_days=14)
-        
+        return event, True
+    
+    def write_event(self, event, format):
         fullcalendar_event = self.transform_fullcalendar_event(event, serialize=True)
         
-        self.set_header("Content-Type", "application/json")
-        self.write(tornado.escape.json_encode(
-          dict(event=fullcalendar_event,
-               tags=['@%s' % x for x in tags],
-           )))
+        if format == '.xml':
+            raise NotImplementedError(format)
+        else:
+            # default is json
+            self.set_header("Content-Type", "application/json")
+            self.write(tornado.escape.json_encode(
+              dict(event=fullcalendar_event,
+                   tags=['@%s' % x for x in event.tags],
+               )))
+
         
 class APIEventsHandler(EventsHandler, APIHandlerMixin):
     
@@ -378,8 +422,46 @@ class APIEventsHandler(EventsHandler, APIHandlerMixin):
         if not self.check_guid():
             return 
             
+        start = self.get_argument('start', None) 
+        if not start:
+            self.set_status(404)
+            return self.write("start timestamp not supplied")
+        
+        end = self.get_argument('end', None) 
+        if not end:
+            self.set_status(404)
+            return self.write("end timestamp not supplied")        
+        
+        guid = self.get_argument('guid')
+        user = self.db.users.User.one({'guid': guid})
+        shares = self.get_argument('shares', u'')#self.get_secure_cookie('shares')
+        
+        data = self.get_events_data(user, shares)
+        self.write_events_data(data, format)
+        
+    def post(self, format):
+        
+        def get(key):
+            return self.get_argument(key, None)
+        
+        if not self.check_guid():
+            return 
             
-        return super(APIEventsHandler, self).get(format=format)
+        if not get('title'):
+            self.set_status(404)
+            return self.write("title not supplied")
+
+        if not (get('date') or (get('start') and get('end'))):
+            self.set_status(404)
+            return self.write("date or (start and end) not supplied")
+        
+        guid = self.get_argument('guid')
+        user = self.db.users.User.one({'guid': guid})
+        
+        event, created = self.create_event(user)
+        self.write_event(event, format)
+        self.set_status(created and 201 or 200) # Created
+            
            
 class EventHandler(BaseHandler):
     

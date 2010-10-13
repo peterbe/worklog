@@ -24,3 +24,10 @@ def encrypt_password(raw_password, log_rounds=10):
     hsh = bcrypt.hashpw(raw_password, salt)
     algo = 'bcrypt'
     return u'%s$bcrypt$%s' % (algo, hsh)   
+
+
+def niceboolean(value):
+    if type(value) is bool:
+        return value
+    falseness = ('','no','off','false','none','0', 'f')
+    return str(value).lower().strip() not in falseness
