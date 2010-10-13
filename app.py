@@ -10,7 +10,6 @@ import os.path
 import re
 from mongokit import Connection
 import tornado.auth
-import tornado.database
 import tornado.httpserver
 import tornado.ioloop
 import tornado.options
