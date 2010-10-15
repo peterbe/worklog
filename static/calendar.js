@@ -233,6 +233,34 @@ function _event_clicked(event, jsEvent, view) {
                     .addClass('placeholdervalue')
                       .val($('input[name="placeholdervalue"]').val());
              });
+	     
+	     $('a.delete').click(function() {
+		var container = $(this).parents('div.delete');
+		$('.confirmation', container).show();
+		$('a.delete', container).hide();
+		
+		//$('a.delete-cancel', container).unbind('click');
+		$('a.delete-confirm', container).click(function() {
+		   $.post('/event/delete', {id: event.id}, function() {
+                      if (current_tooltip) {
+                         current_tooltip.qtip('hide');
+                      }
+                      $('#calendar').fullCalendar('removeEvents', event.id);
+                      $('#calendar').fullCalendar('refetchEvents');
+                      $('#calendar').fullCalendar('render');
+
+                   });
+		   return false;
+		});
+		
+		$('a.delete-cancel', container).unbind('click');
+		$('a.delete-cancel', container).click(function() {
+		   var container = $(this).parents('div.delete');
+		   $('a.delete').show();
+		   $('.confirmation').hide();
+		});
+		return false
+	     });
           }
       }
    };

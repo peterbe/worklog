@@ -38,7 +38,7 @@ class Application(tornado.web.Application):
             (r"/events/stats(\.json|\.xml|\.txt)?", EventStatsHandler),
             (r"/events(\.json|\.js|\.xml|\.txt)?", EventsHandler),
             (r"/api/events(\.json|\.js|\.xml|\.txt)?", APIEventsHandler),
-            (r"/event/(edit|resize|move)", EventHandler),
+            (r"/event/(edit|resize|move|delete)", EventHandler),
             (r"/user/settings(.js|/)", UserSettingsHandler),
             (r"/user/account/", AccountHandler),
             (r"/share/$", SharingHandler),
@@ -468,6 +468,8 @@ class EventHandler(BaseHandler):
         if action in ('move', 'resize'):
             days = int(self.get_argument('days'))
             minutes = int(self.get_argument('minutes'))
+        elif action == 'delete':
+            pass
         else:
             assert action == 'edit'
             title = self.get_argument('title')
@@ -501,6 +503,10 @@ class EventHandler(BaseHandler):
             event.title = title
             event.tags = tags
             event.save()
+        elif action == 'delete':
+            event.delete()
+            return self.write("Deleted")
+            
         else:
             raise NotImplementedError
         
