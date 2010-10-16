@@ -52,120 +52,7 @@ function get_add_form(action, date, all_day) {
    else;
      $('input[name="all_day"]', f).val('');
    return f;
-
-   /*
-   var f = $('<form method="post"></form>').attr('action', action);
-   var d = $('<div></div>');
-   var t = $('<input name="title" id="id_title" size="35">');
-   d.append(t);
-   d.append($('<input type="submit" value="Save">'));
-   if (all_day)
-     d.append($('<input type="hidden" name="all_day" value="1">'));
-   d.append($('<input type="hidden" name="date">').val(date.getTime()));
-   f.append(d);
-   return f;
-    */
 }
-/*
-function get_edit_form(action, id, title, url) {
-   var f = $('#edit-form');
-   f.attr('action', action);
-
-   // reset anything if the edit form has been used before
-   $('.edit-url:visible', f).hide();
-   $('.see-url:visible', f).hide();
-   $('a.delete:hidden', f).show();
-   $('.confirmation', f).hide();
-
-   $('input[name="title"]', f).val(title);
-   $('input[name="id"]', f).val(id);
-   if (url) {
-      $('input[name="url"]', f).val(url);
-      $('.see-url', f).html('').append(
-        $('<a href="#"></a>').text(url).click(function() {
-           window.open=url;
-        })
-      ).show();
-   } else {
-      $('.edit-url', f).show();
-   }
-   $('a.delete', f).click(function() {
-      var parent = $(this).parents('div.delete');
-      $('.confirmation', parent).show();
-      $(this).hide();
-      $('.delete-confirm', parent).click(function() {
-         return false;
-      });
-      $('.delete-cancel', parent).click(function() {
-         $('div.delete .confirmation:visible').hide(400);
-         $(this).show(500);
-         return false;
-      });
-      return false;
-   });
-
-   return f;
-
-   var f = $('<form method="post"></form>').attr('action', action);
-   var d = $('<div></div>');
-   d.append($('<input name="title" id="id_title" size="35">').val(title));
-   d.append($('<input type="submit" value="Save">'));
-   d.append($('<input type="hidden" name="id">').val(id));
-   f.append(d);
-   return f;
-}
-*/
-
-/*
-function OOOOLLLLDDD____event_clicked(calEvent, jsEvent, view) {
-        //alert('Event: ' + calEvent.title);
-        //alert('Coordinates: ' + jsEvent.pageX + ',' + jsEvent.pageY);
-        //alert('View: ' + view.name);
-
-        // change the border color just for fun
-        $(this).qtip({
-           content: {
-              text: calEvent.title//,
-              //title: {
-              //   text: calEvent.title,
-              //   button: 'Close'
-              //}
-           },
-      position: {
-         corner: {
-            target: 'bottomMiddle',
-            tooltip: 'topMiddle'
-         },
-         adjust: {
-            screen: true
-         }
-      },
-      show: {
-         when: 'click',
-         ready: true,
-         solo:true
-      },
-      hide: 'unfocus',
-      style: {
-        tip: true, // Apply a speech bubble tip to the tooltip at the designated tooltip corner
-        border: {
-           width: 0,
-           radius: 3,
-	     color: '#3366CC'
-        },
-	 title: {
-            background:'#3366CC',
-	      color: '#fff'
-	 },
-        background: '#7094db',
-        color: '#fff',
-        name: 'dark'//, // Use the default light style
-        //width: 470 // Set the tooltip width
-      }
-   });
-
-}
-*/
 
 var current_tooltip;
 function _day_clicked(date, allDay, jsEvent, view) {
@@ -199,7 +86,78 @@ function _day_clicked(date, allDay, jsEvent, view) {
 }
 
 function _event_clicked(event, jsEvent, view) {
-   var url = '/event/edit?id=' + event.id;
+   // by default events don't have the 'editable' attribute. It's usually only
+   // set when the event is explcitely *not* editable.
+   var is_editable = true;
+   if (typeof event.editable != 'undefined')
+     is_editable = event.editable;
+   
+   if (is_editable)
+     var url = '/event/edit?id=' + event.id;
+   else
+     var url = '/event/?id=' + event.id;
+   
+   function _prepare_edit_event() {
+      
+      $('form.edit').submit(function() {
+         _setup_ajaxsubmit(this, event.id);
+         return false;
+      });
+      $('input[name="title"]').focus();
+      if (!$('input[name="external_url"]').val()) {
+         $('input[name="external_url"]')
+           .addClass('placeholdervalue')
+             .val($('input[name="placeholdervalue"]').val());
+      }
+      
+      $('input[name="external_url"]').bind('focus', function() {
+         if ($(this).val() == $('input[name="placeholdervalue"]').val()) {
+            $(this).val('').removeClass('placeholdervalue');
+         }
+      }).bind('blur', function() {
+         if (!$.trim($(this).val()))
+           $('input[name="external_url"]')
+             .addClass('placeholdervalue')
+               .val($('input[name="placeholdervalue"]').val());
+         else if ($(this).val().search('://') == -1)
+           $(this).val('http://' + $(this).val());
+      });
+      
+      $('a.delete').click(function() {
+         var container = $(this).parents('div.delete');
+         $('.confirmation', container).show();
+         $('a.delete', container).hide();
+         
+         //$('a.delete-cancel', container).unbind('click');
+         $('a.delete-confirm', container).click(function() {
+            $.post('/event/delete', {id: event.id}, function() {
+               if (current_tooltip) {
+                  current_tooltip.qtip('hide');
+                  current_tooltip = null;
+               }
+               $('#calendar').fullCalendar('removeEvents', event.id);
+               $('#calendar').fullCalendar('refetchEvents');
+               $('#calendar').fullCalendar('render');
+               
+            });
+            return false;
+         });
+         
+         $('a.delete-cancel', container).unbind('click');
+         $('a.delete-cancel', container).click(function() {
+            var container = $(this).parents('div.delete');
+            $('a.delete').show();
+            $('.confirmation').hide();
+         });
+         return false
+      });
+   }
+   
+   /* This function is called when the qtip has opened for previewing */
+   function _prepare_preview_event() {
+      
+   }
+   
    var qtip_options = {
       content: {
            text: 'Please wait...',
@@ -212,55 +170,13 @@ function _event_clicked(event, jsEvent, view) {
       },
       api: {
           onContentUpdate: function() {
-	     $('form.edit').submit(function() {
-		_setup_ajaxsubmit(this, event.id);
-		return false;
-	     });
-             $('input[name="title"]').focus();
-             if (!$('input[name="url"]').val()) {
-                $('input[name="url"]')
-                  .addClass('placeholdervalue')
-                  .val($('input[name="placeholdervalue"]').val());
-             }
-
-             $('input[name="url"]').bind('focus', function() {
-                if ($(this).val() == $('input[name="placeholdervalue"]').val()) {
-                   $(this).val('').removeClass('placeholdervalue');
-                }
-             }).bind('blur', function() {
-                if (!$.trim($(this).val()))
-                  $('input[name="url"]')
-                    .addClass('placeholdervalue')
-                      .val($('input[name="placeholdervalue"]').val());
-             });
-	     
-	     $('a.delete').click(function() {
-		var container = $(this).parents('div.delete');
-		$('.confirmation', container).show();
-		$('a.delete', container).hide();
-		
-		//$('a.delete-cancel', container).unbind('click');
-		$('a.delete-confirm', container).click(function() {
-		   $.post('/event/delete', {id: event.id}, function() {
-                      if (current_tooltip) {
-                         current_tooltip.qtip('hide');
-                      }
-                      $('#calendar').fullCalendar('removeEvents', event.id);
-                      $('#calendar').fullCalendar('refetchEvents');
-                      $('#calendar').fullCalendar('render');
-
-                   });
-		   return false;
-		});
-		
-		$('a.delete-cancel', container).unbind('click');
-		$('a.delete-cancel', container).click(function() {
-		   var container = $(this).parents('div.delete');
-		   $('a.delete').show();
-		   $('.confirmation').hide();
-		});
-		return false
-	     });
+             // for some reason qtip fires onContentUpdate() twice. The only difference
+             // between the two times is this.cache.toggle
+             if (!this.cache.toggle) return;
+             if (is_editable)
+               _prepare_edit_event();
+             else
+               _prepare_preview_event();
           }
       }
    };
@@ -353,6 +269,7 @@ function __inner_setup_ajaxsubmit(element, event_id) {
 	    // close any open qtip
 	    if (current_tooltip) {
                current_tooltip.qtip('hide');
+               current_tooltip = null;
             }
 
  	    //if (response.event) {
@@ -513,16 +430,17 @@ $(function() {
       eventDrop: _event_dropped,
       viewDisplay: function(view) {
          
-         
 	 display_sidebar_stats_wrapped(view.start, view.end);
-         
          var href = '#' + view.name.replace('agenda', '').toLowerCase();
          href += ',' + view.start.getFullYear();
          href += ',' + (view.start.getMonth() + 1);
          href += ',' + view.start.getDate();
          location.href = href;
       }
-  });
+   });
+   
+   // Sooner or later we're going to need the qip
+   $.getScript(JS_URLS.qtip);
 
 });
 

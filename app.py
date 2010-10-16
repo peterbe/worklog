@@ -19,7 +19,10 @@ import unicodedata
 from tornado.options import define, options
 
 from models import Event, User, UserSettings, Share
-from utils import parse_datetime, encrypt_password, niceboolean
+from utils import parse_datetime, encrypt_password, niceboolean, \
+  DatetimeParseError
+import ui_modules
+################################################################################
 
 define("debug", default=False, help="run in debug mode", type=bool)
 define("port", default=8000, help="run on the given port", type=int)
@@ -30,6 +33,7 @@ define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 #define("mysql_user", default="blog", help="blog database user")
 #define("mysql_password", default="blog", help="blog database password")
 
+MAX_TITLE_LENGTH = 500
 
 class Application(tornado.web.Application):
     def __init__(self, database_name=None, xsrf_cookies=True):
@@ -38,7 +42,7 @@ class Application(tornado.web.Application):
             (r"/events/stats(\.json|\.xml|\.txt)?", EventStatsHandler),
             (r"/events(\.json|\.js|\.xml|\.txt)?", EventsHandler),
             (r"/api/events(\.json|\.js|\.xml|\.txt)?", APIEventsHandler),
-            (r"/event/(edit|resize|move|delete)", EventHandler),
+            (r"/event/(edit|resize|move|delete|)", EventHandler),
             (r"/user/settings(.js|/)", UserSettingsHandler),
             (r"/user/account/", AccountHandler),
             (r"/share/$", SharingHandler),
@@ -55,8 +59,9 @@ class Application(tornado.web.Application):
             title=u"Donecal",
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "static"),
-            ui_modules={'Settings': SettingsModule,
-                        'Footer': FooterModule,
+            ui_modules={'Settings': ui_modules.Settings,
+                        'Footer': ui_modules.Footer,
+                        'EventPreview': ui_modules.EventPreview,
                         },
             xsrf_cookies=xsrf_cookies,
             cookie_secret="11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
@@ -118,8 +123,8 @@ class BaseHandler(tornado.web.RequestHandler):
                     id=str(obj._id))
             
         data.update(**kwargs)
-        if getattr(obj, 'url', None):
-            data['url'] = obj.url
+        if getattr(obj, 'external_url', None):
+            data['external_url'] = obj.external_url
             
         if serialize:
             for key, value in data.items():
@@ -189,6 +194,13 @@ class BaseHandler(tornado.web.RequestHandler):
         
         
         return options
+    
+    def share_keys_to_share_objects(self, shares):
+        if not shares: 
+            shares = ''
+        keys = [x for x in shares.split(',') if x]
+        return self.db.shares.Share.find({'key':{'$in':keys}})
+            
 
 class APIHandlerMixin(object):
     
@@ -251,17 +263,7 @@ class HomeHandler(BaseHandler):
         )
 
         
-class SettingsModule(tornado.web.UIModule):
-    def render(self, settings):
-        return self.render_string("modules/settings.html",
-           settings_json=tornado.escape.json_encode(settings),
-         )
          
-class FooterModule(tornado.web.UIModule):
-    def render(self):
-        return self.render_string("modules/footer.html",
-          calendar_link=self.request.path != '/'
-         )
 
 class EventsHandler(BaseHandler):
     
@@ -290,28 +292,25 @@ class EventsHandler(BaseHandler):
                 events.append(self.transform_fullcalendar_event(event, True))
                 tags.update(event['tags'])
                 
-        if not shares: 
-            shares = ''
-        for key in [x for x in shares.split(',') if x]:
-            for share in self.db.shares.Share.find(dict(key=key)):
-                search['user.$id'] = share.user._id
-                className = 'share-%s' % share.user._id
-                full_name = u"%s %s" % (share.user.first_name, share.user.last_name)
-                full_name = full_name.strip()
-                if not full_name:
-                    full_name = share.user.email
-                sharers.append(dict(className=className,
-                                    full_name=full_name,
-                                    key=share.key))
-                                    
-                for event in self.db.events.Event.find(search):
-                    events.append(
-                      self.transform_fullcalendar_event(
-                        event, 
-                        True,
-                        className=className,
-                        editable=False))
-                    tags.update(event['tags'])
+        for share in self.share_keys_to_share_objects(shares):
+            search['user.$id'] = share.user._id
+            className = 'share-%s' % share.user._id
+            full_name = u"%s %s" % (share.user.first_name, share.user.last_name)
+            full_name = full_name.strip()
+            if not full_name:
+                full_name = share.user.email
+            sharers.append(dict(className=className,
+                                full_name=full_name,
+                                key=share.key))
+                                
+            for event in self.db.events.Event.find(search):
+                events.append(
+                  self.transform_fullcalendar_event(
+                    event, 
+                    True,
+                    className=className,
+                    editable=False))
+                tags.update(event['tags'])
                 
         tags = list(tags)
         tags.sort(lambda x, y: cmp(x.lower(), y.lower()))
@@ -366,17 +365,34 @@ class EventsHandler(BaseHandler):
         all_day = niceboolean(self.get_argument("all_day", False))
         if self.get_argument("date", None):
             date = self.get_argument("date")
-            date = parse_datetime(date)
+            try:
+                date = parse_datetime(date)
+            except DatetimeParseError:
+                raise tornado.web.HTTPError(400, "Invalid date")
             start = end = date
-            all_day = True
+            if self.get_argument('all_day', -1) == -1:
+                # it wasn't specified
+                if date.hour + date.minute + date.second == 0:
+                    all_day = True
+                else:
+                    all_day = False
+            if not all_day:
+                # default is to make it one hour 
+                end += datetime.timedelta(hours=1)
         elif self.get_argument('start', None) and self.get_argument('end', None):
             start = parse_datetime(self.get_argument('start'))
             end = parse_datetime(self.get_argument('end'))
+            if end <= start:
+                raise tornado.web.HTTPError(400, "'end' must be greater than 'start'")
+        elif self.get_argument('start', None) or self.get_argument('end', None):
+            raise tornado.web.HTTPError(400, "Need both 'start' and 'end'")
         else:
-            raise tornado.web.HTTPError(404, 
-          "Neither date or (start and end) supplied")
+            date = datetime.date.today()
+            date = datetime.datetime(date.year, date.month, date.day, 0, 0, 0)
+            start = end = date
+            all_day = True
         
-        tags = list(set([x[1:] for x in re.findall('@[\w-]+', title)]))
+        tags = list(set([x[1:] for x in re.findall(r'\B@[\w-]+', title)]))
         self.case_correct_tags(tags, user)
         
         event = self.db.events.Event.one({
@@ -393,8 +409,8 @@ class EventsHandler(BaseHandler):
         event.title = title
         event.tags = tags
         event.all_day = all_day
-        event.start = date
-        event.end = date
+        event.start = start
+        event.end = end
         event.save()
         
         return event, True
@@ -436,6 +452,7 @@ class APIEventsHandler(EventsHandler, APIHandlerMixin):
         data = self.get_events_data(user, shares)
         self.write_events_data(data, format)
         
+        
     def post(self, format):
         
         def get(key):
@@ -445,12 +462,19 @@ class APIEventsHandler(EventsHandler, APIHandlerMixin):
             return 
             
         if not get('title'):
-            self.set_status(404)
-            return self.write("title not supplied")
+            self.set_status(400)
+            return self.write("Missing 'title'")
+        
+            #self.set_status(404)
+            #return self.write("title not supplied")
+        elif len(get('title')) > MAX_TITLE_LENGTH:
+            self.set_status(400)
+            return self.write(
+             "Title too long (max %s)" % MAX_TITLE_LENGTH)
 
-        if not (get('date') or (get('start') and get('end'))):
-            self.set_status(404)
-            return self.write("date or (start and end) not supplied")
+        #if not (get('date') or (get('start') and get('end'))):
+        #    self.set_status(404)
+        #    return self.write("date or (start and end) not supplied")
         
         guid = self.get_argument('guid')
         user = self.db.users.User.one({'guid': guid})
@@ -473,6 +497,14 @@ class EventHandler(BaseHandler):
         else:
             assert action == 'edit'
             title = self.get_argument('title')
+            external_url = self.get_argument('external_url', u"")
+            if external_url:
+                # check that it's valid
+                from urlparse import urlparse
+                parsed = urlparse(external_url)
+                if not (parsed.scheme and parsed.netloc):
+                    raise tornado.web.HTTPError(400, "Invalid URL (%s)" % external_url)
+
         
         user = self.get_current_user()
         if not user:
@@ -501,19 +533,24 @@ class EventHandler(BaseHandler):
         elif action == 'edit':
             tags = list(set([x[1:] for x in re.findall('@\w+', title)]))
             event.title = title
+            event.external_url = external_url
             event.tags = tags
+            if getattr(event, 'url', -1) != -1:
+                # NEED MIGRATION SCRIPTS!
+                del event['url']
             event.save()
         elif action == 'delete':
             event.delete()
             return self.write("Deleted")
-            
         else:
             raise NotImplementedError
         
         return self.write_json(dict(event=self.transform_fullcalendar_event(event, True)))
     
     def get(self, action):
-        assert action == 'edit'
+        if action == '':
+            action = 'preview'
+        assert action in ('edit', 'preview')
         
         _id = self.get_argument('id')
        
@@ -521,9 +558,19 @@ class EventHandler(BaseHandler):
         if not user:
             return self.write(dict(error="Not logged in (no cookie)"))
         
+        shares = self.get_secure_cookie('shares')
+        event = self.find_event(_id, user, shares)
+        
+        if action == 'edit':
+            external_url = getattr(event, 'external_url', None)
+            self.render('event/edit.html', event=event, url=external_url)
+        else:
+            ui_module = ui_modules.EventPreview(self)
+            self.write(ui_module.render(event))
+        
+    def find_event(self, _id, user, shares):
         try:
             search = {
-              'user.$id': user._id,
               '_id': ObjectId(_id),
             }
         except InvalidId:
@@ -533,8 +580,22 @@ class EventHandler(BaseHandler):
         if not event:
             raise tornado.web.HTTPError(404, "Can't find the event")
         
-        self.render('event/edit.html', event=event)
-    
+        if event.user == user:
+            pass
+        elif shares:
+            for share in self.share_keys_to_share_objects(shares):
+                if share.user == event.user:
+                    if share.users:
+                        if user in share.users:
+                            break
+                    else:
+                        break
+            else:
+                raise tornado.web.HTTPError(403, "Not your event (not shared either)")
+        else:
+            raise tornado.web.HTTPError(403, "Not your event")
+            
+        return event
             
 class EventStatsHandler(BaseHandler):
     def get(self, format):

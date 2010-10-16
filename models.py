@@ -79,7 +79,7 @@ class Event(BaseDocument):
       'start': datetime.datetime,
       'end': datetime.datetime,
       'tags': [unicode],
-      'url': unicode,
+      'external_url': unicode,
     }
     use_autorefs = True
     required_fields = ['user', 'title', 'all_day', 'start', 'end']

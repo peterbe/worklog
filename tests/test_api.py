@@ -2,10 +2,10 @@ from pymongo.objectid import InvalidId, ObjectId
 import datetime
 import simplejson as json
 from time import mktime
-from base import BaseHTTPTestCase
+import base
 
 
-class APITestCase(BaseHTTPTestCase):
+class APITestCase(base.BaseHTTPTestCase):
     
     def test_getting_events(self):
         response = self.get('/api/events.json')
@@ -115,14 +115,11 @@ class APITestCase(BaseHTTPTestCase):
         assert self.get_db().users.User.find().count()
         data = dict(guid=peter.guid)
         response = self.post('/api/events.json', data)
-        self.assertEqual(response.code, 404)
-        self.assertTrue('title not supplied' in response.body)
+        self.assertEqual(response.code, 400)
+        self.assertTrue('title' in response.body)
 
-        data['title'] = u"<script>alert('xss')</script> @tagged"
-        response = self.post('/api/events.json', data)
-        self.assertEqual(response.code, 404)
-        self.assertTrue('date or (start and end) not supplied' in response.body)
-        
+        data['title'] = u"<script>alert('xss')</script> @tagged "\
+                        u"but not mail@gmail.com"
         today = datetime.date.today()
         data['date'] = mktime(today.timetuple())
         response = self.post('/api/events.json', data)
@@ -145,4 +142,70 @@ class APITestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         struct_again = json.loads(response.body)
         self.assertEqual(struct_again, struct)
+        
+    def test_posting_without_date(self):
+        
+        from models import User
+        peter = self.get_db().users.User()
+        assert peter.guid
+        peter.save()
+        
+        data = dict(guid=peter.guid, title="Title")
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 201)
+        
+        event = self.get_db().events.Event.one()
+        today = datetime.date.today()
+        self.assertEqual(today.strftime('%Y%m%d%H%M'),
+                         event.start.strftime('%Y%m%d%H%M'))
+        self.assertEqual(today.strftime('%Y%m%d%H%M'),
+                         event.end.strftime('%Y%m%d%H%M'))
+        self.assertEqual(event.all_day, True)
+        
+        data = dict(guid=peter.guid, title=u"Title2")
+        data['date'] = mktime(today.timetuple())
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 201)
+        event = self.get_db().events.Event.one(dict(title=data['title']))
+        self.assertEqual(event.all_day, True)
+        
+        # posting without specifying all_day and then set the hour
+        today = datetime.datetime.today()
+        data = dict(guid=peter.guid, title=u"Title3")
+        data['date'] = mktime(today.timetuple())
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 201)
+        event = self.get_db().events.Event.one(dict(title=data['title']))
+        self.assertEqual(event.all_day, False)
+        # this should have made the end date to be 1 hour from now
+        self.assertEqual(today.strftime('%Y%m%d%H%M'),
+                         event.start.strftime('%Y%m%d%H%M'))
+        self.assertEqual((today + datetime.timedelta(hours=1)).strftime('%Y%m%d%H%M'),
+                         event.end.strftime('%Y%m%d%H%M'))
+                         
+    def test_posting_invalid_data(self):
+        
+        from models import User
+        peter = self.get_db().users.User()
+        assert peter.guid
+        peter.save()
+
+        data = dict(guid=peter.guid, title="x" * (base.app.MAX_TITLE_LENGTH + 1))
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 400)
+        
+        data['title'] = "Sensible"
+        data['date'] = 'xxx'
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 400)
+
+        data.pop('date')
+        data['start'] = mktime((2011, 1, 29,0,0,0,0,0,0))
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 400)
+        
+        data['start'] = mktime((2011, 1, 29,0,0,0,0,0,0))
+        data['end'] = data['start']
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 400)
         

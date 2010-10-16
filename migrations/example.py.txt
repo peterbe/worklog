@@ -1,0 +1,10 @@
+from models import File
+from mongokit import Connection
+con = Connection()
+con.register([File])
+
+collection = con.worklog.files
+print "Fixing", collection.File.find({'text_type':{'$exists': False}}).count(), "files"
+for each in collection.File.find({'text_type':{'$exists': False}}):
+    each['text_type'] = u''
+    each.save()

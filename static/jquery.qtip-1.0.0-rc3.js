@@ -821,9 +821,9 @@
                      positionTip.call(self);
                };
             };
-
             // Call API method and log event
             self.onContentUpdate.call(self);
+            
             return $.fn.qtip.log.error.call(self, 1, $.fn.qtip.constants.EVENT_CONTENT_UPDATED, 'loadContent');
          },
 

@@ -117,8 +117,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         
         self.assertEqual(db.events.Event.find({
           'tags':'It'
-        }).count(), 1)        
-        
+        }).count(), 1)
         
         
     def test_events(self):

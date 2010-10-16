@@ -5,18 +5,18 @@
     <input type="submit" value="Save">
   </div>
   
-  <div class="edit-url" {% if event.url %}style="display:none"{% end %}>
-    {% if event.url %}
-    <input name="url" size="35" value="{{ event.url }}">
+  <div class="edit-url" {% if url %}style="display:none"{% end %}>
+    {% if url %}
+    <input name="external_url" size="35" value="{{ url }}">
     {% else %}
-    <input name="url" size="35" value="">
+    <input name="external_url" size="35" value="">
     {% end %}
     <input type="hidden" name="placeholdervalue" value="URL: (optional)">
   </div>
   
-  {% if event.url %}
+  {% if url %}
   <div class="see-url">
-    <a href="{{ event.url }}" onclick="window.open('{{ event.url }}');return false">{{ event.url }}</a>
+    <a href="{{ url }}" onclick="window.open('{{ url }}');return false">{{ url }}</a>
   </div>
   {% end %}
   

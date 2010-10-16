@@ -1,0 +1,16 @@
+<p>
+{{ event.title }}
+</p>
+
+{% if event.url %}
+<p>
+<a href="{{ event.url }}">{{ event.url }}</a>
+</p>
+{% end %}
+
+<p style="font-size:10px">
+Added {{ add_ago }} ago 
+{% if user_name %}
+by {{ user_name }}
+{% end %}
+</p>
