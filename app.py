@@ -492,6 +492,8 @@ class EventHandler(BaseHandler):
         if action in ('move', 'resize'):
             days = int(self.get_argument('days'))
             minutes = int(self.get_argument('minutes'))
+            if action == 'move':
+                all_day = niceboolean(self.get_argument('all_day'))
         elif action == 'delete':
             pass
         else:
@@ -529,6 +531,7 @@ class EventHandler(BaseHandler):
         elif action == 'move':
             event.start += datetime.timedelta(days=days, minutes=minutes)
             event.end += datetime.timedelta(days=days, minutes=minutes)
+            event.all_day = all_day
             event.save()
         elif action == 'edit':
             tags = list(set([x[1:] for x in re.findall('@\w+', title)]))

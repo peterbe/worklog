@@ -197,7 +197,7 @@ function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view
 }
 
 function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc) {
-   $.post('/event/move', {days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
+   $.post('/event/move', {all_day:allDay, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
