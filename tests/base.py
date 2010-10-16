@@ -1,12 +1,15 @@
+import time
+import base64
 from urllib import urlencode
 
+from tornado.httpclient import HTTPRequest
 from tornado.testing import LogTrapTestCase, AsyncHTTPTestCase
 
 import app
 
 class HTTPClientMixin(object):
 
-    def get(self, url, data=None, headers=None):
+    def get(self, url, data=None, headers=None, follow_redirects=True):
         if data is not None:
             if isinstance(data, dict):
                 data = urlencode(data)
@@ -14,18 +17,23 @@ class HTTPClientMixin(object):
                 url += '&%s' % data
             else:
                 url += '?%s' % data
-        return self._fetch(url, 'GET', headers=headers)
+        return self._fetch(url, 'GET', headers=headers,
+                           follow_redirects=follow_redirects)
     
-    def post(self, url, data, headers=None):
+    def post(self, url, data, headers=None, follow_redirects=True):
         if data is not None:
             if isinstance(data, dict):
                 data = urlencode(data)
-        return self._fetch(url, 'POST', data, headers)
+        return self._fetch(url, 'POST', data, headers, 
+                           follow_redirects=follow_redirects)
     
-    def _fetch(self, url, method, data=None, headers=None):
-        self.http_client.fetch(self.get_url(url), self.stop, method=method,
-                               body=data, headers=headers)
+    def _fetch(self, url, method, data=None, headers=None, follow_redirects=True):
+        request = HTTPRequest(self.get_url(url), follow_redirects=follow_redirects,
+                              headers=headers, method=method, body=data)
+        self.http_client.fetch(request, self.stop)
         return self.wait()
+    
+                                
     
     
 class BaseHTTPTestCase(AsyncHTTPTestCase, LogTrapTestCase, HTTPClientMixin):
@@ -47,5 +55,5 @@ class BaseHTTPTestCase(AsyncHTTPTestCase, LogTrapTestCase, HTTPClientMixin):
         return self._app.con[self._app.database_name]
     
     def get_app(self):
-        return app.Application(database_name='test', xsrf_cookies=False) # consider passing a different database name
+        return app.Application(database_name='test', xsrf_cookies=False) 
     

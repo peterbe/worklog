@@ -223,6 +223,7 @@ class APIHandlerMixin(object):
 class HomeHandler(BaseHandler):
     
     def get(self):
+        
         if self.get_argument('share', None):
             shared_keys = self.get_secure_cookie('shares')
             if not shared_keys:
@@ -237,7 +238,7 @@ class HomeHandler(BaseHandler):
                 shared_keys.append(share.key)
                 
             self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=70)
-            self.redirect('/')
+            return self.redirect('/')
 
         # default settings
         options = self.get_base_options()
@@ -488,12 +489,12 @@ class EventHandler(BaseHandler):
     
     def post(self, action):
         _id = self.get_argument('id')
-        
+
         if action in ('move', 'resize'):
             days = int(self.get_argument('days'))
             minutes = int(self.get_argument('minutes'))
             if action == 'move':
-                all_day = niceboolean(self.get_argument('all_day'))
+                all_day = niceboolean(self.get_argument('all_day', False))
         elif action == 'delete':
             pass
         else:
@@ -586,6 +587,8 @@ class EventHandler(BaseHandler):
         if event.user == user:
             pass
         elif shares:
+            # Find out if for any of the shares we have access to the owner of
+            # the share is the same as the owner of the event
             for share in self.share_keys_to_share_objects(shares):
                 if share.user == event.user:
                     if share.users:
@@ -642,15 +645,22 @@ class EventStatsHandler(BaseHandler):
         hours_spent = sorted([(x,y) for (x, y) in hours_spent.items() if y])
         stats = dict(days_spent=days_spent,
                      hours_spent=hours_spent)
-        #pprint(stats)
                 
         if format == '.json':
             self.write_json(stats)
         elif format == '.xml':
             self.write_xml(stats)
         elif format == '.txt':
-            raise NotImplementedError
-            #self.write_txt(
+            out = cStringIO.StringIO()
+            for key, values in stats.items():
+                out.write('%s:\n' % key.upper().replace('_', ' '))
+                
+                for tag, num in values:
+                    tag = re.sub('</?em>', '*', tag)
+                    out.write('  %s%s\n' % (tag.ljust(40), num))
+                out.write('\n')
+                
+            self.write_txt(out.getvalue())
         
 
 class UserSettingsHandler(BaseHandler):
@@ -769,7 +779,6 @@ class SignupHandler(BaseHandler):
     
           
     def get(self):
-        
         if self.get_argument('validate_email', None):
             # some delay to make brute-force testing boring
             sleep(0.5)
@@ -780,6 +789,8 @@ class SignupHandler(BaseHandler):
             else:
                 result = dict(ok=True)
             self.write_json(result)
+        else:
+            raise tornado.web.HTTPError(404, "Nothing to check")
             
     def post(self):
         email = self.get_argument('email')
@@ -822,72 +833,36 @@ class SignupHandler(BaseHandler):
 #        self.render("feed.xml", entries=entries)
 
 
-class ComposeHandler(BaseHandler):
-    @tornado.web.authenticated
-    def get(self):
-        id = self.get_argument("id", None)
-        entry = None
-        if id:
-            entry = self.db.get("SELECT * FROM entries WHERE id = %s", int(id))
-        self.render("compose.html", entry=entry)
-
-    @tornado.web.authenticated
-    def post(self):
-        id = self.get_argument("id", None)
-        title = self.get_argument("title")
-        text = self.get_argument("markdown")
-        html = markdown.markdown(text)
-        if id:
-            entry = self.db.get("SELECT * FROM entries WHERE id = %s", int(id))
-            if not entry: raise tornado.web.HTTPError(404)
-            slug = entry.slug
-            self.db.execute(
-                "UPDATE entries SET title = %s, markdown = %s, html = %s "
-                "WHERE id = %s", title, text, html, int(id))
-        else:
-            slug = unicodedata.normalize("NFKD", title).encode(
-                "ascii", "ignore")
-            slug = re.sub(r"[^\w]+", " ", slug)
-            slug = "-".join(slug.lower().strip().split())
-            if not slug: slug = "entry"
-            while True:
-                e = self.db.get("SELECT * FROM entries WHERE slug = %s", slug)
-                if not e: break
-                slug += "-2"
-            self.db.execute(
-                "INSERT INTO entries (author_id,title,slug,markdown,html,"
-                "published) VALUES (%s,%s,%s,%s,%s,UTC_TIMESTAMP())",
-                self.current_user.id, title, slug, text, html)
-        self.redirect("/entry/" + slug)
 
 
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
-    @tornado.web.asynchronous
-    def get(self):
-        if self.get_argument("openid.mode", None):
-            self.get_authenticated_user(self.async_callback(self._on_auth))
-            return
-        self.authenticate_redirect()
     
-    def _on_auth(self, user):
-        if not user:
-            raise tornado.web.HTTPError(500, "Google auth failed")
-        author = self.db.get("SELECT * FROM authors WHERE email = %s",
-                             user["email"])
-        if not author:
-            # Auto-create first author
-            any_author = self.db.get("SELECT * FROM authors LIMIT 1")
-            if not any_author:
-                author_id = self.db.execute(
-                    "INSERT INTO authors (email,name) VALUES (%s,%s)",
-                    user["email"], user["name"])
-            else:
-                self.redirect("/")
-                return
-        else:
-            author_id = author["id"]
-        self.set_secure_cookie("user", str(author_id))
-        self.redirect(self.get_argument("next", "/"))
+#    @tornado.web.asynchronous
+#    def get(self):
+#        if self.get_argument("openid.mode", None):
+#            self.get_authenticated_user(self.async_callback(self._on_auth))
+#            return
+#        self.authenticate_redirect()
+#    
+#    def _on_auth(self, user):
+#        if not user:
+#            raise tornado.web.HTTPError(500, "Google auth failed")
+#        author = self.db.get("SELECT * FROM authors WHERE email = %s",
+#                             user["email"])
+#        if not author:
+#            # Auto-create first author
+#            any_author = self.db.get("SELECT * FROM authors LIMIT 1")
+#            if not any_author:
+#                author_id = self.db.execute(
+#                    "INSERT INTO authors (email,name) VALUES (%s,%s)",
+#                    user["email"], user["name"])
+#            else:
+#                self.redirect("/")
+#                return
+#        else:
+#            author_id = author["id"]
+#        self.set_secure_cookie("user", str(author_id))
+#        self.redirect(self.get_argument("next", "/"))
         
     def post(self):
         email = self.get_argument('email')
@@ -909,6 +884,7 @@ class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
         
         self.redirect("/")
         
+
 
 class AuthLogoutHandler(BaseHandler):
     def get(self):

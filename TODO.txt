@@ -1,6 +1,6 @@
-* (HIGH) tests for previewing and editing events
 
 * (MEDIUM) More API for editing or viewing an event
+* (MEDIUM) tests for previewing and editing events in API
 
 * (HIGH) LAUNCH!
 

@@ -2,11 +2,7 @@
 import unittest
 import coverage
 
-TEST_MODULES = [
-    'tests.test_app',
-    'tests.test_models',
-    'tests.test_utils',
-]
+from _run_tests import TEST_MODULES
 
 COVERAGE_MODULES = [
     'app',
