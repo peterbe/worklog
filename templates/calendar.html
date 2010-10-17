@@ -73,4 +73,14 @@
 <script type="text/javascript" src="{{ static_url("calendar.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("sidebar.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("ext/jquery-ui-1.8.5.draggable-resizable-autocomplete.min.js") }}"></script>
+<script type="text/javascript" src="{{ static_url("ext/soundmanager2-jsmin.js") }}"></script>
+<script type="text/javascript">
+soundManager.onready(function(status) {
+  if (status.success) {
+    soundManager.createSound('pling', '{{ static_url("sounds/pling.mp3") }}');
+  } else {
+    SETTINGS.disable_sound = true;
+  }
+});
+</script>
 {% end %}

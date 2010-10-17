@@ -266,6 +266,10 @@ function __inner_setup_ajaxsubmit(element, event_id) {
 	    if (response.error)
 	      alert(response.error);
 
+	    if (!SETTINGS.disable_sound && soundManager.enabled) {
+	       soundManager.play('pling');
+	    }
+	    
 	    // close any open qtip
 	    if (current_tooltip) {
                current_tooltip.qtip('hide');
@@ -282,16 +286,9 @@ function __inner_setup_ajaxsubmit(element, event_id) {
                    AVAILABLE_TAGS.push(tag);
               });
 	    
-	    
-
             if (!response.error) {
                $('#calendar').fullCalendar('refetchEvents');
                $('#calendar').fullCalendar('render');
-	       
-	       $.getScript(JS_URLS.soundmanager2, function() {
-		  soundManager.createSound('pling', SOUND_URLS.pling);
-		  soundManager.play('pling');
-	       });
 	       
             }
 	 }
