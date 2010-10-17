@@ -2,15 +2,19 @@
 
 * (HIGH) moving an event resets colour on shared calendars
 
-* (MEDIUM) Help page about playing sounds
-
 * (HIGH) Once logged in, ability to change things
+
+* (MEDIUM) Help page about playing sounds
+  http://www.schillmania.com/projects/soundmanager2/demo/flashblock/
 
 * (MEDIUM) More API for editing or viewing an event
 * (MEDIUM) tests for previewing and editing events in API
 
+* (MEDIUM) App for voting on feature requests
 
 * (MEDIUM) Improve test coverage
+
+* (MEDIUM) Get in on http://tornado.poweredsites.org/
 
 * (MEDIUM) Write Help page
 * (MEDIUM) Write API help page

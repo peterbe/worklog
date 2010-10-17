@@ -21,6 +21,7 @@ from tornado.options import define, options
 from models import Event, User, UserSettings, Share
 from utils import parse_datetime, encrypt_password, niceboolean, \
   DatetimeParseError
+from utils.routes import route  
 import ui_modules
 ################################################################################
 
@@ -37,32 +38,39 @@ MAX_TITLE_LENGTH = 500
 
 class Application(tornado.web.Application):
     def __init__(self, database_name=None, xsrf_cookies=True):
-        handlers = [
-            (r"/", HomeHandler),
-            (r"/events/stats(\.json|\.xml|\.txt)?", EventStatsHandler),
-            (r"/events(\.json|\.js|\.xml|\.txt)?", EventsHandler),
-            (r"/api/events(\.json|\.js|\.xml|\.txt)?", APIEventsHandler),
-            (r"/event/(edit|resize|move|delete|)", EventHandler),
-            (r"/user/settings(.js|/)", UserSettingsHandler),
-            (r"/user/account/", AccountHandler),
-            (r"/share/$", SharingHandler),
-            (r"/user/signup/", SignupHandler),
-            #(r"/archive", ArchiveHandler),
-            #(r"/feed", FeedHandler),
-            #(r"/entry/([^/]+)", EntryHandler),
-            #(r"/compose", ComposeHandler),
-            (r"/auth/login/", AuthLoginHandler),
-            (r"/auth/logout/", AuthLogoutHandler),
-            (r"/help/(\w*)", HelpHandler),
-        ]
+        #handlers = [
+        #    (r"/", HomeHandler),
+        #    (r"/events/stats(\.json|\.xml|\.txt)?", EventStatsHandler),
+        #    (r"/events(\.json|\.js|\.xml|\.txt)?", EventsHandler),
+        #    (r"/api/events(\.json|\.js|\.xml|\.txt)?", APIEventsHandler),
+        #    (r"/event/(edit|resize|move|delete|)", EventHandler),
+        #    (r"/user/settings(.js|/)", UserSettingsHandler),
+        #    (r"/user/account/", AccountHandler),
+        #    (r"/share/$", SharingHandler),
+        #    (r"/user/signup/", SignupHandler),
+        #    #(r"/archive", ArchiveHandler),
+        #    #(r"/feed", FeedHandler),
+        #    #(r"/entry/([^/]+)", EntryHandler),
+        #    #(r"/compose", ComposeHandler),
+        #    (r"/auth/login/", AuthLoginHandler),
+        #    (r"/auth/logout/", AuthLogoutHandler),
+        #    (r"/help/(\w*)", HelpHandler),
+        #]
+        ui_modules_map = {} 
+        for name in [x for x in dir(ui_modules) if re.findall('[A-Z]\w+', x)]:
+            thing = getattr(ui_modules, name)
+            if issubclass(thing, tornado.web.UIModule):
+                ui_modules_map[name] = thing
+            
+        handlers = route.get_routes()
         settings = dict(
             title=u"Donecal",
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "static"),
-            ui_modules={'Settings': ui_modules.Settings,
-                        'Footer': ui_modules.Footer,
-                        'EventPreview': ui_modules.EventPreview,
-                        },
+            ui_modules=ui_modules_map,#{'Settings': ui_modules.Settings,
+                       # 'Footer': ui_modules.Footer,
+                       # 'EventPreview': ui_modules.EventPreview,
+                       # },
             xsrf_cookies=xsrf_cookies,
             cookie_secret="11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
             login_url="/auth/login",
@@ -221,6 +229,7 @@ class APIHandlerMixin(object):
         return False
     
 
+@route('/')
 class HomeHandler(BaseHandler):
     
     def get(self):
@@ -266,7 +275,7 @@ class HomeHandler(BaseHandler):
 
         
          
-
+@route(r'/events(\.json|\.js|\.xml|\.txt)?')
 class EventsHandler(BaseHandler):
     
     def get(self, format=None):
@@ -431,6 +440,7 @@ class EventsHandler(BaseHandler):
                )))
 
         
+@route(r'/api/events(\.json|\.js|\.xml|\.txt)?')
 class APIEventsHandler(EventsHandler, APIHandlerMixin):
     
     def get(self, format=None):
@@ -485,7 +495,7 @@ class APIEventsHandler(EventsHandler, APIHandlerMixin):
         self.write_event(event, format)
         self.set_status(created and 201 or 200) # Created
             
-           
+@route(r'/event/(edit|resize|move|delete|)')           
 class EventHandler(BaseHandler):
     
     def post(self, action):
@@ -604,6 +614,7 @@ class EventHandler(BaseHandler):
             
         return event
             
+@route('/events/stats(\.json|\.xml|\.txt)?')
 class EventStatsHandler(BaseHandler):
     def get(self, format):
         days_spent = defaultdict(float)
@@ -663,7 +674,8 @@ class EventStatsHandler(BaseHandler):
                 
             self.write_txt(out.getvalue())
         
-
+            
+@route('/user/settings(.js|/)')
 class UserSettingsHandler(BaseHandler):
     def get(self, format=None):
         # default initials
@@ -718,6 +730,7 @@ class UserSettingsHandler(BaseHandler):
         self.redirect("/")
         #self.render("user/settings-saved.html")
         
+@route('/share/$')
 class SharingHandler(BaseHandler):
     
     def get(self):
@@ -774,14 +787,14 @@ class SharingHandler(BaseHandler):
         self.write('Ok')
 
         
+@route('/user/account/')
 class AccountHandler(BaseHandler):
     def get(self):
         self.render("user/account.html")
         
         
-
+@route('/user/signup/')
 class SignupHandler(BaseHandler):
-    
           
     def get(self):
         if self.get_argument('validate_email', None):
@@ -840,6 +853,7 @@ class SignupHandler(BaseHandler):
 
 
 
+@route('/auth/login/')
 class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
     
 #    @tornado.web.asynchronous
@@ -891,6 +905,7 @@ class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
         
 
 
+@route(r'/auth/logout/')
 class AuthLogoutHandler(BaseHandler):
     def get(self):
         self.clear_cookie("user")
@@ -900,6 +915,7 @@ class AuthLogoutHandler(BaseHandler):
         self.redirect(self.get_argument("next", "/"))
 
 
+@route(r'/help/(\w*)')
 class HelpHandler(BaseHandler):
     
     def get(self, page):
