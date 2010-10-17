@@ -448,7 +448,10 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         # nothing is checked
         self.assertTrue(not response.body.count('checked'))
-        
+        self.assertTrue('name="hide_weekend"' in response.body)
+        self.assertTrue('name="monday_first"' in response.body)
+        self.assertTrue('name="disable_sound"' in response.body)
+
         response = self.get('/user/settings.js')
         self.assertEqual(response.code, 200)
         json_str = re.findall('{.*?}', response.body)[0]
@@ -456,7 +459,8 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(settings['hide_weekend'], False)
         self.assertEqual(settings['monday_first'], False)
         
-        data = {'hide_weekend':True}
+        data = {'hide_weekend':True,
+                'disable_sound':True}
         response = self.post('/user/settings/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
@@ -468,6 +472,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
           'user.$id': user._id
         })
         self.assertTrue(user_settings.hide_weekend)
+        self.assertTrue(user_settings.disable_sound)
         self.assertFalse(user_settings.monday_first)
         
     

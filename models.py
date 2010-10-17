@@ -57,6 +57,7 @@ class UserSettings(BaseDocument):
       'user': User,
       'monday_first': bool,
       'hide_weekend': bool,
+      'disable_sound': bool,
     }
     use_autorefs = True
     
@@ -64,6 +65,7 @@ class UserSettings(BaseDocument):
     default_values = {
       'monday_first': False,
       'hide_weekend': False,
+      'disable_sound': False,
     }
     
     indexes = [

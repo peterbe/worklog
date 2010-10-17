@@ -1,9 +1,14 @@
+* (HIGH) LAUNCH!
+
+* (HIGH) moving an event resets colour on shared calendars
+
+* (MEDIUM) Help page about playing sounds
+
 * (HIGH) Once logged in, ability to change things
 
 * (MEDIUM) More API for editing or viewing an event
 * (MEDIUM) tests for previewing and editing events in API
 
-* (HIGH) LAUNCH!
 
 * (MEDIUM) Improve test coverage
 

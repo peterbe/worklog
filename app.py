@@ -168,7 +168,8 @@ class BaseHandler(tornado.web.RequestHandler):
         options = {}
         # default settings
         settings = dict(hide_weekend=False,
-                        monday_first=False)
+                        monday_first=False,
+                        disable_sound=False)
 
         user = self.get_secure_cookie('user')
         user_name = None
@@ -187,11 +188,11 @@ class BaseHandler(tornado.web.RequestHandler):
             if user_settings:
                 settings['hide_weekend'] = user_settings.hide_weekend
                 settings['monday_first'] = user_settings.monday_first
+                settings['disable_sound'] = user_settings.disable_sound
                 
         options['user'] = user
         options['user_name'] = user_name
         options['settings'] = settings
-        
         
         return options
     
@@ -668,6 +669,7 @@ class UserSettingsHandler(BaseHandler):
         # default initials
         hide_weekend = False
         monday_first = False
+        disable_sound = False
         
         user = self.get_current_user()
         if user:
@@ -675,6 +677,7 @@ class UserSettingsHandler(BaseHandler):
             if user_settings:
                 hide_weekend = user_settings.hide_weekend
                 monday_first = user_settings.monday_first
+                disable_sound = user_settings.disable_sound
             else:
                 user_settings = self.db.user_settings.UserSettings()
                 user_settings.user = user
@@ -682,7 +685,8 @@ class UserSettingsHandler(BaseHandler):
 
         if format == '.js':
             data = dict(hide_weekend=hide_weekend,
-                        monday_first=monday_first)
+                        monday_first=monday_first,
+                        disable_sound=disable_sound)
             self.set_header("Content-Type", "text/javascript; charset=UTF-8")
             self.set_header("Cache-Control", "public,max-age=0")
             self.write('var SETTINGS=%s;' % tornado.escape.json_encode(data))
@@ -702,13 +706,14 @@ class UserSettingsHandler(BaseHandler):
         if user_settings:
             hide_weekend = user_settings.hide_weekend
             monday_first = user_settings.monday_first
+            disable_sound = user_settings.disable_sound
         else:
             user_settings = self.db.user_settings.UserSettings()
             user_settings.user = user
             user_settings.save()
                 
-        user_settings['monday_first'] = bool(self.get_argument('monday_first', None))
-        user_settings['hide_weekend'] = bool(self.get_argument('hide_weekend', None))
+        for key in ('monday_first', 'hide_weekend', 'disable_sound'):
+            user_settings[key] = bool(self.get_argument(key, None))
         user_settings.save()
         self.redirect("/")
         #self.render("user/settings-saved.html")
@@ -947,3 +952,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    
