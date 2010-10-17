@@ -1,3 +1,4 @@
+* (HIGH) Once logged in, ability to change things
 
 * (MEDIUM) More API for editing or viewing an event
 * (MEDIUM) tests for previewing and editing events in API

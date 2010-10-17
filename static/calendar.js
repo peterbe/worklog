@@ -281,10 +281,18 @@ function __inner_setup_ajaxsubmit(element, event_id) {
                 if ($.inArray(tag, AVAILABLE_TAGS) == -1)
                    AVAILABLE_TAGS.push(tag);
               });
+	    
+	    
 
             if (!response.error) {
                $('#calendar').fullCalendar('refetchEvents');
                $('#calendar').fullCalendar('render');
+	       
+	       $.getScript(JS_URLS.soundmanager2, function() {
+		  soundManager.createSound('pling', SOUND_URLS.pling);
+		  soundManager.play('pling');
+	       });
+	       
             }
 	 }
       });
