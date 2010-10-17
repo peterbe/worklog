@@ -21,7 +21,9 @@ from tornado.options import define, options
 from models import Event, User, UserSettings, Share
 from utils import parse_datetime, encrypt_password, niceboolean, \
   DatetimeParseError
-from utils.routes import route  
+from utils.routes import route
+from utils.git import get_git_revision
+
 import ui_modules
 ################################################################################
 
@@ -75,6 +77,7 @@ class Application(tornado.web.Application):
             cookie_secret="11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
             login_url="/auth/login",
             debug=options.debug,
+            git_revision=get_git_revision(),
         )
         tornado.web.Application.__init__(self, handlers, **settings)
         
@@ -201,6 +204,8 @@ class BaseHandler(tornado.web.RequestHandler):
         options['user'] = user
         options['user_name'] = user_name
         options['settings'] = settings
+        
+        options['git_revision'] = self.application.settings['git_revision']
         
         return options
     
