@@ -8,3 +8,5 @@ db/
 mongodb
 tags
 *.py.done
+build/
+pip-log.txt
