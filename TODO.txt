@@ -1,7 +1,5 @@
 * (HIGH) Find out why all CSS is lost when an event is added
 
-* (HIGH) Fix caching problem with getScript()
-
 * (HIGH) moving an event resets colour on shared calendars
 
 * (HIGH) Once logged in, ability to change things
