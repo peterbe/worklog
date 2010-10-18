@@ -206,6 +206,7 @@ class BaseHandler(tornado.web.RequestHandler):
         options['settings'] = settings
         
         options['git_revision'] = self.application.settings['git_revision']
+        options['total_no_events'] = self.db.events.find().count()
         
         return options
     
@@ -517,6 +518,8 @@ class EventHandler(BaseHandler):
             assert action == 'edit'
             title = self.get_argument('title')
             external_url = self.get_argument('external_url', u"")
+            if external_url == u"URL: (optional)":
+                external_url = u""
             if external_url:
                 # check that it's valid
                 from urlparse import urlparse

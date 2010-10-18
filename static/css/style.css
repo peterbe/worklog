@@ -842,6 +842,10 @@ p.taxonomy-people {
 	background: #eee;
 	color: #14568a;
 }
+.creds .footer-stats {
+        float:right;
+        font-size:10px;
+}
 
 
 #login {

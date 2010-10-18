@@ -134,6 +134,7 @@ function _event_clicked(event, jsEvent, view) {
                   current_tooltip.qtip('hide');
                   current_tooltip = null;
                }
+               decrement_total_no_events();
                $('#calendar').fullCalendar('removeEvents', event.id);
                $('#calendar').fullCalendar('refetchEvents');
                $('#calendar').fullCalendar('render');
@@ -264,10 +265,13 @@ function __inner_setup_ajaxsubmit(element, event_id) {
          success: function(response) {
 	    if (response.error)
 	      alert(response.error);
-
-	    if (!SETTINGS.disable_sound && soundManager.enabled) {
-	       soundManager.play('pling');
-	    }
+            
+            if (!event_id) {
+               if (!SETTINGS.disable_sound && soundManager.enabled) {
+                  soundManager.play('pling');
+               }
+               increment_total_no_events();
+            }
 	    
 	    // close any open qtip
 	    if (current_tooltip) {
@@ -275,10 +279,6 @@ function __inner_setup_ajaxsubmit(element, event_id) {
                current_tooltip = null;
             }
 
- 	    //if (response.event) {
-            //   $('#calendar').fullCalendar('removeEvents', event_id);
-            //   $('#calendar').fullCalendar('renderEvent', response.event, false);
-            //}
             if (response.tags)
               $.each(response.tags, function(i, tag) {
                 if ($.inArray(tag, AVAILABLE_TAGS) == -1)
@@ -286,8 +286,13 @@ function __inner_setup_ajaxsubmit(element, event_id) {
               });
 	    
             if (!response.error) {
-               $('#calendar').fullCalendar('refetchEvents');
-               $('#calendar').fullCalendar('render');
+               if (event_id) {
+                  // it was an edit
+                  $('#calendar').fullCalendar('refetchEvents');
+                  $('#calendar').fullCalendar('render');
+               } else {
+                  $('#calendar').fullCalendar('renderEvent', response.event);
+               }
 	       
             }
 	 }
@@ -351,7 +356,6 @@ function __display_current_sharers(sharers) {
 			  .append($('<a href="#"></a>')
 				  .text(share.full_name)));
       }
-
 
       $('.' + className + ', .fc-agenda .' + className + ' .fc-event-time, .' + className + ' a'
           ).css('background-color', color).css('border-color', color);
