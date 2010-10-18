@@ -49,13 +49,14 @@ function get_add_form(action, date, all_day) {
    $('input[name="date"]', f).val(date.getTime());
    if (all_day)
      $('input[name="all_day"]', f).val('1');
-   else;
+   else
      $('input[name="all_day"]', f).val('');
    return f;
 }
 
 var current_tooltip;
 function _day_clicked(date, allDay, jsEvent, view) {
+   L('allDay', allDay);
    var url = '/events';
    var qtip_options = {
       content: {
