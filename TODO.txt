@@ -1,7 +1,12 @@
-* (HIGH) Fix caching problem with getScript()
-
 * (BUG) Adding events reloads /events.json when it should only reload
   stats
+
+* (BUG) Deleting events reloads /events.json
+
+* (HIGH) Replace jquery UI for doing autocomplete. CSS too bloated
+
+* (HIGH) Fix caching problem with getScript()
+
 
 * (HIGH) moving an event resets colour on shared calendars
 
