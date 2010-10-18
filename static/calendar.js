@@ -72,16 +72,17 @@ function _day_clicked(date, allDay, jsEvent, view) {
               _setup_ajaxsubmit(this);
               return false;
            });
+	   __setup_tag_autocomplete($('input[name="title"]:visible'));
+	   $('input[name="title"]:visible').focus();
         }
       }
    };
    qtip_options = $.extend(qtip_options, __standard_qtip_options());
    current_tooltip = $(this);
    current_tooltip.qtip(qtip_options);
-   setTimeout(function() {
-      $('input[name="title"]:visible').focus();
-      __setup_tag_autocomplete($('input[name="title"]:visible'));
-   }, 500);
+//   setTimeout(function() {
+//      $('input[name="title"]:visible').focus();
+//   }, 500);
 }
 
 function _event_clicked(event, jsEvent, view) {
@@ -100,9 +101,21 @@ function _event_clicked(event, jsEvent, view) {
       
       $('form.edit').submit(function() {
          _setup_ajaxsubmit(this, event.id);
+	 
          return false;
       });
-      $('input[name="title"]').focus();
+
+      if ($('form.edit input[name="title"]:visible').size()) {
+	 __setup_tag_autocomplete($('form.edit input[name="title"]'));
+	 $('form.edit input[name="title"]').focus();
+      } else {
+	 // it hasn't been loaded yet :(
+	 setTimeout(function() {
+	    __setup_tag_autocomplete($('form.edit input[name="title"]'));
+	    $('form.edit input[name="title"]').focus();
+	 }, 500);
+      }
+      
       if (!$('input[name="external_url"]').val()) {
          $('input[name="external_url"]')
            .addClass('placeholdervalue')
@@ -219,8 +232,17 @@ function __setup_tag_autocomplete(jelement) {
    function extractLast(term ) {
       return split(term).pop();
    }
-
-   jelement.autocomplete({
+   
+   jelement.autocomplete(AVAILABLE_TAGS, {
+	autoFill: false,
+	multiple: true,
+	multipleSeparator: ' ',
+	formatItem: function(row) {
+	   return row[0] + ' ';
+	}
+   });
+   /*
+   jelement.autocomplete(
       minLength: 1,
       delay: 100,
       source: function(request, response ) {
@@ -249,6 +271,7 @@ function __setup_tag_autocomplete(jelement) {
          return false;
       }
    });
+    */
 }
 
 function _setup_ajaxsubmit(element, event_id) {
