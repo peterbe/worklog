@@ -1,4 +1,7 @@
-* (HIGH) LAUNCH!
+* (HIGH) Fix caching problem with getScript()
+
+* (BUG) Adding events reloads /events.json when it should only reload
+  stats
 
 * (HIGH) moving an event resets colour on shared calendars
 

@@ -5,7 +5,6 @@ function L() {
 }
 
 
-
 function __standard_qtip_options() {
   return {
      position: {
@@ -56,7 +55,6 @@ function get_add_form(action, date, all_day) {
 
 var current_tooltip;
 function _day_clicked(date, allDay, jsEvent, view) {
-   L('allDay', allDay);
    var url = '/events';
    var qtip_options = {
       content: {
