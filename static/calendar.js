@@ -136,8 +136,12 @@ function _event_clicked(event, jsEvent, view) {
                }
                decrement_total_no_events();
                $('#calendar').fullCalendar('removeEvents', event.id);
-               $('#calendar').fullCalendar('refetchEvents');
-               $('#calendar').fullCalendar('render');
+	       //__update_described_colors();
+	       var view = $('#calendar').fullCalendar('getView');
+	       display_sidebar_stats_wrapped(view.start, view.end);
+	       __update_described_colors();
+               //$('#calendar').fullCalendar('refetchEvents');
+               //$('#calendar').fullCalendar('render');
                
             });
             return false;
@@ -193,6 +197,8 @@ function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view
          revertFunc();
       }
       display_sidebar_stats_wrapped(view.start, view.end);
+      __update_described_colors();
+
    });
 }
 
@@ -202,6 +208,7 @@ function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc) {
          alert(response.error);
          revertFunc();
       }
+      __update_described_colors();
    });
 }
 
@@ -286,13 +293,10 @@ function __inner_setup_ajaxsubmit(element, event_id) {
               });
 	    
             if (!response.error) {
-               if (event_id) {
-                  // it was an edit
-                  $('#calendar').fullCalendar('refetchEvents');
-                  $('#calendar').fullCalendar('render');
-               } else {
-                  $('#calendar').fullCalendar('renderEvent', response.event);
-               }
+	       $('#calendar').fullCalendar('renderEvent', response.event);
+	       var view = $('#calendar').fullCalendar('getView');
+	       display_sidebar_stats_wrapped(view.start, view.end);
+	       __update_described_colors();
 	       
             }
 	 }
@@ -324,6 +328,7 @@ function __hide_share(share) {
  */
 var colors = '#5C8D87,#994499,#6633CC,#B08B59,#DD4477,#22AA99,#668CB3,#DD5511,#D6AE00,#668CD9,#3640AD'.split(',');
 var described_classNames = new Array();
+var described_colors = {};
 function __display_current_sharers(sharers) {
    var container = $('#current-sharers ul');
    var any = false;
@@ -357,12 +362,12 @@ function __display_current_sharers(sharers) {
 				  .text(share.full_name)));
       }
 
-      $('.' + className + ', .fc-agenda .' + className + ' .fc-event-time, .' + className + ' a'
-          ).css('background-color', color).css('border-color', color);
-      
+      described_colors[className] = color;
       any = true;
    });
+   
    if (any) {
+      __update_described_colors();
       if (SETTINGS.hidden_shares) {
          $.each(SETTINGS.hidden_shares, function(i, share) {
             _share_toggles[share.className] = false;
@@ -374,6 +379,17 @@ function __display_current_sharers(sharers) {
       
       $('#current-sharers').show();
    }
+}
+
+function __update_described_colors() {
+   $.each(described_colors, function(className, color) {
+      $('.' + className + ', .fc-agenda .' + className + ' .fc-event-time, .' + className + ' a'
+	  ).css('background-color', color).css('border-color', color);
+      if (!_share_toggles[className]) 
+	$('div.' + className, '#calendar').fadeOut(0);
+   });
+      
+
 }
 
 var AVAILABLE_TAGS = [];
@@ -444,6 +460,7 @@ $(function() {
          href += ',' + (view.start.getMonth() + 1);
          href += ',' + view.start.getDate();
          location.href = href;
+	 
       }
    });
    
