@@ -1,7 +1,4 @@
-* (BUG) Adding events reloads /events.json when it should only reload
-  stats
-
-* (BUG) Deleting events reloads /events.json
+* (HIGH) Find out why all CSS is lost when an event is added
 
 * (HIGH) Replace jquery UI for doing autocomplete. CSS too bloated
 
