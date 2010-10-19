@@ -209,3 +209,21 @@ class APITestCase(base.BaseHTTPTestCase):
         response = self.post('/api/events.json', data)
         self.assertEqual(response.code, 400)
         
+    def test_posting_not_all_day_without_date(self):
+        from models import User
+        peter = self.get_db().users.User()
+        assert peter.guid
+        peter.save()
+
+        data = dict(guid=peter.guid, title="done", all_day='false')
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 201)
+        
+        struct = json.loads(response.body)
+        
+        self.assertTrue(not struct['event']['allDay'])
+        start = datetime.datetime.fromtimestamp(struct['event']['start'])
+        end = datetime.datetime.fromtimestamp(struct['event']['end'])
+        self.assertEqual((end - start).seconds, 60*60)
+        self.assertTrue(not (start.hour==0 and start.minute==0 and start.second==0))
+        

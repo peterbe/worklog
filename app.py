@@ -415,10 +415,17 @@ class EventsHandler(BaseHandler):
         elif self.get_argument('start', None) or self.get_argument('end', None):
             raise tornado.web.HTTPError(400, "Need both 'start' and 'end'")
         else:
-            date = datetime.date.today()
-            date = datetime.datetime(date.year, date.month, date.day, 0, 0, 0)
-            start = end = date
-            all_day = True
+            # if no date of any kind was specified, assume that it was an all day
+            # event unless it explicitely set all_day=False
+            if self.get_argument('all_day', -1) != -1 and not all_day:
+                start = datetime.datetime.now()
+                end = start + datetime.timedelta(hours=1)
+                all_day = False
+            else:
+                date = datetime.date.today()
+                date = datetime.datetime(date.year, date.month, date.day, 0, 0, 0)
+                start = end = date
+                all_day = True
         
         tags = list(set([x[1:] for x in re.findall(r'\B@[\w-]+', title)]))
         self.case_correct_tags(tags, user)
