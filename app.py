@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #
+import httplib
 from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import InvalidId, ObjectId
@@ -233,7 +234,17 @@ class APIHandlerMixin(object):
             
         self.set_header('Content-Type', 'text/plain')
         return False
-    
+
+    def check_xsrf_cookie(self):
+        """use this to check the guid"""
+        if not self.check_guid():
+            raise tornado.web.HTTPError(403, "guid not right")
+        
+    def get_error_html(self, status_code, **kwargs):
+        return "ERROR: %(code)d: %(message)s\n" % \
+         dict(code=status_code, 
+              message=httplib.responses[status_code])
+
 
 @route('/')
 class HomeHandler(BaseHandler):
@@ -447,7 +458,7 @@ class EventsHandler(BaseHandler):
 
         
 @route(r'/api/events(\.json|\.js|\.xml|\.txt)?')
-class APIEventsHandler(EventsHandler, APIHandlerMixin):
+class APIEventsHandler(APIHandlerMixin, EventsHandler):
     
     def get(self, format=None):
         if not self.check_guid():
@@ -473,11 +484,12 @@ class APIEventsHandler(EventsHandler, APIHandlerMixin):
         
     def post(self, format):
         
+        if not self.application.settings.get('xsrf_cookies'):
+            if not self.check_guid():
+                return
+            
         def get(key):
             return self.get_argument(key, None)
-        
-        if not self.check_guid():
-            return 
             
         if not get('title'):
             self.set_status(400)

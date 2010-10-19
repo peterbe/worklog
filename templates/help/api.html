@@ -44,7 +44,7 @@ The format (<code>.json</code>, <code>.xml</code> or <code>.txt</code>) is optio
 </p>
 
 <p><strong>Example:</strong></p>
-<pre>$ curl -X POST -f guid={{ sample_guid }} -f title="@api test" date={{ sample_start_timestamp }} -f all_day=true \
+<pre>$ curl -X POST -d guid={{ sample_guid }} -d title="@api test" -d date={{ sample_start_timestamp }} -d all_day=true \
  {{ base_url }}/api/events
 {"event": {"start": {{ sample_start_timestamp }},
            "end": {{ sample_start_timestamp }},
