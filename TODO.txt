@@ -1,5 +1,6 @@
 * (HIGH) Find out why all CSS is lost when an event is added
 
+
 * (HIGH) moving an event resets colour on shared calendars
 
 * (HIGH) Once logged in, ability to change things
