@@ -69,6 +69,10 @@ function _day_clicked(date, allDay, jsEvent, view) {
       api: {
         onShow: function(event) {
            $('form:visible').submit(function() {
+	      if (!SETTINGS.disable_sound && soundManager.enabled) {
+                  soundManager.play('pling');
+               }
+	      L("sound played");
               _setup_ajaxsubmit(this);
               return false;
            });
@@ -280,7 +284,6 @@ function _setup_ajaxsubmit(element, event_id) {
    });
 }
 function __inner_setup_ajaxsubmit(element, event_id) {
-
       $(element).ajaxSubmit({
          beforeSubmit: function(arr, form, options) {
 	    var _all_good = true;
@@ -297,9 +300,6 @@ function __inner_setup_ajaxsubmit(element, event_id) {
 	      alert(response.error);
             
             if (!event_id) {
-               if (!SETTINGS.disable_sound && soundManager.enabled) {
-                  soundManager.play('pling');
-               }
                increment_total_no_events();
             }
 	    
