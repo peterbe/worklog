@@ -1,3 +1,6 @@
+* (HIGH) Resizing a all_day=false event from the month view should
+  yield and error.
+  
 * (HIGH) Find out why all CSS is lost when an event is added
 
 * (HIGH) moving an event resets colour on shared calendars

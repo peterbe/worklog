@@ -620,6 +620,16 @@ class ApplicationTestCase(BaseHTTPTestCase):
         
         user = db.users.User.one(dict(email='bob@test.com'))
         self.assertEqual(user.last_name, data['last_name'].strip())
+        
+        # log out
+        response = self.get('/auth/logout/', headers={'Cookie':cookie}, 
+                            follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        self.assertTrue('user=;' in response.headers['Set-Cookie'])
+        self.assertTrue('guid=;' in response.headers['Set-Cookie'])
+        self.assertTrue('shares=;' in response.headers['Set-Cookie'])
+        self.assertTrue('hidden_shares=;' in response.headers['Set-Cookie'])
+        
 
         
         

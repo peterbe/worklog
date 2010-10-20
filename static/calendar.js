@@ -468,6 +468,7 @@ $(function() {
       year: year,
       month: month,
       date: day,
+      timeFormat: 'h(:mm)tt',
       defaultView: defaultView,
       editable: true,
       aspectRatio: 1.5, // 1.35 is default
