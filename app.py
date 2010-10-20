@@ -21,9 +21,10 @@ from tornado.options import define, options
 
 from models import Event, User, UserSettings, Share
 from utils import parse_datetime, encrypt_password, niceboolean, \
-  DatetimeParseError
+  DatetimeParseError, valid_email
 from utils.routes import route
 from utils.git import get_git_revision
+from utils.decorators import login_required
 
 import ui_modules
 ################################################################################
@@ -32,33 +33,12 @@ define("debug", default=False, help="run in debug mode", type=bool)
 define("port", default=8000, help="run on the given port", type=int)
 define("database_name", default="worklog", help="mongodb database name")
 define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
-#define("mysql_host", default="127.0.0.1:3306", help="blog database host")
-#define("mysql_database", default="blog", help="blog database name")
-#define("mysql_user", default="blog", help="blog database user")
-#define("mysql_password", default="blog", help="blog database password")
+define("showurls", default=False, help="Show all routed URLs", type=bool)
 
 MAX_TITLE_LENGTH = 500
 
 class Application(tornado.web.Application):
     def __init__(self, database_name=None, xsrf_cookies=True):
-        #handlers = [
-        #    (r"/", HomeHandler),
-        #    (r"/events/stats(\.json|\.xml|\.txt)?", EventStatsHandler),
-        #    (r"/events(\.json|\.js|\.xml|\.txt)?", EventsHandler),
-        #    (r"/api/events(\.json|\.js|\.xml|\.txt)?", APIEventsHandler),
-        #    (r"/event/(edit|resize|move|delete|)", EventHandler),
-        #    (r"/user/settings(.js|/)", UserSettingsHandler),
-        #    (r"/user/account/", AccountHandler),
-        #    (r"/share/$", SharingHandler),
-        #    (r"/user/signup/", SignupHandler),
-        #    #(r"/archive", ArchiveHandler),
-        #    #(r"/feed", FeedHandler),
-        #    #(r"/entry/([^/]+)", EntryHandler),
-        #    #(r"/compose", ComposeHandler),
-        #    (r"/auth/login/", AuthLoginHandler),
-        #    (r"/auth/logout/", AuthLogoutHandler),
-        #    (r"/help/(\w*)", HelpHandler),
-        #]
         ui_modules_map = {} 
         for name in [x for x in dir(ui_modules) if re.findall('[A-Z]\w+', x)]:
             thing = getattr(ui_modules, name)
@@ -70,10 +50,7 @@ class Application(tornado.web.Application):
             title=u"Donecal",
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "static"),
-            ui_modules=ui_modules_map,#{'Settings': ui_modules.Settings,
-                       # 'Footer': ui_modules.Footer,
-                       # 'EventPreview': ui_modules.EventPreview,
-                       # },
+            ui_modules=ui_modules_map,
             xsrf_cookies=xsrf_cookies,
             cookie_secret="11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
             login_url="/auth/login",
@@ -89,10 +66,6 @@ class Application(tornado.web.Application):
         self.con.register([Event, User, UserSettings, Share])
         #self.db = Connection()
         
-        #self.db = tornado.database.Connection(
-        #    host=options.mysql_host, database=options.mysql_database,
-        #    user=options.mysql_user, password=options.mysql_password)
-
 
 class BaseHandler(tornado.web.RequestHandler):
     @property
@@ -817,8 +790,42 @@ class SharingHandler(BaseHandler):
 @route('/user/account/')
 class AccountHandler(BaseHandler):
     def get(self):
-        self.render("user/account.html")
+        if self.get_secure_cookie('user'):
+            user = self.db.users.User.one(dict(guid=self.get_secure_cookie('user')))
+            if not user:
+                return self.write("Error. User does not exist")
+            options = dict(
+              email=user.email,
+              first_name=user.first_name,
+              last_name=user.last_name,
+            )
+    
+            self.render("user/change-account.html", **options)
+        else:
+            self.render("user/account.html")
+            
+    @login_required
+    def post(self):
+        email = self.get_argument('email').strip()
+        first_name = self.get_argument('first_name', u"").strip()
+        last_name = self.get_argument('last_name', u"").strip()
         
+        if not valid_email(email):
+            raise tornado.web.HTTPError(400, "Not a valid email address")
+
+        guid = self.get_secure_cookie('user')
+        user = self.db.users.User.one(dict(guid=guid))
+        
+        existing_user = self.find_user(email)
+        if existing_user and existing_user != user:
+            raise tornado.web.HTTPError(400, "Email address already used by someone else")
+
+        user.email = email
+        user.first_name = first_name
+        user.last_name = last_name
+        user.save()
+        
+        self.redirect('/')
         
 @route('/user/signup/')
 class SignupHandler(BaseHandler):
@@ -826,7 +833,7 @@ class SignupHandler(BaseHandler):
     def get(self):
         if self.get_argument('validate_email', None):
             # some delay to make brute-force testing boring
-            sleep(0.5)
+            sleep(0.5) # XXX This needs to be converted into an async call!
             
             email = self.get_argument('validate_email').strip()
             if self.has_user(email):
@@ -845,6 +852,8 @@ class SignupHandler(BaseHandler):
         
         if not email:
             return self.write("Error. No email provided")
+        elif not valid_email(email):
+            raise tornado.web.HTTPError(400, "Not a valid email address")
         if not password:
             return self.write("Error. No password provided")
         
@@ -954,30 +963,39 @@ class HelpHandler(BaseHandler):
         if os.path.isfile(os.path.join(self.application.settings['template_path'],
                                        filename)):
             if page == 'API':
-                user = self.get_current_user()
-                options['base_url'] = '%s://%s' % (self.request.protocol, 
-                                                   self.request.host)
-                options['sample_guid'] = '6a971ed0-7105-49a4-9deb-cf1e44d6c718'
-                options['guid'] = None
-                if user:
-                    options['guid'] = user.guid
-                    options['sample_guid'] = user.guid
-                
-                t = datetime.date.today()
-                first = datetime.date(t.year, t.month, 1)
-                if t.month == 12:
-                    last = datetime.date(t.year + 1, 1, 1)
-                else:
-                    last = datetime.date(t.year, t.month + 1, 1)
-                last -= datetime.timedelta(days=1)
-                options['sample_start_timestamp'] = int(mktime(first.timetuple()))
-                options['sample_end_timestamp'] = int(mktime(last.timetuple()))
+                self._extend_api_options(options)
             return self.render(filename, **options)
         raise tornado.web.HTTPError(404, "Unknown page")
+    
+    def _extend_api_options(self, options):
+        """get all the relevant extra variables for the API page"""
+        user = self.get_current_user()
+        options['base_url'] = '%s://%s' % (self.request.protocol, 
+                                           self.request.host)
+        options['sample_guid'] = '6a971ed0-7105-49a4-9deb-cf1e44d6c718'
+        options['guid'] = None
+        if user:
+            options['guid'] = user.guid
+            options['sample_guid'] = user.guid
+        
+        t = datetime.date.today()
+        first = datetime.date(t.year, t.month, 1)
+        if t.month == 12:
+            last = datetime.date(t.year + 1, 1, 1)
+        else:
+            last = datetime.date(t.year, t.month + 1, 1)
+        last -= datetime.timedelta(days=1)
+        options['sample_start_timestamp'] = int(mktime(first.timetuple()))
+        options['sample_end_timestamp'] = int(mktime(last.timetuple()))        
+    
 
 
 def main():
     tornado.options.parse_command_line()
+    if options.showurls:
+        for path, class_ in route.get_routes():
+            print path
+        return
     http_server = tornado.httpserver.HTTPServer(Application())
     print "Starting tornado on port", options.port
     if options.prefork:

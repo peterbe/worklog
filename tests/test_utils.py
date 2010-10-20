@@ -35,3 +35,11 @@ class UtilsTestCase(unittest.TestCase):
         hashed = r.split('$bcrypt$')[-1].encode('utf8')
         self.assertEqual(hashed, bcrypt.hashpw(p, hashed))
         
+    def test_valid_email(self):
+        from utils import valid_email
+        self.assertTrue(valid_email('peterbe@gmail.com'))
+        self.assertTrue(valid_email("peter'be@gmail.com"))
+        
+        self.assertTrue(not valid_email('peterbe @gmail.com'))
+        self.assertTrue(not valid_email("peter'be@gmai"))
+        

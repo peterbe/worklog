@@ -1,14 +1,12 @@
 * (HIGH) Find out why all CSS is lost when an event is added
 
-
 * (HIGH) moving an event resets colour on shared calendars
-
-* (HIGH) Once logged in, ability to change things
 
 * (MEDIUM) Help page about playing sounds
   http://www.schillmania.com/projects/soundmanager2/demo/flashblock/
 
-* (MEDIUM) More API for editing or viewing an event
+* (LOW) More API for editing or viewing an event
+
 * (MEDIUM) tests for previewing and editing events in API
 
 * (MEDIUM) App for voting on feature requests
@@ -17,9 +15,9 @@
 
 * (LOW) Get in on http://tornado.poweredsites.org/
 
-* (MEDIUM) Write Help page
-* (MEDIUM) Write API help page
-* (MEDIUM) Finish links on about.html
+* (HIGH) Write Help page
+
+* (MEDIUM) Write sample Python package for using API
 
 * (MEDIUM) Google OpenID login
 

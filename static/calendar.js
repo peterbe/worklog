@@ -105,7 +105,6 @@ function _event_clicked(event, jsEvent, view) {
       
       $('form.edit').submit(function() {
          _setup_ajaxsubmit(this, event.id);
-	 
          return false;
       });
 
@@ -316,6 +315,9 @@ function __inner_setup_ajaxsubmit(element, event_id) {
               });
 	    
             if (!response.error) {
+	       if (event_id)
+		 $('#calendar').fullCalendar('removeEvents', event_id);
+
 	       $('#calendar').fullCalendar('renderEvent', response.event);
 	       var view = $('#calendar').fullCalendar('getView');
 	       display_sidebar_stats_wrapped(view.start, view.end);

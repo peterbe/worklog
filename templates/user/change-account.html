@@ -1,0 +1,17 @@
+<form action="/user/account/" method="post">
+
+<div>
+<label>E-mail:</label>
+<input name="email" value="{{ email }}"><br>
+
+<label>First name:</label>
+<input name="first_name" value="{{ first_name }}"><br>
+
+<label>Last name:</label>
+<input name="last_name" value="{{ last_name }}"><br>
+
+<input type="submit" value="Save account">
+</div>
+
+{{ xsrf_form_html() }}
+</form>

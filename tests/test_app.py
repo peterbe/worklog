@@ -9,6 +9,7 @@ from tornado.web import RequestHandler, _O
 
 #import app
 from base import BaseHTTPTestCase
+from utils import encrypt_password
 from models import Event, User
 
         
@@ -569,6 +570,57 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user_cookie = self._decode_cookie_value('user', response.headers['Set-Cookie'])
         guid = base64.b64decode(user_cookie.split('|')[0])
         self.assertEqual(user.guid, guid)
+
+    def test_change_account(self):
+        db = self.get_db()
+        
+        
+        user = db.users.User()
+        user.email = u"peter@fry-it.com"
+        user.first_name = u"Ptr"
+        user.password = encrypt_password(u"secret")
+        user.save()
+        
+        other_user = db.users.User()
+        other_user.email = u'peterbe@gmail.com'
+        other_user.save()
+        
+        data = dict(email=user.email, password="secret")
+        response = self.post('/auth/login/', data, follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        user_cookie = self._decode_cookie_value('user', response.headers['Set-Cookie'])
+        guid = base64.b64decode(user_cookie.split('|')[0])
+        self.assertEqual(user.guid, guid)
+        cookie = 'user=%s;' % user_cookie
+        
+        response = self.get('/user/account/', headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertTrue('value="Ptr"' in response.body)
+        
+        # not logged in
+        response = self.post('/user/account/', {})
+        self.assertEqual(response.code, 403)
+        
+        # no email supplied
+        response = self.post('/user/account/', {}, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 404)
+        
+        data = {'email':'bob'}
+        response = self.post('/user/account/', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 400)
+
+        data = {'email':'PETERBE@gmail.com'}
+        response = self.post('/user/account/', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 400)
+        
+        data = {'email':'bob@test.com', 'last_name': '  Last Name \n'}
+        response = self.post('/user/account/', data, headers={'Cookie':cookie}, 
+                             follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        
+        user = db.users.User.one(dict(email='bob@test.com'))
+        self.assertEqual(user.last_name, data['last_name'].strip())
+
         
         
         
