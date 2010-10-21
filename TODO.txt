@@ -1,3 +1,5 @@
+* (HIGH) Write about python-donecal on api.html
+
 * (HIGH) Resizing a all_day=false event from the month view should
   yield and error.
   
@@ -24,13 +26,16 @@
 
 * (MEDIUM) Google OpenID login
 
-* (MEDIUM) Whoosh and Carrot
+* (LOW) Whoosh and Carrot
   http://github.com/ask/carrot
   
 * (MEDIUM) Look at this for ideas on how to use a log file
   http://groups.google.com/group/python-tornado/browse_thread/thread/6d62aec54eb47015
 
-* (LOW) Fork and write a static_url() that takes multiple files and
+* (LOW) Experiment with http://vis.stanford.edu/protovis/ to write
+  some nice stats
+  
+* (MEDIUM) Fork and write a static_url() that takes multiple files and
   combine them using timestamps instead
 
 * (LOW) Experiment with running mongodb in RAM for faster unit tests

@@ -327,7 +327,7 @@ class EventsHandler(BaseHandler):
         return data
             
     def write_events_data(self, data, format):
-        if format in ('.json', '.js'):
+        if format in ('.json', '.js', None):
             self.write_json(data, javascript=format=='.js')
         elif format == '.xml':
             self.write_xml(data)
@@ -505,6 +505,7 @@ class EventHandler(BaseHandler):
             if action == 'move':
                 all_day = niceboolean(self.get_argument('all_day', False))
         elif action == 'delete':
+            
             pass
         else:
             assert action == 'edit'
