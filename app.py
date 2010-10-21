@@ -4,7 +4,7 @@ import httplib
 from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import InvalidId, ObjectId
-from time import mktime, sleep
+from time import mktime, sleep, time
 import cStringIO
 import datetime
 import os.path
@@ -100,16 +100,16 @@ class BaseHandler(tornado.web.RequestHandler):
         self.write(str_)
         
         
-    def transform_fullcalendar_event(self, obj, serialize=False, **kwargs):
-        data = dict(title=obj.title,
-                    start=obj.start,
-                    end=obj.end,
-                    allDay=obj.all_day,
-                    id=str(obj._id))
+    def transform_fullcalendar_event(self, item, serialize=False, **kwargs):
+        data = dict(title=item['title'],
+                    start=item['start'],
+                    end=item['end'],
+                    allDay=item['all_day'],
+                    id=str(item['_id']))
             
         data.update(**kwargs)
-        if getattr(obj, 'external_url', None):
-            data['external_url'] = obj.external_url
+        if 'external_url' in item:
+            data['external_url'] = item['external_url']
             
         if serialize:
             for key, value in data.items():
@@ -130,16 +130,20 @@ class BaseHandler(tornado.web.RequestHandler):
         for tag in tags:
             search = dict(base_search, 
                           tags=re.compile(re.escape(tag), re.I))
-            for event in self.db.events.Event.find(search):
+            
+            for event in self.db.events.find(search):
                 checked_tags = []
-                for t in event.tags:
+                for t in event['tags']:
                     if t != tag and t.lower() == tag.lower():
                         checked_tags.append(tag)
                     else:
                         checked_tags.append(t)
-                if event.tags != checked_tags:
-                    event.tags = checked_tags
-                    event.save()
+                if event['tags'] != checked_tags:
+                    event['tags'] = checked_tags
+                    # because 'event' is just a dict, we need to turn it into an object
+                    # before we can save it
+                    event_obj = self.db.events.Event(event)
+                    event_obj.save()
         
         
     def find_user(self, email):
@@ -188,7 +192,7 @@ class BaseHandler(tornado.web.RequestHandler):
         if not shares: 
             shares = ''
         keys = [x for x in shares.split(',') if x]
-        return self.db.shares.Share.find({'key':{'$in':keys}})
+        return self.db.shares.find({'key':{'$in':keys}})
             
 
 class APIHandlerMixin(object):
@@ -196,8 +200,9 @@ class APIHandlerMixin(object):
     def check_guid(self):
         guid = self.get_argument('guid', None)
         if guid:
-            if self.db.users.one({'guid':guid}):
-                return True
+            user = self.db.users.one({'guid':guid})
+            if user:
+                return user
             else:
                 self.set_status(403)
                 self.write("guid not recognized")
@@ -206,7 +211,6 @@ class APIHandlerMixin(object):
             self.write("guid not supplied")
             
         self.set_header('Content-Type', 'text/plain')
-        return False
 
     def check_xsrf_cookie(self):
         """use this to check the guid"""
@@ -245,18 +249,17 @@ class HomeHandler(BaseHandler):
         
         user = options['user']
         
-        if user:
-            hidden_shares = self.get_secure_cookie('hidden_shares')
-            if not hidden_shares: 
-                hidden_shares = ''
-            hidden_keys = [x for x in hidden_shares.split(',') if x]
-            hidden_shares = []
-            for share in self.db.shares.Share.find({'key':{'$in':hidden_keys}}):
-                className = 'share-%s' % share.user._id
-                hidden_shares.append(dict(key=share.key,
-                                          className=className))
+        hidden_shares = self.get_secure_cookie('hidden_shares')
+        if not hidden_shares: 
+            hidden_shares = ''
+        hidden_keys = [x for x in hidden_shares.split(',') if x]
+        hidden_shares = []
+        for share in self.db.shares.find({'key':{'$in':hidden_keys}}):
+            className = 'share-%s' % share['user'].id
+            hidden_shares.append(dict(key=share['key'],
+                                      className=className))
 
-            options['settings']['hidden_shares'] = hidden_shares
+        options['settings']['hidden_shares'] = hidden_shares
         
         self.render("calendar.html", 
           #
@@ -288,23 +291,24 @@ class EventsHandler(BaseHandler):
         search['end'] = {'$lte': end}
 
         if user:
-            search['user.$id'] = user._id
-            for event in self.db.events.Event.find(search):
+            search['user.$id'] = user['_id']
+            for event in self.db.events.find(search):
                 events.append(self.transform_fullcalendar_event(event, True))
                 tags.update(event['tags'])
                 
         for share in self.share_keys_to_share_objects(shares):
-            search['user.$id'] = share.user._id
-            className = 'share-%s' % share.user._id
-            full_name = u"%s %s" % (share.user.first_name, share.user.last_name)
+            share_user = self.db.users.one(dict(_id=share['user'].id))
+            search['user.$id'] = share_user['_id']
+            className = 'share-%s' % share_user['_id']
+            full_name = u"%s %s" % (share_user['first_name'], share_user['last_name'])
             full_name = full_name.strip()
             if not full_name:
-                full_name = share.user.email
+                full_name = share_user['email']
             sharers.append(dict(className=className,
                                 full_name=full_name,
-                                key=share.key))
+                                key=share['key']))
                                 
-            for event in self.db.events.Event.find(search):
+            for event in self.db.events.find(search):
                 events.append(
                   self.transform_fullcalendar_event(
                     event, 
@@ -441,7 +445,8 @@ class EventsHandler(BaseHandler):
 class APIEventsHandler(APIHandlerMixin, EventsHandler):
     
     def get(self, format=None):
-        if not self.check_guid():
+        user = self.check_guid()
+        if not user:
             return 
             
         start = self.get_argument('start', None) 
@@ -454,8 +459,6 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
             self.set_status(404)
             return self.write("end timestamp not supplied")        
         
-        guid = self.get_argument('guid')
-        user = self.db.users.User.one({'guid': guid})
         shares = self.get_argument('shares', u'')#self.get_secure_cookie('shares')
         
         data = self.get_events_data(user, shares)
@@ -602,9 +605,9 @@ class EventHandler(BaseHandler):
             # Find out if for any of the shares we have access to the owner of
             # the share is the same as the owner of the event
             for share in self.share_keys_to_share_objects(shares):
-                if share.user == event.user:
-                    if share.users:
-                        if user in share.users:
+                if share['user'].id == event['user']['_id']:
+                    if share['users']:
+                        if user['_id'] in [x.id for x in share['users']]:
                             break
                     else:
                         break
@@ -631,19 +634,19 @@ class EventStatsHandler(BaseHandler):
                 end = parse_datetime(self.get_argument('end'))
                 search['end'] = {'$lte': end}
                 
-            for entry in self.db.events.Event.find(search):
-                if entry.all_day:
-                    days = 1 + (entry.end - entry.start).days
-                    if entry.tags:
-                        for tag in entry.tags:
+            for entry in self.db.events.find(search):
+                if entry['all_day']:
+                    days = 1 + (entry['end'] - entry['start']).days
+                    if entry['tags']:
+                        for tag in entry['tags']:
                             days_spent[tag] += days
                     else:
                         days_spent[u''] += days
                     
                 else:
-                    hours = (entry.end - entry.start).seconds / 60.0 / 60
-                    if entry.tags:
-                        for tag in entry.tags:
+                    hours = (entry['end'] - entry['start']).seconds / 60.0 / 60
+                    if entry['tags']:
+                        for tag in entry['tags']:
                             hours_spent[tag] += hours
                     else:
                         hours_spent[u''] += hours

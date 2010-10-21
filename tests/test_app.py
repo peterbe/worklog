@@ -532,6 +532,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         hidden_shares = base64.b64decode(hidden_shares_cookie.split('|')[0])
         
         self.assertEqual(hidden_shares, key)
+        cookie += response.headers['Set-Cookie']
+        response = self.get('/', headers={'Cookie': cookie})
+        # a setting for 'hidden_shares' is going to appear in the rendered HTML
+        self.assertTrue('hidden_shares' in response.body)
+        # so will the share key
+        self.assertTrue(share.key in response.body)
+        
         
     def test_signup(self):
         # the get method is just used to validate if an email is used another 
@@ -573,7 +580,6 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
     def test_change_account(self):
         db = self.get_db()
-        
         
         user = db.users.User()
         user.email = u"peter@fry-it.com"
