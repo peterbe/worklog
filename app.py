@@ -25,6 +25,7 @@ from utils import parse_datetime, encrypt_password, niceboolean, \
 from utils.routes import route
 from utils.git import get_git_revision
 from utils.decorators import login_required
+from utils.datatoxml import dict_to_xml
 
 import ui_modules
 ################################################################################
@@ -93,7 +94,8 @@ class BaseHandler(tornado.web.RequestHandler):
         self.write(tornado.escape.json_encode(struct))
         
     def write_xml(self, struct):
-        raise NotImplementedError
+        self.set_header("Content-Type", "text/xml; charset=UTF-8")
+        self.write(dict_to_xml(struct))
     
     def write_txt(self, str_):
         self.set_header("Content-Type", "text/plain; charset=UTF-8") # doesn;t seem to work
@@ -430,15 +432,16 @@ class EventsHandler(BaseHandler):
     def write_event(self, event, format):
         fullcalendar_event = self.transform_fullcalendar_event(event, serialize=True)
         
+        result = dict(event=fullcalendar_event,
+                      tags=['@%s' % x for x in event.tags],
+                      )
         if format == '.xml':
-            raise NotImplementedError(format)
+            self.set_header("Content-Type", "text/xml; charset=UTF-8")
+            self.write(dict_to_xml(result))
         else:
             # default is json
             self.set_header("Content-Type", "application/json")
-            self.write(tornado.escape.json_encode(
-              dict(event=fullcalendar_event,
-                   tags=['@%s' % x for x in event.tags],
-               )))
+            self.write(tornado.escape.json_encode(result))
 
         
 @route(r'/api/events(\.json|\.js|\.xml|\.txt)?')

@@ -97,6 +97,14 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertEqual(struct['events'][0]['title'], event2.title)
         self.assertEqual(struct.get('tags'), ['@Tag'])
         
+        response = self.get('/api/events.xml', data)
+        self.assertEqual(response.code, 200)
+        xml = response.body
+        #print xml
+        self.assertTrue('<allDay>false</allDay>' in xml)
+        self.assertTrue('<external_url/>' in xml)
+        self.assertTrue('<tag>@Tag</tag>' in xml)
+        
     def test_posting_events(self):
         response = self.post('/api/events.json', {})
         self.assertEqual(response.code, 404)
@@ -142,6 +150,13 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         struct_again = json.loads(response.body)
         self.assertEqual(struct_again, struct)
+        
+        # Post and expect XML
+        response = self.post('/api/events.xml', data)
+        self.assertEqual(response.code, 200)
+        self.assertTrue('<allDay>true</allDay>' in response.body)
+        self.assertTrue('<title>&lt;script&gt;' in response.body)
+        self.assertTrue('<tag>@tagged</tag>' in response.body)
         
     def test_posting_without_date(self):
         
