@@ -29,10 +29,17 @@ except ImportError:
                     
 def dict_to_xml(dict_, root_node_tagname="Result"):
     root = etree.Element(root_node_tagname)
+    assert isinstance(dict_, dict)
     _append_dict(root, dict_)
     return etree.tostring(root, pretty_print=True)
 
-def _append_dict(root, data, key=None):
+def list_to_xml(list_, key, root_node_tagname="Result"):
+    root = etree.Element(root_node_tagname)
+    assert isinstance(list_, (list, tuple))
+    _append_list(root, key, list_)
+    return etree.tostring(root, pretty_print=True)
+            
+def _append_dict(root, data):
     for key, value in data.items():
         element = etree.SubElement(root, key)
         if isinstance(value, dict):
@@ -41,15 +48,21 @@ def _append_dict(root, data, key=None):
             list_key = re.sub('ies$', '', key)
             if list_key == key:
                 list_key = re.sub('s$', '', key)
-            sub_element = etree.SubElement(element, list_key)
-            for v in value:
-                if isinstance(v, dict):
-                    _append_dict(sub_element, v)
-                else:
-                    _append_value(sub_element, v)
+            if list_key == key:
+                list_key += '_item'
+
+            _append_list(element, list_key, value)
         else:
             _append_value(element, value)
-            
+
+def _append_list(element, key, value):
+    for v in value:
+        sub_element = etree.SubElement(element, key)
+        if isinstance(v, dict):
+            _append_dict(sub_element, v)
+        else:
+            _append_value(sub_element, v)
+                
 def _append_value(element, value):
     if value is not None:
         if isinstance(value, bool):

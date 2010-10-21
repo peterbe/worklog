@@ -23,4 +23,7 @@ if __name__ == '__main__':
     import tornado.testing
     #import cProfile, pstats
     #cProfile.run('tornado.testing.main()')
-    tornado.testing.main()
+    try:
+        tornado.testing.main()
+    except KeyboardInterrupt:
+        pass # exit

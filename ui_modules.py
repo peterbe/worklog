@@ -1,6 +1,17 @@
 import tornado.web
 from utils.timesince import smartertimesince
 
+try:
+    import pygments
+    import pygments.lexers
+    from pygments.formatters import HtmlFormatter
+    __pygments__ = True
+except ImportError:
+    __pygments__ = True
+    #code = 'print "Hello World"'
+    #print highlight(code, PythonLexer(), HtmlFormatter())
+    
+
 class Footer(tornado.web.UIModule):
     def render(self):
         return self.render_string("modules/footer.html",
@@ -26,3 +37,15 @@ class EventPreview(tornado.web.UIModule):
          )
          
          
+class Syntax(tornado.web.UIModule):
+    def render(self, code, lexer_name):
+        if __pygments__:
+            lexer = pygments.lexers.get_lexer_by_name(lexer_name)
+            code = pygments.highlight(code, lexer, HtmlFormatter())
+            
+        else:
+            code = code.replace('<','&lt;').replace('>','&gt;')\
+              .replace('"','&quot;').replace('\n', '<br>')
+            code = '<pre>%s</pre>' % code
+        return code
+    

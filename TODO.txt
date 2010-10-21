@@ -1,5 +1,3 @@
-* (HIGH) Write about python-donecal on api.html
-
 * (HIGH) Resizing a all_day=false event from the month view should
   yield and error.
   

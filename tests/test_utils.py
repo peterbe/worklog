@@ -43,3 +43,35 @@ class UtilsTestCase(unittest.TestCase):
         self.assertTrue(not valid_email('peterbe @gmail.com'))
         self.assertTrue(not valid_email("peter'be@gmai"))
         
+    def test_data_to_xml(self):
+        from utils.datatoxml import dict_to_xml, list_to_xml
+        peter = {'name':'Peter', 'straight': True, 'height':1.93, 'age':30}
+        xml = dict_to_xml(peter, "Person")
+        self.assertTrue('<Person' in xml)
+        self.assertTrue('<age>30</age>' in xml)
+        self.assertTrue('<straight>true</straight>' in xml)
+        self.assertTrue('<name>Peter</name>' in xml)
+        self.assertTrue('<height>1.93</height>' in xml)
+        self.assertTrue('</Person>' in xml)
+        
+        wilson = {'name':u'Wilson', 'straight': False, 'height':1.73, 'age':None}
+        xml = dict_to_xml(wilson, "Person")
+        self.assertTrue('<age/>' in xml)
+        self.assertTrue('<straight>false</straight>' in xml)
+        self.assertTrue('<name>Wilson</name>' in xml)
+        people = [peter, wilson]
+        
+        xml = list_to_xml(people, "person")
+        self.assertEqual(xml.count('<person>'), 2)
+        self.assertTrue('<height>1.93</height>' in xml)
+        self.assertTrue('<height>1.73</height>' in xml)
+        self.assertTrue('<age>30</age>' in xml)
+        self.assertTrue('<age/>' in xml)
+        
+        xml = dict_to_xml(dict(people=people), "People")
+        
+        pig = {'legs': 4, 'color': 'pink', 'eggs': None}
+        chicken = {'legs': 2, 'color':'white', 'eggs':2}
+        animals = [pig, chicken]
+        
+        
