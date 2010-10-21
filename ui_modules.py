@@ -7,7 +7,7 @@ try:
     from pygments.formatters import HtmlFormatter
     __pygments__ = True
 except ImportError:
-    __pygments__ = True
+    __pygments__ = False
     #code = 'print "Hello World"'
     #print highlight(code, PythonLexer(), HtmlFormatter())
     
