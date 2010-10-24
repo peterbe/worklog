@@ -10,7 +10,7 @@
 
 * (LOW) More API for editing or viewing an event
 
-* (MEDIUM) tests for previewing and editing events in API
+* (LOW) tests for previewing and editing events in API
 
 * (MEDIUM) App for voting on feature requests
 
@@ -20,7 +20,7 @@
 
 * (HIGH) Write Help page
 
-* (MEDIUM) Write sample Python package for using API
+* (MEDIUM) Write sample Ruby package for using API
 
 * (MEDIUM) Google OpenID login
 
@@ -33,9 +33,6 @@
 * (LOW) Experiment with http://vis.stanford.edu/protovis/ to write
   some nice stats
   
-* (MEDIUM) Fork and write a static_url() that takes multiple files and
-  combine them using timestamps instead
-
 * (LOW) Experiment with running mongodb in RAM for faster unit tests
   http://www.phpmoadmin.com/mongodb-in-memory-database
   

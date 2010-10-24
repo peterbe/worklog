@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block extra_head %}
-        <link rel="stylesheet" type="text/css" href="{{ static_url("css/fullcalendar.css") }}">
+       {{ modules.Static("css/fullcalendar.css", "css/jquery.jqplot.min.css", "css/jquery.autocomplete.css") }}
+        <!--<link rel="stylesheet" type="text/css" href="{{ static_url("css/fullcalendar.css") }}">
         <link rel="stylesheet" type="text/css" href="{{ static_url("css/jquery.jqplot.min.css") }}">
-        <link rel="stylesheet" type="text/css" href="{{ static_url("css/jquery.autocomplete.css") }}">	
+        <link rel="stylesheet" type="text/css" href="{{ static_url("css/jquery.autocomplete.css") }}">-->
 	<style type="text/css">
 	h2.fc-header-title {
 	  font-size: 130%;
@@ -69,11 +70,14 @@
 
 
 {% block extrajs %}
-<script type="text/javascript" src="{{ static_url("ext/fullcalendar.min.js") }}"></script>
+{{ modules.Static("ext/fullcalendar.js", "calendar.js", "sidebar.js", "ext/jquery-ui-1.8.4.draggable-resizable.min.js", "ext/jquery.autocomplete.pack.js") }}
+
+<!--<script type="text/javascript" src="{{ static_url("ext/fullcalendar.min.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("calendar.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("sidebar.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("ext/jquery-ui-1.8.4.draggable-resizable.min.js") }}"></script>
 <script type="text/javascript" src="{{ static_url("ext/jquery.autocomplete.pack.js") }}"></script>
+-->
 <script type="text/javascript" src="{{ static_url("ext/soundmanager2-nodebug-jsmin.js") }}"></script>
 <script type="text/javascript">
 soundManager.onready(function(status) {

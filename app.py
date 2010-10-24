@@ -5,6 +5,7 @@ from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import InvalidId, ObjectId
 from time import mktime, sleep, time
+from types import ClassType
 import cStringIO
 import datetime
 import os.path
@@ -39,12 +40,24 @@ define("showurls", default=False, help="Show all routed URLs", type=bool)
 MAX_TITLE_LENGTH = 500
 
 class Application(tornado.web.Application):
-    def __init__(self, database_name=None, xsrf_cookies=True):
+    def __init__(self, 
+                 database_name=None, 
+                 xsrf_cookies=True, 
+                 optimize_static_content=None):
         ui_modules_map = {} 
         for name in [x for x in dir(ui_modules) if re.findall('[A-Z]\w+', x)]:
             thing = getattr(ui_modules, name)
-            if issubclass(thing, tornado.web.UIModule):
-                ui_modules_map[name] = thing
+            try:
+                if issubclass(thing, tornado.web.UIModule):
+                    ui_modules_map[name] = thing
+            except TypeError:
+                # most likely a builtin class or something
+                pass
+            
+        # unless explicitly set, then if in debug mode, disable optimization
+        # of static content
+        if optimize_static_content is None:
+            optimize_static_content = not options.debug
             
         handlers = route.get_routes()
         settings = dict(
@@ -56,7 +69,12 @@ class Application(tornado.web.Application):
             cookie_secret="11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
             login_url="/auth/login",
             debug=options.debug,
+            optimize_static_content=optimize_static_content,
             git_revision=get_git_revision(),
+            CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__), 
+                                      "static", "compiler.jar"),
+            YUI_LOCATION=os.path.join(os.path.dirname(__file__), 
+                                      "static", "yuicompressor-2.4.2.jar"),
         )
         tornado.web.Application.__init__(self, handlers, **settings)
         

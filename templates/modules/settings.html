@@ -1,11 +1,11 @@
 <script type="text/javascript">
 var SETTINGS = {{ settings_json }};
 var JS_URLS = {
-  account: '{{ static_url("account.js") }}',
-  jquery_form: '{{ static_url("ext/jquery.form.js") }}',
-  jqplot: '{{ static_url("ext/jquery.jqplot.min.js") }}',
-  jqplot_pierenderer: '{{ static_url("ext/jqplot.pieRenderer.min.js") }}',
-  validate: '{{ static_url("ext/jquery.validate.min.js") }}',
-  qtip: '{{ static_url("ext/jquery.qtip-1.0.0-rc3.js") }}'
+  account: '{{ modules.StaticURL("account.js") }}',
+  jquery_form: '{{ modules.StaticURL("ext/jquery.form.js") }}',
+  jqplot: '{{ modules.StaticURL("ext/jquery.jqplot.min.js") }}',
+  jqplot_pierenderer: '{{ modules.StaticURL("ext/jqplot.pieRenderer.min.js") }}',
+  validate: '{{ modules.StaticURL("ext/jquery.validate.min.js") }}',
+  qtip: '{{ modules.StaticURL("ext/jquery.qtip-1.0.0-rc3.js") }}'
 };
 </script>

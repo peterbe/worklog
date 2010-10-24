@@ -1,3 +1,4 @@
+import os
 import re
 import bcrypt
 import datetime
@@ -14,8 +15,6 @@ def parse_datetime(datestr):
             return datetime.datetime.fromtimestamp(float(datestr)/1000)
         if len(datestr) >= len('1283140800'):
             return datetime.datetime.fromtimestamp(float(datestr))
-    
-    
     raise DatetimeParseError(datestr)
 
 
@@ -40,3 +39,22 @@ email_re = re.compile(
     r')@(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?$', re.IGNORECASE)  # domain
 def valid_email(email):
     return bool(email_re.search(email))
+
+
+def mkdir(newdir):
+    """works the way a good mkdir should :)
+        - already exists, silently complete
+        - regular file in the way, raise an exception
+        - parent directory(ies) does not exist, make them as well
+    """
+    if os.path.isdir(newdir):
+        pass
+    elif os.path.isfile(newdir):
+        raise OSError("a file with the same name as the desired " \
+                    "dir, '%s', already exists." % newdir)
+    else:
+        head, tail = os.path.split(newdir)
+        if head and not os.path.isdir(head):
+            _mkdir(head)
+        if tail:
+            os.mkdir(newdir)

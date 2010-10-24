@@ -55,5 +55,7 @@ class BaseHTTPTestCase(AsyncHTTPTestCase, LogTrapTestCase, HTTPClientMixin):
         return self._app.con[self._app.database_name]
     
     def get_app(self):
-        return app.Application(database_name='test', xsrf_cookies=False) 
+        return app.Application(database_name='test', 
+                               xsrf_cookies=False,
+                               optimize_static_content=False)
     

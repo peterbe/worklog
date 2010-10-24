@@ -8,9 +8,6 @@ Template:       genesis
 Version:        1.0
 */
 
-/*@import url(http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold);
-@import url(http://fonts.googleapis.com/css?family=Droid+Serif:regular);*/
-
 /* =Reset default browser CSS. Based on work by Eric Meyer: http://meyerweb.com/eric/tools/css/reset/index.html
 -------------------------------------------------------------- */
 
@@ -317,6 +314,7 @@ the Post and Page Edit screens.
 	padding: 75px 0 12px;
 	width: 100%;
 }
+/*
 #title {
 	float: left;
 	margin: 0 0 0 25px;
@@ -328,7 +326,6 @@ the Post and Page Edit screens.
 	width: 361px;
 	height: 69px;
 }
-/*
 #description {
 	position: absolute;
 	left: -9000px;
@@ -850,7 +847,6 @@ p.taxonomy-people {
 
 #login {
   background-color:#57554E;
-  /*background-image:url("/css");*/
   background-position:15px center;
   background-repeat:no-repeat;
   color:#DBDBDA;
