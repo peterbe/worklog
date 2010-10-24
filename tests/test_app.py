@@ -124,6 +124,9 @@ class ApplicationTestCase(BaseHTTPTestCase):
         struct = json.loads(response.body)
         event_id = struct['event']['id']
         
+        event_obj = db.events.Event.one(dict(title="Foo"))
+        self.assertTrue(event_obj.all_day)
+        
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
@@ -131,7 +134,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         
         # move it 
         data = {'id': event_id,
-                'all_day': '',
+                'all_day': 'true', # still
                 'days': '-1',
                 'minutes': 0}
         response = self.post('/event/move', data, headers={'Cookie':cookie})
@@ -141,6 +144,9 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(new_start, struct['event']['end'])
         new_start = datetime.datetime.fromtimestamp(new_start)
         self.assertEqual((today - new_start).days, 1)
+
+        event_obj = db.events.Event.one(dict(title="Foo"))
+        self.assertTrue(event_obj.all_day)
         
         # resize it
         data = {'id': event_id,
@@ -156,6 +162,16 @@ class ApplicationTestCase(BaseHTTPTestCase):
         new_start = datetime.datetime.fromtimestamp(new_start)
         new_end = datetime.datetime.fromtimestamp(new_end)
         self.assertEqual((new_end - new_start).days, 3)
+        
+        # try resizing it again in the wrong way
+        data = {'id': event_id,
+                'all_day': '',
+                'days': '0',
+                'minutes': 10}
+        response = self.post('/event/resize', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertTrue(struct.get('error'))
         
         # render the edit template
         data = {'id': event_id}
@@ -636,7 +652,6 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue('shares=;' in response.headers['Set-Cookie'])
         self.assertTrue('hidden_shares=;' in response.headers['Set-Cookie'])
         
+        
 
-        
-        
         

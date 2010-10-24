@@ -206,25 +206,24 @@ function _event_clicked(event, jsEvent, view) {
 }
 
 function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view) {
-   //revertFunc();
+   __update_described_colors();
    $.post('/event/resize', {days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
       }
       display_sidebar_stats_wrapped(view.start, view.end);
-      __update_described_colors();
 
    });
 }
 
 function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc) {
+   __update_described_colors();
    $.post('/event/move', {all_day:allDay, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
       }
-      __update_described_colors();
    });
 }
 
@@ -487,6 +486,9 @@ $(function() {
          href += ',' + view.start.getDate();
          location.href = href;
 	 
+      },
+      windowResize: function(view) {
+         __update_described_colors();
       }
    });
    

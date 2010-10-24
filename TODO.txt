@@ -1,7 +1,11 @@
-* (HIGH) Resizing a all_day=false event from the month view should
-  yield and error.
+* (HIGH) render the shared classes in calendar.html on page load (and
+  see if that helps with the reloading etc)
   
 * (HIGH) Find out why all CSS is lost when an event is added
+
+* (MEDIUM) A nice bookmarklet like social.com 
+  (download http://bookmarklet.social.com/ext/social/bookmarklet.js
+   and copy)
 
 * (HIGH) moving an event resets colour on shared calendars
 
@@ -40,5 +44,4 @@
 
 --- DOMAIN NAME ---
 
- donecal.com?
  

@@ -424,7 +424,7 @@ class EventsHandler(BaseHandler):
                 start = end = date
                 all_day = True
         
-        tags = list(set([x[1:] for x in re.findall(r'\B@[\w-]+', title)]))
+        tags = list(set([x[1:] for x in re.findall(r'\B@[\w\-\.]+', title)]))
         self.case_correct_tags(tags, user)
         
         event = self.db.events.Event.one({
@@ -529,7 +529,6 @@ class EventHandler(BaseHandler):
             if action == 'move':
                 all_day = niceboolean(self.get_argument('all_day', False))
         elif action == 'delete':
-            
             pass
         else:
             assert action == 'edit'
@@ -544,7 +543,6 @@ class EventHandler(BaseHandler):
                 if not (parsed.scheme and parsed.netloc):
                     raise tornado.web.HTTPError(400, "Invalid URL (%s)" % external_url)
 
-        
         user = self.get_current_user()
         if not user:
             return self.write(dict(error="Not logged in (no cookie)"))
@@ -563,6 +561,12 @@ class EventHandler(BaseHandler):
             raise tornado.web.HTTPError(404, "Can't find the event")
         
         if action == 'resize':
+            if event.all_day and not days and minutes:
+                return self.write_json(dict(error=\
+              "Can't resize an all-day event in minutes"))
+            elif not event.all_day and days and not minutes:
+                return self.write_json(dict(error=\
+              "Can't resize an hourly event in days"))
             event.end += datetime.timedelta(days=days, minutes=minutes)
             event.save()
         elif action == 'move':
@@ -989,8 +993,18 @@ class HelpHandler(BaseHandler):
                                        filename)):
             if page == 'API':
                 self._extend_api_options(options)
+            elif page == 'Bookmarklet':
+                self._extend_bookmarklet_options(options)
+                
             return self.render(filename, **options)
         raise tornado.web.HTTPError(404, "Unknown page")
+
+    def _extend_bookmarklet_options(self, options):
+        url = '/static/bookmarklet.js'
+        url = '%s://%s%s' % (self.request.protocol, 
+                             self.request.host,
+                             url)
+        options['full_bookmarklet_url'] = url
     
     def _extend_api_options(self, options):
         """get all the relevant extra variables for the API page"""
