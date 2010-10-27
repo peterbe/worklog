@@ -64,67 +64,8 @@ class Syntax(tornado.web.UIModule):
 _name_conversion = {}
 
 class StaticURL(tornado.web.UIModule):
-    def _combine_filename(self, names, max_length=60):
-        # expect the parameter 'names' be something like this:
-        # ['css/foo.css', 'css/jquery/datepicker.css']
-        # The combined filename is then going to be 
-        # "/tmp/foo.datepicker.css"
-        first_ext = os.path.splitext(names[0])[-1]
-        save_dir = self.handler.application.settings.get('combined_static_dir')
-        if save_dir is None:
-            save_dir = gettempdir()
-        save_dir = os.path.join(save_dir, 'combined')
-        mkdir(save_dir)
-        combined_name = []
-        for name in names:
-            name, ext = os.path.splitext(os.path.basename(name))
-            if ext != first_ext:
-                raise ValueError("Mixed file extensions (%s, %s)" %\
-                 (first_ext, ext))
-            combined_name.append(name)
-        if sum(len(x) for x in combined_name) > max_length:
-            combined_name = [x.replace('.min','.m').replace('.pack','.p')
-                             for x in combined_name]
-            combined_name = [re.sub(r'-[\d\.]+', '', x) for x in combined_name]
-            while sum(len(x) for x in combined_name) > max_length:
-                try:
-                    combined_name = [x[-2] == '.' and x[:-2] or x[:-1]
-                                 for x in combined_name]
-                except IndexError:
-                    break
-        
-        combined_name.append(first_ext[1:])
-        return os.path.join(save_dir, '.'.join(combined_name))
-    
-    def _replace_css_images_with_static_urls(self, css_code, rel_dir):
-        def replacer(match):
-            filename = match.groups()[0]
-            if (filename.startswith('"') and filename.endswith('"')) or \
-              (filename.startswith("'") and filename.endswith("'")):
-                filename = filename[1:-1]
-            if 'data:image' in filename or filename.startswith('http://'):
-                return filename
-            # It's really quite common that the CSS file refers to the file 
-            # that doesn't exist because if you refer to an image in CSS for
-            # a selector you never use you simply don't suffer.
-            # That's why we say not to warn on nonexisting files
-            new_filename = self.handler.static_url(os.path.join(rel_dir, filename))
-            return match.group().replace(filename, new_filename)
-        _regex = re.compile('url\(([^\)]+)\)')
-        css_code = _regex.sub(replacer, css_code)
-        
-        return css_code
-    
-    def _already_optimized_filename(self, file_path):
-        file_name = os.path.basename(file_path)
-        for part in ('.min.', '.minified.', '.pack.', '-jsmin.'):
-            if part in file_name:
-                return True
-        #print "NOT", repr(file_name)
-        return False
 
     def render(self, *static_urls):
-        
         # the following 4 lines will have to be run for every request. Since 
         # it's just a basic lookup on a dict it's going to be uber fast.
         basic_name = ''.join(static_urls)
@@ -201,16 +142,79 @@ class StaticURL(tornado.web.UIModule):
         _name_conversion[basic_name] = new_name
         return new_name
     
+
+    def _combine_filename(self, names, max_length=60):
+        # expect the parameter 'names' be something like this:
+        # ['css/foo.css', 'css/jquery/datepicker.css']
+        # The combined filename is then going to be 
+        # "/tmp/foo.datepicker.css"
+        first_ext = os.path.splitext(names[0])[-1]
+        save_dir = self.handler.application.settings.get('combined_static_dir')
+        if save_dir is None:
+            save_dir = gettempdir()
+        save_dir = os.path.join(save_dir, 'combined')
+        mkdir(save_dir)
+        combined_name = []
+        for name in names:
+            name, ext = os.path.splitext(os.path.basename(name))
+            if ext != first_ext:
+                raise ValueError("Mixed file extensions (%s, %s)" %\
+                 (first_ext, ext))
+            combined_name.append(name)
+        if sum(len(x) for x in combined_name) > max_length:
+            combined_name = [x.replace('.min','.m').replace('.pack','.p')
+                             for x in combined_name]
+            combined_name = [re.sub(r'-[\d\.]+', '', x) for x in combined_name]
+            while sum(len(x) for x in combined_name) > max_length:
+                try:
+                    combined_name = [x[-2] == '.' and x[:-2] or x[:-1]
+                                 for x in combined_name]
+                except IndexError:
+                    break
+        
+        combined_name.append(first_ext[1:])
+        return os.path.join(save_dir, '.'.join(combined_name))
+    
+    def _replace_css_images_with_static_urls(self, css_code, rel_dir):
+        def replacer(match):
+            filename = match.groups()[0]
+            if (filename.startswith('"') and filename.endswith('"')) or \
+              (filename.startswith("'") and filename.endswith("'")):
+                filename = filename[1:-1]
+            if 'data:image' in filename or filename.startswith('http://'):
+                return filename
+            # It's really quite common that the CSS file refers to the file 
+            # that doesn't exist because if you refer to an image in CSS for
+            # a selector you never use you simply don't suffer.
+            # That's why we say not to warn on nonexisting files
+            new_filename = self.handler.static_url(os.path.join(rel_dir, filename))
+            return match.group().replace(filename, new_filename)
+        _regex = re.compile('url\(([^\)]+)\)')
+        css_code = _regex.sub(replacer, css_code)
+        
+        return css_code
+    
+    def _already_optimized_filename(self, file_path):
+        file_name = os.path.basename(file_path)
+        for part in ('.min.', '.minified.', '.pack.', '-jsmin.'):
+            if part in file_name:
+                return True
+        #print "NOT", repr(file_name)
+        return False
+
+    
 class Static(StaticURL):
     """given a list of static resources, return the whole HTML tag"""
     def render(self, *static_urls):
-        if static_urls[0].endswith('.css'):
+        extension = static_urls[0].split('.')[-1]
+        if extension == 'css':
             template = '<link rel="stylesheet" type="text/css" href="%(url)s">'
-        elif static_urls[0].endswith('.js'):
+        elif extension == 'js':
             template = '<script type="text/javascript" src="%(url)s"></script>'
+        else:
+            raise NotImplementedError
         url = super(Static, self).render(*static_urls)
         return template % dict(url=url)
-
     
     
 def run_closure_compiler(code, jar_location, verbose=False):
@@ -269,3 +273,28 @@ def _run_yui_compressor(code, type_, jar_location):
     
     return stdoutdata
     
+
+class PlainStaticURL(tornado.web.UIModule):
+    def render(self, url):
+        return self.handler.static_url(url)
+
+class PlainStatic(tornado.web.UIModule):
+    """Render the HTML that displays a static resource without any optimization
+    or combing.
+    """
+
+    def render(self, *static_urls):
+        extension = static_urls[0].split('.')[-1]
+        if extension == 'css':
+            template = '<link rel="stylesheet" type="text/css" href="%(url)s">'
+        elif extension == 'js':
+            template = '<script type="text/javascript" src="%(url)s"></script>'
+        else:
+            raise NotImplementedError
+
+        html = []
+        for each in static_urls:
+            url = self.handler.static_url(each)
+            html.append(template % dict(url=url))
+        return "\n".join(html)
+        

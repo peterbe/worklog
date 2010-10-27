@@ -1,3 +1,5 @@
+* (HIGH) Bug: try changing user setting to start on a monday
+
 * (HIGH) render the shared classes in calendar.html on page load (and
   see if that helps with the reloading etc)
   

@@ -27,4 +27,4 @@ You start it like this:
 
         ./run_coverage_tests.sh
 	
-It will cancel the report if the tests don't pass.	
+It will cancel the report if the tests don't pass.

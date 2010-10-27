@@ -36,6 +36,7 @@ define("port", default=8000, help="run on the given port", type=int)
 define("database_name", default="worklog", help="mongodb database name")
 define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 define("showurls", default=False, help="Show all routed URLs", type=bool)
+define("dont_combine", default=False, help="Don't combine static resources", type=bool)
 
 MAX_TITLE_LENGTH = 500
 
@@ -54,6 +55,10 @@ class Application(tornado.web.Application):
                 # most likely a builtin class or something
                 pass
             
+        if options.dont_combine:
+            ui_modules_map['Static'] = ui_modules_map['PlainStatic']
+            ui_modules_map['StaticURL'] = ui_modules_map['PlainStaticURL']
+            
         # unless explicitly set, then if in debug mode, disable optimization
         # of static content
         if optimize_static_content is None:
@@ -61,7 +66,7 @@ class Application(tornado.web.Application):
             
         handlers = route.get_routes()
         settings = dict(
-            title=u"Donecal",
+            title=u"DoneCal",
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "static"),
             ui_modules=ui_modules_map,
@@ -1051,7 +1056,33 @@ class HelpHandler(BaseHandler):
         code = '\n'.join(x.lstrip() for x in code.splitlines())
         options['code_pythondonecal_1'] = code.strip()
 
-
+@route(r'/bookmarklet/')
+class Bookmarklet(BaseHandler):
+    
+    def get(self):
+        external_url = self.get_argument('external_url', u'')
+        
+        user = self.get_current_user()
+        
+        title = u""
+        doc_title = self.get_argument('doc_title', u'')
+        if doc_title:
+            tags = self._suggest_tags(user, doc_title)
+            if tags:
+                title = ' '.join(tags) + ' '
+        self.render("bookmarklet.html", 
+                    external_url=external_url, 
+                    title=title)
+        
+    def _suggest_tags(self, user, title):
+        """given a user and a title (e.g. 'Tra the la [Foo]') return a list of
+        tags that are in that string. Disregard English stopwords."""
+        tags = []
+        
+        
+        return ['@%s' % x for x in tags]
+        
+    
 def main():
     tornado.options.parse_command_line()
     if options.showurls:
