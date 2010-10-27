@@ -1,0 +1,13 @@
+#wrap {
+        padding:10px;  
+}
+h1 {
+	font-size: 19px;
+	line-height: 1.158em;
+    
+}
+input[name="title"] { 
+    font-size:15px;
+    width:80%;
+    margin:40px;
+}    

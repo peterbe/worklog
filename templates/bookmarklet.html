@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>DoneCal bookmarklet</title>
+    {{ modules.Static("css/style.css", "css/bookmarklet.css") }}
+    </head>
+    <body>
+<div id="wrap">
+<h1>Quickly save something on DoneCal</h1>
+<form action="." method="post">
+<input name="title" size="35" value="{{ title }}">
+
+{% if external_url %}
+<p>
+  <input type="checkbox" id="id_use_current_url" name="use_current_url" value="1" checked>
+  <label for="id_use_current_url">Remember that it was here on
+  <em>{{ external_url }}</em>
+  </label>
+  <input type="hidden" name="external_url" value="{{ external_url }}">
+</p>  
+{% end %}
+<div>
+  <input type="submit" value="Save on DoneCal">
+</div>
+</form>
+
+</div>
+</body>
+</html>

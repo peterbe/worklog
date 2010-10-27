@@ -5,9 +5,7 @@
   
 * (HIGH) Find out why all CSS is lost when an event is added
 
-* (MEDIUM) A nice bookmarklet like social.com 
-  (download http://bookmarklet.social.com/ext/social/bookmarklet.js
-   and copy)
+* (MEDIUM) Finish the work on bookmarklets
 
 * (HIGH) moving an event resets colour on shared calendars
 
