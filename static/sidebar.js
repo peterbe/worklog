@@ -49,7 +49,7 @@ $(function() {
          'transitionOut': 'none',
          //'type': 'iframe',
          onClosed: function() {
-            location.href='/'; // works but not ideal
+            //location.href='/'; // works but not ideal
          }
       });
       

@@ -278,21 +278,61 @@ function __setup_tag_autocomplete(jelement) {
 
 function _setup_ajaxsubmit(element, event_id) {
    $.getScript(JS_URLS.jquery_form, function() {
-      __inner_setup_ajaxsubmit(element, event_id);
+      if (is_offline) {
+	 __inner_setup_ajaxsubmit_offline(element, event_id);	
+      } else {
+	 __inner_setup_ajaxsubmit(element, event_id);
+      }
    });
 }
+
+function __inner_setup_ajaxsubmit_offline(element, event_id) {
+   
+   $(element).ajaxSubmit({beforeSubmit: function(arr, form, options) {
+      if (!__beforeSubmit_form_validate(arr, form, options)) {
+	 // consider showing a validation error
+	 return;
+      }
+	 
+      // assume that all will go well
+      //       
+      if (!event_id)
+	increment_total_no_events();
+      
+      // close any open qtip
+      if (current_tooltip) {
+	 current_tooltip.qtip('hide');
+	 current_tooltip = null;
+      }
+      
+      //if (event_id)
+      // $('#calendar').fullCalendar('removeEvents', event_id);
+      // 
+	       
+      //$('#calendar').fullCalendar('renderEvent', response.event);
+      //var view = $('#calendar').fullCalendar('getView');
+      //display_sidebar_stats_wrapped(view.start, view.end);
+      //__update_described_colors();
+   
+   }
+   });
+   
+}
+
+function __beforeSubmit_form_validate(arr, form, options) {
+   var _all_good = true;
+   $.each(arr, function(i, e) {
+      if (e.name == 'title')
+	if (!$.trim(e.value)) {
+	   _all_good = false;
+	}
+   });
+   return _all_good;
+}
+
 function __inner_setup_ajaxsubmit(element, event_id) {
       $(element).ajaxSubmit({
-         beforeSubmit: function(arr, form, options) {
-	    var _all_good = true;
-	    $.each(arr, function(i, e) {
-	       if (e.name == 'task')
-		 if (!$.trim(e.value)) {
-		    _all_good = false;
-		 }
-	    });
-	    return _all_good;
-	 },
+         beforeSubmit: __beforeSubmit_form_validate,
          success: function(response) {
 	    if (response.error)
 	      alert(response.error);

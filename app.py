@@ -183,7 +183,8 @@ class BaseHandler(tornado.web.RequestHandler):
         # default settings
         settings = dict(hide_weekend=False,
                         monday_first=False,
-                        disable_sound=False)
+                        disable_sound=False,
+                        offline_mode=False)
 
         user = self.get_secure_cookie('user')
         user_name = None
@@ -203,6 +204,7 @@ class BaseHandler(tornado.web.RequestHandler):
                 settings['hide_weekend'] = user_settings.hide_weekend
                 settings['monday_first'] = user_settings.monday_first
                 settings['disable_sound'] = user_settings.disable_sound
+                settings['offline_mode'] = getattr(user_settings, 'offline_mode', False)
                 
         options['user'] = user
         options['user_name'] = user_name
@@ -716,6 +718,7 @@ class UserSettingsHandler(BaseHandler):
         hide_weekend = False
         monday_first = False
         disable_sound = False
+        offline_mode = False
         
         user = self.get_current_user()
         if user:
@@ -724,6 +727,7 @@ class UserSettingsHandler(BaseHandler):
                 hide_weekend = user_settings.hide_weekend
                 monday_first = user_settings.monday_first
                 disable_sound = user_settings.disable_sound
+                offline_mode = getattr(user_settings, 'offline_mode', False)
             else:
                 user_settings = self.db.user_settings.UserSettings()
                 user_settings.user = user
@@ -732,7 +736,8 @@ class UserSettingsHandler(BaseHandler):
         if format == '.js':
             data = dict(hide_weekend=hide_weekend,
                         monday_first=monday_first,
-                        disable_sound=disable_sound)
+                        disable_sound=disable_sound,
+                        offline_mode=offline_mode)
             self.set_header("Content-Type", "text/javascript; charset=UTF-8")
             self.set_header("Cache-Control", "public,max-age=0")
             self.write('var SETTINGS=%s;' % tornado.escape.json_encode(data))
@@ -753,12 +758,13 @@ class UserSettingsHandler(BaseHandler):
             hide_weekend = user_settings.hide_weekend
             monday_first = user_settings.monday_first
             disable_sound = user_settings.disable_sound
+            offline_mode = getattr(user_settings, 'offline_mode', False)
         else:
             user_settings = self.db.user_settings.UserSettings()
             user_settings.user = user
             user_settings.save()
                 
-        for key in ('monday_first', 'hide_weekend', 'disable_sound'):
+        for key in ('monday_first', 'hide_weekend', 'disable_sound', 'offline_mode'):
             user_settings[key] = bool(self.get_argument(key, None))
         user_settings.save()
         self.redirect("/")

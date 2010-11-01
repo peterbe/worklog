@@ -58,6 +58,7 @@ class UserSettings(BaseDocument):
       'monday_first': bool,
       'hide_weekend': bool,
       'disable_sound': bool,
+      'offline_mode': bool,
     }
     use_autorefs = True
     
@@ -66,6 +67,7 @@ class UserSettings(BaseDocument):
       'monday_first': False,
       'hide_weekend': False,
       'disable_sound': False,
+      'offline_mode': False,
     }
     
     indexes = [

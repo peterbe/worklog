@@ -69,6 +69,9 @@
 {{ modules.Settings(settings) }}
 
 {% block extrajs %}
+{% if settings.get('offline_mode') %}
+{{ modules.Static("ext/jquery.store.js", "ext/json2.js", "ajaxproxy.js") }}
+{% end %}
 {{ modules.Static("ext/fullcalendar.js", "calendar.js") }}
 {{ modules.Static("sidebar.js", "ext/jquery-ui-1.8.4.draggable-resizable.min.js", "ext/jquery.autocomplete.pack.js") }}
 <script type="text/javascript" src="{{ static_url("ext/soundmanager2-nodebug-jsmin.js") }}"></script>
