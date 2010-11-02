@@ -81,9 +81,10 @@ function _day_clicked(date, allDay, jsEvent, view) {
         }
       }
    };
-   qtip_options = $.extend(qtip_options, __standard_qtip_options());
-   current_tooltip = $(this);
-   current_tooltip.qtip(qtip_options);
+   //qtip_options = $.extend(qtip_options, __standard_qtip_options());
+   //current_tooltip = $(this);
+   //current_tooltip.qtip(qtip_options);
+   
 //   setTimeout(function() {
 //      $('input[name="title"]:visible').focus();
 //   }, 500);
