@@ -8,35 +8,21 @@ function L() {
 function __standard_qtip_options() {
   return {
      position: {
-        corner: {
-        target: 'bottomMiddle',
-        tooltip: 'topMiddle'
+          my: 'bottom middle',
+	  at: 'center'
      },
-     adjust: {
-        screen: true
-     }
-   },
    show: {
       when: 'click',
       ready: true,
       solo: true
    },
    hide: 'unfocus',
+       
    style: {
-        tip: true, // Apply a speech bubble tip to the tooltip at the designated tooltip corner
-        border: {
-           width: 0,
-           radius: 3,
-             color: '#3366CC'
-        },
-         title: {
-            background: '#3366CC',
-              color: '#fff'
-         },
-        background: '#7094db',
-        color: '#fff',
-        name: 'dark', // Use the default light style
-        width: 470 // Set the tooltip width
+    classes: 'ui-tooltip-shadow',
+    tip: {
+      corner: 'middle bottom'
+    }
       }
   };
 }
@@ -56,23 +42,23 @@ function get_add_form(action, date, all_day) {
 var current_tooltip;
 function _day_clicked(date, allDay, jsEvent, view) {
    var url = '/events';
+   // need to set date and allDay into $('#add-form-container form')
    var qtip_options = {
       content: {
            //text: "Please wait...",
-	   text: get_add_form(url, date, allDay)
+	   text: $('#add-form-container form').html()
 	   //url: url//,
 	   //title: {
            //  text: "Adding new event",
 	   //  button: "Cancel"
 	   //}
       },
-      api: {
-        onShow: function(event) {
+      events: {
+        render: function(event, api) {
            $('form:visible').submit(function() {
-	      if (!SETTINGS.disable_sound && soundManager.enabled) {
-                  soundManager.play('pling');
-               }
-	      L("sound played");
+	      //if (!SETTINGS.disable_sound && soundManager.enabled) {
+              //    soundManager.play('pling');
+              // }
               _setup_ajaxsubmit(this);
               return false;
            });
@@ -81,9 +67,10 @@ function _day_clicked(date, allDay, jsEvent, view) {
         }
       }
    };
-   //qtip_options = $.extend(qtip_options, __standard_qtip_options());
-   //current_tooltip = $(this);
-   //current_tooltip.qtip(qtip_options);
+   qtip_options = $.extend(qtip_options, __standard_qtip_options());
+   current_tooltip = $(this);
+   current_tooltip.qtip(qtip_options);
+
    
 //   setTimeout(function() {
 //      $('input[name="title"]:visible').focus();
@@ -335,9 +322,14 @@ function __inner_setup_ajaxsubmit(element, event_id) {
       $(element).ajaxSubmit({
          beforeSubmit: __beforeSubmit_form_validate,
          success: function(response) {
-	    if (response.error)
-	      alert(response.error);
+	    if (response.error) {
+	       alert(response.error);
+	       return;
+	    }
             
+	    if (!event_id && !SETTINGS.disable_sound && soundManager.enabled) {
+                  soundManager.play('pling');
+            }	    
             if (!event_id) {
                increment_total_no_events();
             }
@@ -354,16 +346,13 @@ function __inner_setup_ajaxsubmit(element, event_id) {
                    AVAILABLE_TAGS.push(tag);
               });
 	    
-            if (!response.error) {
-	       if (event_id)
-		 $('#calendar').fullCalendar('removeEvents', event_id);
+	    if (event_id)
+	      $('#calendar').fullCalendar('removeEvents', event_id);
 
-	       $('#calendar').fullCalendar('renderEvent', response.event);
-	       var view = $('#calendar').fullCalendar('getView');
-	       display_sidebar_stats_wrapped(view.start, view.end);
-	       __update_described_colors();
-	       
-            }
+	    $('#calendar').fullCalendar('renderEvent', response.event);
+	    var view = $('#calendar').fullCalendar('getView');
+	    display_sidebar_stats_wrapped(view.start, view.end);
+	    __update_described_colors();
 	 }
       });
 }
@@ -534,9 +523,45 @@ $(function() {
    });
    
    // Sooner or later we're going to need the qip
-   $.getScript(JS_URLS.qtip);
+   /*
+   $.getScript(JS_URLS.qtip, function() {
+      __craigs_tip();
+      return;
+      	 L("Setting up qTip");
+      $('.fc-view td').css('border', '1px solid red').css('background-color','#efefef');
+	 $('.fc-view td').qtip({
+            content:$('#add-form-container form')
+	 });
+   });
+    */
 
 });
+
+function __craigs_tip() {
+   return;
+   $('.fc-state-default').each(function(){
+      // Grab event data
+      var title = "title";
+      
+      $(this).qtip({
+         content: "Content",
+	 position: {
+              my: 'bottom center',
+	      at: 'top center'
+	 },
+	 show: {
+              when: 'click',
+	      ready: false,
+	      solo: true
+	 },
+	 hide: 'unfocus',
+	 style: {
+              tip: true
+	 }
+      })
+   });
+     
+}
 
 // Because this file is loaded before stats.js
 // We can't yet use display_sidebar_stats() since that function might not yet

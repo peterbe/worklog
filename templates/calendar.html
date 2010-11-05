@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block extra_head %}
-       {{ modules.Static("css/fullcalendar.css", "css/jquery.jqplot.min.css", "css/jquery.autocomplete.css") }}
+       {{ modules.Static("css/fullcalendar.css") }}
+       {{ modules.Static("css/jquery.jqplot.min.css", "css/jquery.autocomplete.css", "css/jquery.qtip.css") }}
         <!--<link rel="stylesheet" type="text/css" href="{{ static_url("css/fullcalendar.css") }}">
         <link rel="stylesheet" type="text/css" href="{{ static_url("css/jquery.jqplot.min.css") }}">
         <link rel="stylesheet" type="text/css" href="{{ static_url("css/jquery.autocomplete.css") }}">-->
@@ -20,6 +21,9 @@
 	  font-size:10px; 
 	  float:right;
 	}
+	.ui-tooltip, .qtip { max-width:500px; }
+	
+	
 	</style>
 {% end %}
 
@@ -52,8 +56,8 @@
 	      
 	    </div>
 	    
-<div id="add-form-container">
-<form method="post" class="add-form" style="display:none">
+<div id="add-form-container" style="display:none">
+<form method="post" class="add-form">
   <div>
     <input name="title" autocomplete="off" size="35">
     <input type="hidden" name="all_day">
@@ -76,6 +80,7 @@
 {% else %}<script type="text/javascript">var is_offline=false</script>
 {% end %}
 
+{{ modules.Static("ext/jquery.qtip.js") }}
 {{ modules.Static("ext/fullcalendar.js", "calendar.js") }}
 {{ modules.Static("sidebar.js", "ext/jquery-ui-1.8.4.draggable-resizable.min.js", "ext/jquery.autocomplete.pack.js") }}
 <script type="text/javascript" src="{{ static_url("ext/soundmanager2-nodebug-jsmin.js") }}"></script>
