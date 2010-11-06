@@ -1,8 +1,10 @@
 <form class="edit" action="/event/edit" method="post">
   <div>
     <input type="hidden" name="id" value="{{ event._id }}">
-    <input name="title" autocomplete="off" size="35" value="{{ event.title }}">
+    <input name="title" autocomplete="off" size="35" value="{{ event.title }}"> 
     <input type="submit" value="Save">
+    <input type="button" class="cancel" value="Cancel">
+    
   </div>
   
   <div class="edit-url" {% if url %}style="display:none"{% end %}>

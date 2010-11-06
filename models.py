@@ -13,7 +13,7 @@ class BaseDocument(Document):
       'add_date': datetime.datetime.now,
       'modify_date': datetime.datetime.now
     }
-    
+    use_autorefs = True
     use_dot_notation = True
     
 class User(BaseDocument):
@@ -26,6 +26,7 @@ class User(BaseDocument):
       'last_name': unicode,
     }
     
+    use_autorefs = True
     required_fields = ['guid']
     default_values = {
       'guid': lambda:unicode(uuid.uuid4()),
@@ -87,7 +88,6 @@ class Event(BaseDocument):
     }
     use_autorefs = True
     required_fields = ['user', 'title', 'all_day', 'start', 'end']
-
     
     indexes = [
       {'fields': ['user', 'start', 'end']},
@@ -104,7 +104,6 @@ class Share(BaseDocument):
       'key': lambda:unicode(md5(unicode(uuid.uuid4())).hexdigest()),
     }
     
-    use_autorefs = True
     required_fields = ['user']
 
     indexes = [

@@ -1,3 +1,4 @@
+from bson import DBRef
 import datetime
 #import sys; sys.path.insert(0, '..')
 import unittest
@@ -40,12 +41,14 @@ class ModelsTestCase(unittest.TestCase):
         
     def test_create_event(self):
         user = self.db.users.User()
+        user.save()
         event = self.db.events.Event()
-        event.user = user
+        event.user = user#DBRef('users', user['_id'])
         event.title = u"Test"
         event.all_day = True
         event.start = datetime.datetime.today()
         event.end = datetime.datetime.today()
+        event.validate()
         event.save()
         
         self.assertEqual(self.db.events.Event.find().count(), 1)

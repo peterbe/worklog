@@ -524,8 +524,90 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
         self.write_event(event, format)
         self.set_status(created and 201 or 200) # Created
             
-@route(r'/event/(edit|resize|move|delete|)')           
-class EventHandler(BaseHandler):
+#@route(r'/events(\.json|\.js|\.xml|\.txt)?')
+        
+class BaseEventHandler(BaseHandler):
+    
+    def write_event_data(self, data, format):
+        if format in ('.json', '.js', None):
+            self.write_json(data, javascript=format=='.js')
+        elif format == '.xml':
+            self.write_xml(data)
+        elif format == '.txt':
+            out = cStringIO.StringIO()
+            out.write('EVENT\n')
+            pprint(data, out)
+            out.write("\n")
+            self.write_txt(out.getvalue())
+        elif format == '.html':
+            ui_module = ui_modules.EventPreview(self)
+            self.write(ui_module.render(data))
+        else:
+            raise NotImplementedError
+
+    def find_event(self, _id, user, shares):
+        try:
+            search = {
+              '_id': ObjectId(_id),
+            }
+        except InvalidId:
+            raise tornado.web.HTTPError(404, "Invalid ID")
+        
+        event = self.db.events.Event.one(search)
+        if not event:
+            raise tornado.web.HTTPError(404, "Can't find the event")
+        
+        if event.user == user:
+            pass
+        elif shares:
+            # Find out if for any of the shares we have access to the owner of
+            # the share is the same as the owner of the event
+            for share in self.share_keys_to_share_objects(shares):
+                if share['user'].id == event['user']['_id']:
+                    if share['users']:
+                        if user['_id'] in [x.id for x in share['users']]:
+                            break
+                    else:
+                        break
+            else:
+                raise tornado.web.HTTPError(403, "Not your event (not shared either)")
+        else:
+            raise tornado.web.HTTPError(403, "Not your event")
+            
+        return event
+    
+@route(r'/event(\.json|\.js|\.xml|\.txt|\.html)?')
+class EventHandler(BaseEventHandler):
+    def get(self, format):
+        #if action == '':
+        #    action = 'preview'
+        #assert action in ('edit', 'preview')
+        
+        _id = self.get_argument('id')
+       
+        user = self.get_current_user()
+        if not user:
+            return self.write(dict(error="Not logged in (no cookie)"))
+        
+        shares = self.get_secure_cookie('shares')
+        event = self.find_event(_id, user, shares)
+        
+        if format == '.html':
+            data = event
+        else:
+            data = self.transform_fullcalendar_event(event, True)
+        self.write_event_data(data, format)
+        
+        #if 0 and action == 'edit':
+        #    external_url = getattr(event, 'external_url', None)
+        #    self.render('event/edit.html', event=event, url=external_url)
+        #elif format == 'html':
+        #    ui_module = ui_modules.EventPreview(self)
+        #    self.write(ui_module.render(event))
+        #elif format == '
+    
+@route(r'/event/(edit|resize|move|delete|)')
+class EditEventHandler(BaseEventHandler):
     
     def post(self, action):
         _id = self.get_argument('id')
@@ -598,57 +680,7 @@ class EventHandler(BaseHandler):
         
         return self.write_json(dict(event=self.transform_fullcalendar_event(event, True)))
     
-    def get(self, action):
-        if action == '':
-            action = 'preview'
-        assert action in ('edit', 'preview')
         
-        _id = self.get_argument('id')
-       
-        user = self.get_current_user()
-        if not user:
-            return self.write(dict(error="Not logged in (no cookie)"))
-        
-        shares = self.get_secure_cookie('shares')
-        event = self.find_event(_id, user, shares)
-        
-        if action == 'edit':
-            external_url = getattr(event, 'external_url', None)
-            self.render('event/edit.html', event=event, url=external_url)
-        else:
-            ui_module = ui_modules.EventPreview(self)
-            self.write(ui_module.render(event))
-        
-    def find_event(self, _id, user, shares):
-        try:
-            search = {
-              '_id': ObjectId(_id),
-            }
-        except InvalidId:
-            raise tornado.web.HTTPError(404, "Invalid ID")
-        
-        event = self.db.events.Event.one(search)
-        if not event:
-            raise tornado.web.HTTPError(404, "Can't find the event")
-        
-        if event.user == user:
-            pass
-        elif shares:
-            # Find out if for any of the shares we have access to the owner of
-            # the share is the same as the owner of the event
-            for share in self.share_keys_to_share_objects(shares):
-                if share['user'].id == event['user']['_id']:
-                    if share['users']:
-                        if user['_id'] in [x.id for x in share['users']]:
-                            break
-                    else:
-                        break
-            else:
-                raise tornado.web.HTTPError(403, "Not your event (not shared either)")
-        else:
-            raise tornado.web.HTTPError(403, "Not your event")
-            
-        return event
             
 @route('/events/stats(\.json|\.xml|\.txt)?')
 class EventStatsHandler(BaseHandler):

@@ -21,7 +21,12 @@
 	  font-size:10px; 
 	  float:right;
 	}
-	.ui-tooltip, .qtip { max-width:500px; }
+        input.cancel { font-size:0.8em;}
+	.ui-tooltip, .qtip { max-width:540px; }
+        .ui-tooltip-wrapper {
+          background-color:#EEEEEE;
+          border-color:#cdcdcd;
+        }
 	
 	
 	</style>
@@ -63,7 +68,36 @@
     <input type="hidden" name="all_day">
     <input type="hidden" name="date">
     <input type="submit" value="Save">
+    <input type="button" class="cancel" value="Cancel">
   </div>
+  {{ xsrf_form_html() }}
+</form>
+</div>
+
+<div id="edit-form-container" style="display:none">
+<form method="post" class="add-form" action="/event/edit">
+  <div>
+    <input type="hidden" name="id">
+    <input name="title" autocomplete="off" size="35">
+    <input type="hidden" name="all_day">
+    <input type="hidden" name="date">
+    <input type="submit" value="Save">
+    <input type="button" class="cancel" value="Cancel">
+  </div>
+  <div class="edit-url" style="display:none">
+  </div>
+  <div class="see-url" style="display:none">
+  </div>
+  <div class="delete">
+    <p>
+    <a href="#" class="delete">Delete?</a>
+      <span class="confirmation" style="display:none">Are you sure?
+        <a href="#" class="delete-confirm">Yes</a>
+        <a href="#" class="delete-cancel">No</a>
+      </span>
+    </p>
+  </div>
+  
   {{ xsrf_form_html() }}
 </form>
 </div>

@@ -7,10 +7,6 @@ function L() {
 
 function __standard_qtip_options() {
   return {
-     position: {
-          my: 'bottom middle',
-	  at: 'center'
-     },
    show: {
       when: 'click',
       ready: true,
@@ -18,16 +14,11 @@ function __standard_qtip_options() {
    },
    hide: 'unfocus',
        
-   style: {
-    classes: 'ui-tooltip-shadow',
-    tip: {
-      corner: 'middle bottom'
-    }
-      }
   };
 }
 
 /* Return a jQuery type DOM form element */
+/*
 function get_add_form(action, date, all_day) {
    var f = $('#add-form');
    f.attr('action', action);
@@ -37,21 +28,43 @@ function get_add_form(action, date, all_day) {
    else
      $('input[name="all_day"]', f).val('');
    return f;
-}
+}*/
 
 var current_tooltip;
 function _day_clicked(date, allDay, jsEvent, view) {
    var url = '/events';
    // need to set date and allDay into $('#add-form-container form')
+   $('#add-form-container form').attr('action', url);
+   if (allDay)
+     $('#add-form-container input[name="all_day"]').val('1');
+   else
+     $('#add-form-container input[name="all_day"]').val('');
+   $('#add-form-container input[name="date"]').val(date.getTime());
+   
    var qtip_options = {
       content: {
-           //text: "Please wait...",
-	   text: $('#add-form-container form').html()
-	   //url: url//,
-	   //title: {
-           //  text: "Adding new event",
-	   //  button: "Cancel"
-	   //}
+	   text: $('#add-form-container').html()
+      },
+     position: {
+          my: 'bottom middle',
+	  at: 'center',
+ 	 // important so it doesn't move when move the mouse
+          //target: 'event'
+          target:this
+      },
+      hide: {
+         event: false
+      },
+      show: {
+           solo: true,
+           ready:true,
+           event: 'click'  
+      },
+      style: {
+          classes: 'ui-tooltip-shadow',
+          tip: {
+              corner: 'middle bottom' 
+          }
       },
       events: {
         render: function(event, api) {
@@ -64,17 +77,21 @@ function _day_clicked(date, allDay, jsEvent, view) {
            });
 	   __setup_tag_autocomplete($('input[name="title"]:visible'));
 	   $('input[name="title"]:visible').focus();
-        }
+        },
+	hide: function(event, api) {
+	    //L("hide!");
+	     //api.destroy();
+	}
+	 
       }
    };
-   qtip_options = $.extend(qtip_options, __standard_qtip_options());
+   //qtip_options = $.extend(qtip_options, __standard_qtip_options());
    current_tooltip = $(this);
-   current_tooltip.qtip(qtip_options);
-
+   //current_tooltip.css('border', '2px solid red');
+   //L(current_tooltip, current_tooltip.qtip());
    
-//   setTimeout(function() {
-//      $('input[name="title"]:visible').focus();
-//   }, 500);
+   current_tooltip.qtip(qtip_options);
+   //var api = current_tooltip.qtip();
 }
 
 function _event_clicked(event, jsEvent, view) {
@@ -85,17 +102,15 @@ function _event_clicked(event, jsEvent, view) {
      is_editable = event.editable;
    
    if (is_editable)
-     var url = '/event/edit?id=' + event.id;
+     var url = '/event.json?id=' + event.id;
    else
-     var url = '/event/?id=' + event.id;
+     var url = '/event.html?id=' + event.id;
    
    function _prepare_edit_event() {
-      
       $('form.edit').submit(function() {
          _setup_ajaxsubmit(this, event.id);
          return false;
       });
-
       if ($('form.edit input[name="title"]:visible').size()) {
 	 __setup_tag_autocomplete($('form.edit input[name="title"]'));
 	 $('form.edit input[name="title"]').focus();
@@ -126,6 +141,7 @@ function _event_clicked(event, jsEvent, view) {
            $(this).val('http://' + $(this).val());
       });
       
+      L($('a.delete'));
       $('a.delete').click(function() {
          var container = $(this).parents('div.delete');
          $('.confirmation', container).show();
@@ -133,11 +149,8 @@ function _event_clicked(event, jsEvent, view) {
          
          //$('a.delete-cancel', container).unbind('click');
          $('a.delete-confirm', container).click(function() {
+            close_current_tooltip();
             $.post('/event/delete', {id: event.id}, function() {
-               if (current_tooltip) {
-                  current_tooltip.qtip('hide');
-                  current_tooltip = null;
-               }
                decrement_total_no_events();
                $('#calendar').fullCalendar('removeEvents', event.id);
 	       //__update_described_colors();
@@ -168,6 +181,61 @@ function _event_clicked(event, jsEvent, view) {
    
    var qtip_options = {
       content: {
+          ajax: {
+            url:url,
+               success: function(data, status) {
+                  L($('#edit-form-container input[name="title"]').val());
+                  var clone = $('#edit-form-container').clone();
+                  $('input[name="title"]', clone).val(data.title);
+                  $('input[name="id"]', clone).val(data.id);
+                  this.set('content.text', clone);
+                  return false;
+                  //if (is_editable)
+                  //  _prepare_edit_event();
+                  //else
+                  //  _prepare_preview_event();                  
+               }
+          }
+      },
+     position: {
+          my: 'bottom middle',
+	  at: 'center',
+ 	 // important so it doesn't move when move the mouse
+          //target: 'event'
+          target:this
+      },
+      hide: {
+         event: false
+      },
+      show: {
+           solo: true,
+           ready:true,
+           event: 'click'  
+      },
+      style: {
+          classes: 'ui-tooltip-shadow',
+          tip: {
+              corner: 'middle bottom' 
+          }
+      },
+      events: {
+        show: function(event, api) {
+           L("show!");
+        },
+        render: function(event, api) {
+           L("render");
+           
+      //       if (is_editable)
+      //         _prepare_edit_event();
+      //       else
+      //         _prepare_preview_event();
+        }
+      }
+   };
+ 
+   /*
+   var qtip_options = {
+      content: {
            text: 'Please wait...',
 	   //text: get_edit_form(url, event.id, event.title, event.url)
 	   url: url
@@ -188,7 +256,8 @@ function _event_clicked(event, jsEvent, view) {
           }
       }
    };
-   qtip_options = $.extend(qtip_options, __standard_qtip_options());
+    */
+   //qtip_options = $.extend(qtip_options, __standard_qtip_options());
    current_tooltip = $(this);
    current_tooltip.qtip(qtip_options);
 }
@@ -288,10 +357,7 @@ function __inner_setup_ajaxsubmit_offline(element, event_id) {
 	increment_total_no_events();
       
       // close any open qtip
-      if (current_tooltip) {
-	 current_tooltip.qtip('hide');
-	 current_tooltip = null;
-      }
+      close_current_tooltip();
       
       //if (event_id)
       // $('#calendar').fullCalendar('removeEvents', event_id);
@@ -335,10 +401,7 @@ function __inner_setup_ajaxsubmit(element, event_id) {
             }
 	    
 	    // close any open qtip
-	    if (current_tooltip) {
-               current_tooltip.qtip('hide');
-               current_tooltip = null;
-            }
+            close_current_tooltip();
 
             if (response.tags)
               $.each(response.tags, function(i, tag) {
@@ -442,8 +505,13 @@ function __update_described_colors() {
       if (!_share_toggles[className]) 
 	$('div.' + className, '#calendar').fadeOut(0);
    });
-      
+}
 
+function close_current_tooltip(parent) {
+   if (current_tooltip) {
+      current_tooltip.qtip().destroy();
+      current_tooltip = null;
+   }
 }
 
 var AVAILABLE_TAGS = [];
@@ -508,7 +576,7 @@ $(function() {
       eventResize: _event_resized,
       eventDrop: _event_dropped,
       viewDisplay: function(view) {
-         
+         close_current_tooltip(); // if any open
 	 display_sidebar_stats_wrapped(view.start, view.end);
          var href = '#' + view.name.replace('agenda', '').toLowerCase();
          href += ',' + view.start.getFullYear();
@@ -520,6 +588,10 @@ $(function() {
       windowResize: function(view) {
          __update_described_colors();
       }
+   });
+   
+   $('input.cancel').live('click', function() {
+      close_current_tooltip(this);
    });
    
    // Sooner or later we're going to need the qip
@@ -537,31 +609,6 @@ $(function() {
 
 });
 
-function __craigs_tip() {
-   return;
-   $('.fc-state-default').each(function(){
-      // Grab event data
-      var title = "title";
-      
-      $(this).qtip({
-         content: "Content",
-	 position: {
-              my: 'bottom center',
-	      at: 'top center'
-	 },
-	 show: {
-              when: 'click',
-	      ready: false,
-	      solo: true
-	 },
-	 hide: 'unfocus',
-	 style: {
-              tip: true
-	 }
-      })
-   });
-     
-}
 
 // Because this file is loaded before stats.js
 // We can't yet use display_sidebar_stats() since that function might not yet
