@@ -229,8 +229,10 @@ def run_closure_compiler(code, jar_location, verbose=False):
         print "seconds to compress %d bytes into %d (%s%%)" % (a, b, c)
     return r
 
-def _run_closure_compiler(jscode, jar_location):
-    cmd = "java -jar %s --compilation_level ADVANCED_OPTIMIZATIONS" % jar_location
+def _run_closure_compiler(jscode, jar_location, advanced_optmization=False):
+    cmd = "java -jar %s " % jar_location
+    if advanced_optmization:
+        cmd += " --compilation_level ADVANCED_OPTIMIZATIONS "
     proc = Popen(cmd, shell=True, stdout=PIPE, stdin=PIPE, stderr=PIPE)
     try:
         (stdoutdata, stderrdata) = proc.communicate(jscode)

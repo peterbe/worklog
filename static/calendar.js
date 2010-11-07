@@ -12,35 +12,23 @@ function __standard_qtip_options() {
       ready: true,
       solo: true
    },
-   hide: 'unfocus',
-       
+   hide: 'unfocus'
+
   };
 }
-
-/* Return a jQuery type DOM form element */
-/*
-function get_add_form(action, date, all_day) {
-   var f = $('#add-form');
-   f.attr('action', action);
-   $('input[name="date"]', f).val(date.getTime());
-   if (all_day)
-     $('input[name="all_day"]', f).val('1');
-   else
-     $('input[name="all_day"]', f).val('');
-   return f;
-}*/
 
 var current_tooltip;
 function _day_clicked(date, allDay, jsEvent, view) {
    var url = '/events';
    // need to set date and allDay into $('#add-form-container form')
    $('#add-form-container form').attr('action', url);
-   if (allDay)
+   if (allDay) {
      $('#add-form-container input[name="all_day"]').val('1');
-   else
+   } else {
      $('#add-form-container input[name="all_day"]').val('');
+   }
    $('#add-form-container input[name="date"]').val(date.getTime());
-   
+
    var qtip_options = {
       content: {
 	   text: $('#add-form-container').html()
@@ -50,20 +38,20 @@ function _day_clicked(date, allDay, jsEvent, view) {
 	  at: 'center',
  	 // important so it doesn't move when move the mouse
           //target: 'event'
-          target:this
+          target: this
       },
       hide: {
          event: false
       },
       show: {
            solo: true,
-           ready:true,
-           event: 'click'  
+           ready: true,
+           event: 'click'
       },
       style: {
           classes: 'ui-tooltip-shadow',
           tip: {
-              corner: 'middle bottom' 
+              corner: 'middle bottom'
           }
       },
       events: {
@@ -91,13 +79,13 @@ function _event_clicked(event, jsEvent, view) {
    var is_editable = true;
    if (typeof event.editable != 'undefined')
      is_editable = event.editable;
-   
-   L('is_editable', is_editable);
-   if (is_editable)
-     var url = '/event.json?id=' + event.id;
-   else
-     var url = '/event.html?id=' + event.id;
-   
+
+   if (is_editable) {
+      var url = '/event.json?id=' + event.id;
+   } else {
+      var url = '/event.html?id=' + event.id;
+   }
+
    function _prepare_edit_event(container) {
       $('form', container).submit(function() {
          _setup_ajaxsubmit(this, event.id);
@@ -113,13 +101,13 @@ function _event_clicked(event, jsEvent, view) {
 	    $('input[name="title"]', container).focus();
 	 }, 500);
       }
-      
+
       if (!$('input[name="external_url"]', container).val()) {
          $('input[name="external_url"]', container)
            .addClass('placeholdervalue')
              .val($('input[name="placeholdervalue"]', container).val());
       }
-      
+
       $('input[name="external_url"]', container).bind('focus', function() {
          if ($(this).val() == $('input[name="placeholdervalue"]', container).val()) {
             $(this).val('').removeClass('placeholdervalue');
@@ -132,12 +120,12 @@ function _event_clicked(event, jsEvent, view) {
          else if ($(this).val().search('://') == -1)
            $(this).val('http://' + $(this).val());
       });
-      
+
       $('a.delete', container).click(function() {
          var parent = $(this).parents('div.delete');
          $('.confirmation', parent).show();
          $('a.delete', parent).hide();
-         
+
          $('a.delete-confirm', parent).unbind('click');
          $('a.delete-confirm', parent).click(function() {
             close_current_tooltip();
@@ -150,11 +138,11 @@ function _event_clicked(event, jsEvent, view) {
 	       __update_described_colors();
                //$('#calendar').fullCalendar('refetchEvents');
                //$('#calendar').fullCalendar('render');
-               
+
             });
             return false;
          });
-         
+
          $('a.delete-cancel', parent).unbind('click');
          $('a.delete-cancel', parent).click(function() {
             //var this_parent = $(this).parents('div.delete');
@@ -162,19 +150,19 @@ function _event_clicked(event, jsEvent, view) {
             $('.confirmation', parent).hide();
 	    return false;
          });
-         return false
+         return false;
       });
    }
-   
+
    /* This function is called when the qtip has opened for previewing */
    function _prepare_preview_event() {
-      
+
    }
-   
+
    var qtip_options = {
       content: {
           ajax: {
-            url:url,
+            url: url,
                success: function(data, status) {
                   if (is_editable) {
                      var clone = $('#edit-form-container').clone();
@@ -195,24 +183,24 @@ function _event_clicked(event, jsEvent, view) {
      position: {
           my: 'bottom middle',
 	  at: 'center',
-          target:this
+          target: this
       },
       hide: {
          event: false
       },
       show: {
            solo: true,
-           ready:true,
-           event: 'click'  
+           ready: true,
+           event: 'click'
       },
       style: {
           classes: 'ui-tooltip-shadow',
           tip: {
-              corner: 'middle bottom' 
+              corner: 'middle bottom'
           }
       }
    };
- 
+
    //qtip_options = $.extend(qtip_options, __standard_qtip_options());
    current_tooltip = $(this);
    current_tooltip.qtip(qtip_options);
@@ -232,7 +220,7 @@ function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view
 
 function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc) {
    __update_described_colors();
-   $.post('/event/move', {all_day:allDay, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
+   $.post('/event/move', {all_day: allDay, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
@@ -247,7 +235,7 @@ function __setup_tag_autocomplete(jelement) {
    function extractLast(term ) {
       return split(term).pop();
    }
-   
+
    jelement.autocomplete(AVAILABLE_TAGS, {
 	autoFill: false,
 	multiple: true,
@@ -261,7 +249,7 @@ function __setup_tag_autocomplete(jelement) {
 function _setup_ajaxsubmit(element, event_id) {
    $.getScript(JS_URLS.jquery_form, function() {
       if (is_offline) {
-	 __inner_setup_ajaxsubmit_offline(element, event_id);	
+	 __inner_setup_ajaxsubmit_offline(element, event_id);
       } else {
 	 __inner_setup_ajaxsubmit(element, event_id);
       }
@@ -269,33 +257,33 @@ function _setup_ajaxsubmit(element, event_id) {
 }
 
 function __inner_setup_ajaxsubmit_offline(element, event_id) {
-   
+
    $(element).ajaxSubmit({beforeSubmit: function(arr, form, options) {
       if (!__beforeSubmit_form_validate(arr, form, options)) {
 	 // consider showing a validation error
 	 return;
       }
-	 
+
       // assume that all will go well
-      //       
+      //
       if (!event_id)
 	increment_total_no_events();
-      
+
       // close any open qtip
       close_current_tooltip();
-      
+
       //if (event_id)
       // $('#calendar').fullCalendar('removeEvents', event_id);
-      // 
-	       
+      //
+
       //$('#calendar').fullCalendar('renderEvent', response.event);
       //var view = $('#calendar').fullCalendar('getView');
       //display_sidebar_stats_wrapped(view.start, view.end);
       //__update_described_colors();
-   
+
    }
    });
-   
+
 }
 
 function __beforeSubmit_form_validate(arr, form, options) {
@@ -317,14 +305,14 @@ function __inner_setup_ajaxsubmit(element, event_id) {
 	       alert(response.error);
 	       return;
 	    }
-            
+
 	    if (!event_id && !SETTINGS.disable_sound && soundManager.enabled) {
                   soundManager.play('pling');
-            }	    
+            }
             if (!event_id) {
                increment_total_no_events();
             }
-	    
+
 	    // close any open qtip
             close_current_tooltip();
 
@@ -333,7 +321,7 @@ function __inner_setup_ajaxsubmit(element, event_id) {
                 if ($.inArray(tag, AVAILABLE_TAGS) == -1)
                    AVAILABLE_TAGS.push(tag);
               });
-	    
+
 	    if (event_id)
 	      $('#calendar').fullCalendar('removeEvents', event_id);
 
@@ -359,9 +347,9 @@ function __hide_share(share) {
       SETTINGS.hidden_shares = $.grep(SETTINGS.hidden_shares, function(element) {
          return element != share;
       });
-     
+
    }
-   $.post('/share/', {key:share.key});
+   $.post('/share/', {key: share.key});
    return _share_toggles[share.className];
 }
 
@@ -383,7 +371,7 @@ function __display_current_sharers(sharers) {
 	 described_classNames.push(className);
       }
       var color = colors[$.inArray(className, described_classNames)];
-      
+
       if (is_new) {
 	 _share_toggles[share.className] = true;
 	 container.append($('<li></li>')
@@ -393,11 +381,12 @@ function __display_current_sharers(sharers) {
 				  .text('hide')
 				  .addClass('share-hider')
 				  .bind('click', function() {
-				     if (__hide_share(share))
-				       $(this).text('hide');
-				     else
-				       $(this).text('show');
-					
+				     if (__hide_share(share)) {
+				        $(this).text('hide');
+				     } else {
+					$(this).text('show');
+				     }
+
 				     return false;
 				  }))
 			  .append($('<a href="#"></a>')
@@ -407,7 +396,7 @@ function __display_current_sharers(sharers) {
       described_colors[className] = color;
       any = true;
    });
-   
+
    if (any) {
       __update_described_colors();
       if (SETTINGS.hidden_shares) {
@@ -418,7 +407,7 @@ function __display_current_sharers(sharers) {
             $('li.' + share.className + ' a.share-hider', '#current-sharers').text('show');
          });
       }
-      
+
       $('#current-sharers').show();
    }
 }
@@ -427,7 +416,7 @@ function __update_described_colors() {
    $.each(described_colors, function(className, color) {
       $('.' + className + ', .fc-agenda .' + className + ' .fc-event-time, .' + className + ' a'
 	  ).css('background-color', color).css('border-color', color);
-      if (!_share_toggles[className]) 
+      if (!_share_toggles[className])
 	$('div.' + className, '#calendar').fadeOut(0);
    });
 }
@@ -476,9 +465,9 @@ $(function() {
            //  $.each(response.hidden_shares, function(i, share) {
            //     _share_toggles[share.className] = true;
            //     $('li.' + share.className, '#current-sharers').fadeTo(300, 0.4);
-           //     
+           //
            //  });
-             
+
         });
       },
 
@@ -508,13 +497,14 @@ $(function() {
          href += ',' + (view.start.getMonth() + 1);
          href += ',' + view.start.getDate();
          location.href = href;
-	 
+
       },
       windowResize: function(view) {
          __update_described_colors();
       }
    });
-   
+   $.getScript(JS_URLS.qtip);
+
    $('input.cancel').live('click', function() {
       close_current_tooltip(this);
    });
