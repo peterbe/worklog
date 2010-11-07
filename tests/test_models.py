@@ -24,7 +24,7 @@ class ModelsTestCase(unittest.TestCase):
         self._emptyCollections()
         
     def test_create_user(self):
-        user = self.db.users.User()
+        user = self.db.User()
         assert user.guid
         assert user.add_date
         assert user.modify_date
@@ -58,8 +58,8 @@ class ModelsTestCase(unittest.TestCase):
         
         
     def test_user_settings(self):
-        user = self.db.users.User()
-        settings = self.db.user_settings.UserSettings()
+        user = self.db.User()
+        settings = self.db.UserSettings()
         from mongokit import RequireFieldError
         self.assertRaises(RequireFieldError, settings.save)
         settings.user = user
@@ -68,23 +68,23 @@ class ModelsTestCase(unittest.TestCase):
         self.assertFalse(settings.monday_first)
         self.assertFalse(settings.hide_weekend)
         
-        model = self.db.user_settings.UserSettings
+        model = self.db.UserSettings
         self.assertEqual(model.find({'user.$id': user._id}).count(), 1)
         
     def test_create_share(self):
-        user = self.db.users.User()
-        share = self.db.shares.Share()
+        user = self.db.User()
+        share = self.db.Share()
         share.user = user
         share.save()
         
         self.assertEqual(share.tags, [])
         
-        new_key = Share.generate_new_key(self.db.shares, min_length=4)
+        new_key = Share.generate_new_key(self.db[Share.__collection__], min_length=4)
         self.assertTrue(len(new_key) == 4)
         share.key = new_key
         share.save()
         
-        self.assertTrue(self.db.shares.Share.one(dict(key=new_key)))
+        self.assertTrue(self.db.Share.one(dict(key=new_key)))
         
         
         

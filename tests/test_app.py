@@ -29,7 +29,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         db = self.get_db()
         today = datetime.date.today()
         
-        self.assertEqual(db.users.User.find().count(), 0)
+        self.assertEqual(db.User.find().count(), 0)
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
@@ -43,8 +43,8 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(struct['event'].get('title'), 'Foo')
         self.assertEqual(struct.get('tags'), [])
         
-        self.assertEqual(db.events.Event.find().count(), 1)
-        event = db.events.Event.one()
+        self.assertEqual(db.Event.find().count(), 1)
+        event = db.Event.one()
         self.assertTrue(isinstance(event.start, datetime.datetime))
         
         first_of_this_month = datetime.datetime(today.year, today.month, 1)
@@ -54,18 +54,18 @@ class ApplicationTestCase(BaseHTTPTestCase):
             last_of_this_month = datetime.datetime(today.year, today.month + 1, 1)
         last_of_this_month -= datetime.timedelta(days=1)
         
-        self.assertEqual(db.events.Event.find({
+        self.assertEqual(db.Event.find({
           'start':{'$gte':first_of_this_month},
           'end':{'$lte': last_of_this_month}
           }).count(),
           1)
-        self.assertEqual(db.users.User.find().count(), 1)
+        self.assertEqual(db.User.find().count(), 1)
         
         
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
-        self.assertEqual(db.users.User.find({'guid':guid}).count(), 1)
+        self.assertEqual(db.User.find({'guid':guid}).count(), 1)
         
         # with a tag this time
         data = {'title': "@fryit Foo", 
@@ -76,11 +76,11 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(struct.get('event'))
         self.assertEqual(struct.get('tags'), ['@fryit'])
         
-        self.assertEqual(db.events.Event.find({
+        self.assertEqual(db.Event.find({
           'tags':'fryit'
         }).count(), 1)
 
-        self.assertEqual(db.users.User.find().count(), 1)
+        self.assertEqual(db.User.find().count(), 1)
         
         # change your preference for case on the fryit tag
         data = {'title': "@FryIT working on @Italy",
@@ -91,9 +91,9 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(struct.get('event'))
         self.assertEqual(struct.get('tags'), ['@Italy', '@FryIT'])
         
-        self.assertEqual(db.users.User.find().count(), 1)
+        self.assertEqual(db.User.find().count(), 1)
         
-        self.assertEqual(db.events.Event.find({
+        self.assertEqual(db.Event.find({
           'tags':'FryIT'
         }).count(), 2)
         
@@ -103,13 +103,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': 'yes'}
         response = self.post('/events', data, headers={'Cookie':cookie})
         
-        self.assertEqual(db.users.User.find().count(), 1)
+        self.assertEqual(db.User.find().count(), 1)
         # change the other ones from before
-        self.assertEqual(db.events.Event.find({
+        self.assertEqual(db.Event.find({
           'tags':'FryIT'
         }).count(), 2)
         
-        self.assertEqual(db.events.Event.find({
+        self.assertEqual(db.Event.find({
           'tags':'It'
         }).count(), 1)
         
@@ -124,13 +124,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         struct = json.loads(response.body)
         event_id = struct['event']['id']
         
-        event_obj = db.events.Event.one(dict(title="Foo"))
+        event_obj = db.Event.one(dict(title="Foo"))
         self.assertTrue(event_obj.all_day)
         
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
-        self.assertEqual(db.users.User.find({'guid':guid}).count(), 1)
+        self.assertEqual(db.User.find({'guid':guid}).count(), 1)
         
         # move it 
         data = {'id': event_id,
@@ -145,7 +145,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         new_start = datetime.datetime.fromtimestamp(new_start)
         self.assertEqual((today - new_start).days, 1)
 
-        event_obj = db.events.Event.one(dict(title="Foo"))
+        event_obj = db.Event.one(dict(title="Foo"))
         self.assertTrue(event_obj.all_day)
         
         # resize it
@@ -187,7 +187,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['event']['title'], data['title'])
-        self.assertTrue(db.events.Event.one({'title':'New title'}))
+        self.assertTrue(db.Event.one({'title':'New title'}))
         
         # edit URL (wrong)
         data = {'id': event_id,
@@ -211,7 +211,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.post('/event/delete', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         
-        self.assertTrue(not db.events.Event.find().count())
+        self.assertTrue(not db.Event.find().count())
         
     def test_getting_event_for_edit_json(self):
         db = self.get_db()
@@ -224,13 +224,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         struct = json.loads(response.body)
         event_id = struct['event']['id']
         
-        event_obj = db.events.Event.one(dict(title="Foo"))
+        event_obj = db.Event.one(dict(title="Foo"))
         self.assertTrue(event_obj.all_day)
         
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
-        self.assertEqual(db.users.User.find({'guid':guid}).count(), 1)
+        self.assertEqual(db.User.find({'guid':guid}).count(), 1)
         
         url = '/event.json'
         response = self.get(url, dict(id=event_id))
@@ -254,7 +254,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(struct,
           {'hours_spent': [], 'days_spent': []})
         
-        self.assertEqual(db.users.User.find().count(), 0)
+        self.assertEqual(db.User.find().count(), 0)
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
@@ -289,7 +289,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': 'yes'}
         response = self.post('/events', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
-        event = db.events.Event.one(dict(title=data['title']))
+        event = db.Event.one(dict(title=data['title']))
         event.end += datetime.timedelta(days=2)
         event.save()
         
@@ -312,7 +312,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         db = self.get_db()
         today = datetime.date.today()
         
-        self.assertEqual(db.users.User.find().count(), 0)
+        self.assertEqual(db.User.find().count(), 0)
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
@@ -324,7 +324,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
-        self.assertEqual(db.users.User.find({'guid':guid}).count(), 1)
+        self.assertEqual(db.User.find({'guid':guid}).count(), 1)
         
         response = self.get('/event?id=%s' % event_id)
         self.assertEqual(response.code, 200)
@@ -337,11 +337,11 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue("by peter" not in response.body.lower())
         self.assertTrue("added seconds ago" in response.body.lower())
         
-        event = db.events.Event.one(dict(title=data['title']))
+        event = db.Event.one(dict(title=data['title']))
         event.add_date -= datetime.timedelta(minutes=3)
         event.save()
         
-        user = db.users.User.one({'guid':guid})
+        user = db.User.one({'guid':guid})
         user.email = u"peter@fry-it.com"
         user.save()
         
@@ -380,11 +380,11 @@ class ApplicationTestCase(BaseHTTPTestCase):
         guid = base64.b64decode(guid_cookie.split('|')[0])
         
         # try to preview someone else's event
-        user2 = db.users.User()
+        user2 = db.User()
         user2.email = u"ashley@test.com"
         user2.save()
         
-        event = db.events.Event()
+        event = db.Event()
         event.user = user2
         event.title = u"Testing @at"
         event.all_day = True
@@ -399,13 +399,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 403)
         
         # user2 needs to create a share
-        user3 = db.users.User()
+        user3 = db.User()
         user3.email = u"else@test.com"
         user3.save()
         
-        user = db.users.User.one({'guid':guid})
+        user = db.User.one({'guid':guid})
         
-        share = db.shares.Share()
+        share = db.Share()
         share.user = user2
         share.users = [user3]
         share.save()
@@ -459,11 +459,11 @@ class ApplicationTestCase(BaseHTTPTestCase):
     def test_view_shared_calendar(self):
         db = self.get_db()
         
-        user = db.users.User()
+        user = db.User()
         user.email = u"peter@fry-it.com"
         user.save()
         
-        event = db.events.Event()
+        event = db.Event()
         event.user = user
         event.title = u"Title"
         event.start = datetime.datetime(2010,10, 13)
@@ -472,7 +472,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         event.tags = [u"tag"]
         event.save()
         
-        share = db.shares.Share()
+        share = db.Share()
         share.user = user
         share.save()
         
@@ -515,8 +515,8 @@ class ApplicationTestCase(BaseHTTPTestCase):
         guid = base64.b64decode(guid_cookie.split('|')[0])
        
         db = self.get_db()
-        user = db.users.User.one(dict(guid=guid))
-        user_settings = db.user_settings.UserSettings.one({
+        user = db.User.one(dict(guid=guid))
+        user_settings = db.UserSettings.one({
           'user.$id': user._id
         })
         self.assertTrue(user_settings.hide_weekend)
@@ -546,7 +546,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertTrue("can't share yet" in response.body.lower())
         
-        user = db.users.User.one(dict(guid=guid))
+        user = db.User.one(dict(guid=guid))
         user.first_name = u"peter"
         user.save()
         
@@ -556,7 +556,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         # expect there to be a full URL in the HTML
         url = re.findall('value="(.*)"', response.body)[0]
         key = re.findall('share=(.*)', url)[0]
-        share = db.shares.Share.one(dict(key=key))
+        share = db.Share.one(dict(key=key))
         self.assertTrue(share)
         self.assertEqual(share.user, user)
         
@@ -628,13 +628,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
     def test_change_account(self):
         db = self.get_db()
         
-        user = db.users.User()
+        user = db.User()
         user.email = u"peter@fry-it.com"
         user.first_name = u"Ptr"
         user.password = encrypt_password(u"secret")
         user.save()
         
-        other_user = db.users.User()
+        other_user = db.User()
         other_user.email = u'peterbe@gmail.com'
         other_user.save()
         
@@ -671,7 +671,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                              follow_redirects=False)
         self.assertEqual(response.code, 302)
         
-        user = db.users.User.one(dict(email='bob@test.com'))
+        user = db.User.one(dict(email='bob@test.com'))
         self.assertEqual(user.last_name, data['last_name'].strip())
         
         # log out

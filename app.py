@@ -99,7 +99,7 @@ class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
         guid = self.get_secure_cookie("guid")
         if guid:
-            return self.db.users.User.one({'guid': guid})
+            return self.db.User.one({'guid': guid})
         
     def get_current_user_settings(self, user=None):
         if user is None:
@@ -107,7 +107,7 @@ class BaseHandler(tornado.web.RequestHandler):
             
         if not user:
             raise ValueError("Can't get settings when there is no user")
-        return self.db.user_settings.UserSettings.one({'user.$id': user._id})
+        return self.db.UserSettings.one({'user.$id': user._id})
     
     def write_json(self, struct, javascript=False):
         if javascript:
@@ -156,7 +156,7 @@ class BaseHandler(tornado.web.RequestHandler):
             search = dict(base_search, 
                           tags=re.compile(re.escape(tag), re.I))
             
-            for event in self.db.events.find(search):
+            for event in self.db[Event.__collection__].find(search):
                 checked_tags = []
                 for t in event['tags']:
                     if t != tag and t.lower() == tag.lower():
@@ -167,12 +167,12 @@ class BaseHandler(tornado.web.RequestHandler):
                     event['tags'] = checked_tags
                     # because 'event' is just a dict, we need to turn it into an object
                     # before we can save it
-                    event_obj = self.db.events.Event(event)
+                    event_obj = self.db.Event(event)
                     event_obj.save()
         
         
     def find_user(self, email):
-        return self.db.users.User.one(dict(email=\
+        return self.db.User.one(dict(email=\
          re.compile(re.escape(email), re.I)))
          
     def has_user(self, email):
@@ -190,7 +190,7 @@ class BaseHandler(tornado.web.RequestHandler):
         user_name = None
         
         if user:
-            user = self.db.users.User.one(dict(guid=user))
+            user = self.db.User.one(dict(guid=user))
             if user.first_name:
                 user_name = user.first_name
             elif user.email:
@@ -211,7 +211,7 @@ class BaseHandler(tornado.web.RequestHandler):
         options['settings'] = settings
         
         options['git_revision'] = self.application.settings['git_revision']
-        options['total_no_events'] = self.db.events.find().count()
+        options['total_no_events'] = self.db[Event.__collection__].find().count()
         
         return options
     
@@ -219,7 +219,7 @@ class BaseHandler(tornado.web.RequestHandler):
         if not shares: 
             shares = ''
         keys = [x for x in shares.split(',') if x]
-        return self.db.shares.find({'key':{'$in':keys}})
+        return self.db[Share.__collection__].find({'key':{'$in':keys}})
             
 
 class APIHandlerMixin(object):
@@ -227,7 +227,7 @@ class APIHandlerMixin(object):
     def check_guid(self):
         guid = self.get_argument('guid', None)
         if guid:
-            user = self.db.users.one({'guid':guid})
+            user = self.db[User.__collection__].one({'guid':guid})
             if user:
                 return user
             else:
@@ -261,10 +261,10 @@ class HomeHandler(BaseHandler):
                 shared_keys = []
             else:
                 shared_keys = [x.strip() for x in shared_keys.split(',')
-                               if x.strip() and self.db.shares.Share.one(dict(key=x))]
+                               if x.strip() and self.db.Share.one(dict(key=x))]
             
             key = self.get_argument('share')
-            share = self.db.shares.Share.one(dict(key=key))
+            share = self.db.Share.one(dict(key=key))
             if share.key not in shared_keys:
                 shared_keys.append(share.key)
                 
@@ -281,7 +281,7 @@ class HomeHandler(BaseHandler):
             hidden_shares = ''
         hidden_keys = [x for x in hidden_shares.split(',') if x]
         hidden_shares = []
-        for share in self.db.shares.find({'key':{'$in':hidden_keys}}):
+        for share in self.db[Share.__collection__].find({'key':{'$in':hidden_keys}}):
             className = 'share-%s' % share['user'].id
             hidden_shares.append(dict(key=share['key'],
                                       className=className))
@@ -319,12 +319,12 @@ class EventsHandler(BaseHandler):
 
         if user:
             search['user.$id'] = user['_id']
-            for event in self.db.events.find(search):
+            for event in self.db[Event.__collection__].find(search):
                 events.append(self.transform_fullcalendar_event(event, True))
                 tags.update(event['tags'])
                 
         for share in self.share_keys_to_share_objects(shares):
-            share_user = self.db.users.one(dict(_id=share['user'].id))
+            share_user = self.db[User.__collection__].one(dict(_id=share['user'].id))
             search['user.$id'] = share_user['_id']
             className = 'share-%s' % share_user['_id']
             full_name = u"%s %s" % (share_user['first_name'], share_user['last_name'])
@@ -335,7 +335,7 @@ class EventsHandler(BaseHandler):
                                 full_name=full_name,
                                 key=share['key']))
                                 
-            for event in self.db.events.find(search):
+            for event in self.db[Event.__collection__].find(search):
                 events.append(
                   self.transform_fullcalendar_event(
                     event, 
@@ -378,7 +378,7 @@ class EventsHandler(BaseHandler):
         user = self.get_current_user()
         
         if not user:
-            user = self.db.users.User()
+            user = self.db.User()
             user.save()
         event, created = self.create_event(user)
         
@@ -434,7 +434,7 @@ class EventsHandler(BaseHandler):
         tags = list(set([x[1:] for x in re.findall(r'\B@[\w\-\.]+', title)]))
         self.case_correct_tags(tags, user)
         
-        event = self.db.events.Event.one({
+        event = self.db.Event.one({
           'user.$id': user._id,
           'title': title,
           'start': start,
@@ -443,8 +443,8 @@ class EventsHandler(BaseHandler):
         if event:
             return event, False
             
-        event = self.db.events.Event()
-        event.user = self.db.users.User(user)
+        event = self.db.Event()
+        event.user = self.db.User(user)
         event.title = title
         event.tags = tags
         event.all_day = all_day
@@ -518,7 +518,7 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
         #    return self.write("date or (start and end) not supplied")
         
         guid = self.get_argument('guid')
-        user = self.db.users.User.one({'guid': guid})
+        user = self.db.User.one({'guid': guid})
         
         event, created = self.create_event(user)
         self.write_event(event, format)
@@ -553,7 +553,7 @@ class BaseEventHandler(BaseHandler):
         except InvalidId:
             raise tornado.web.HTTPError(404, "Invalid ID")
         
-        event = self.db.events.Event.one(search)
+        event = self.db.Event.one(search)
         if not event:
             raise tornado.web.HTTPError(404, "Can't find the event")
         
@@ -645,7 +645,7 @@ class EditEventHandler(BaseEventHandler):
         except InvalidId:
             raise tornado.web.HTTPError(404, "Invalid ID")
         
-        event = self.db.events.Event.one(search)
+        event = self.db.Event.one(search)
         if not event:
             raise tornado.web.HTTPError(404, "Can't find the event")
         
@@ -698,7 +698,7 @@ class EventStatsHandler(BaseHandler):
                 end = parse_datetime(self.get_argument('end'))
                 search['end'] = {'$lte': end}
                 
-            for entry in self.db.events.find(search):
+            for entry in self.db[Event.__collection__].find(search):
                 if entry['all_day']:
                     days = 1 + (entry['end'] - entry['start']).days
                     if entry['tags']:
@@ -761,7 +761,7 @@ class UserSettingsHandler(BaseHandler):
                 disable_sound = user_settings.disable_sound
                 offline_mode = getattr(user_settings, 'offline_mode', False)
             else:
-                user_settings = self.db.user_settings.UserSettings()
+                user_settings = self.db.UserSettings()
                 user_settings.user = user
                 user_settings.save()
 
@@ -781,7 +781,7 @@ class UserSettingsHandler(BaseHandler):
     def post(self, format=None):
         user = self.get_current_user()
         if not user:
-            user = self.db.users.User()
+            user = self.db.User()
             user.save()
             self.set_secure_cookie("guid", str(user.guid), expires_days=100)
             
@@ -792,7 +792,7 @@ class UserSettingsHandler(BaseHandler):
             disable_sound = user_settings.disable_sound
             offline_mode = getattr(user_settings, 'offline_mode', False)
         else:
-            user_settings = self.db.user_settings.UserSettings()
+            user_settings = self.db.UserSettings()
             user_settings.user = user
             user_settings.save()
                 
@@ -814,7 +814,7 @@ class SharingHandler(BaseHandler):
             self.render("sharing/cant-share-yet.html")
             return 
         
-        shares = self.db.shares.Share.find({'user.$id': user._id})
+        shares = self.db.Share.find({'user.$id': user._id})
         count = shares.count()
         if count:
             if count == 1:
@@ -822,10 +822,10 @@ class SharingHandler(BaseHandler):
             else:
                 raise NotImplementedError
         else:
-            share = self.db.shares.Share()
+            share = self.db.Share()
             share.user = user
             # might up this number in the future
-            share.key = Share.generate_new_key(self.db.shares, min_length=7)
+            share.key = Share.generate_new_key(self.db[Share.__collection__], min_length=7)
             share.save()
             
         share_url = "/?share=%s" % share.key
@@ -842,7 +842,7 @@ class SharingHandler(BaseHandler):
             shares = ''
         keys = [x for x in shares.split(',') if x]
         if keys:
-            keys = [x.key for x in self.db.shares.Share.find({'key':{'$in':keys}})]
+            keys = [x.key for x in self.db.Share.find({'key':{'$in':keys}})]
         if key not in keys:
             raise tornado.web.HTTPError(404, "Not a key that has been shared with you")
         
@@ -863,7 +863,7 @@ class SharingHandler(BaseHandler):
 class AccountHandler(BaseHandler):
     def get(self):
         if self.get_secure_cookie('user'):
-            user = self.db.users.User.one(dict(guid=self.get_secure_cookie('user')))
+            user = self.db.User.one(dict(guid=self.get_secure_cookie('user')))
             if not user:
                 return self.write("Error. User does not exist")
             options = dict(
@@ -886,7 +886,7 @@ class AccountHandler(BaseHandler):
             raise tornado.web.HTTPError(400, "Not a valid email address")
 
         guid = self.get_secure_cookie('user')
-        user = self.db.users.User.one(dict(guid=guid))
+        user = self.db.User.one(dict(guid=guid))
         
         existing_user = self.find_user(email)
         if existing_user and existing_user != user:
@@ -937,7 +937,7 @@ class SignupHandler(BaseHandler):
         
         user = self.get_current_user()
         if not user:
-            user = self.db.users.User()
+            user = self.db.User()
             user.save()
         user.email = email
         user.password = encrypt_password(password)

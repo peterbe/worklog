@@ -17,6 +17,7 @@ class BaseDocument(Document):
     use_dot_notation = True
     
 class User(BaseDocument):
+    __collection__ = 'users'
     structure = {
       'guid': unicode,
       'username': unicode,
@@ -54,6 +55,7 @@ class User(BaseDocument):
         
     
 class UserSettings(BaseDocument):
+    __collection__ = 'user_settings'
     structure = {
       'user': User,
       'monday_first': bool,
@@ -77,6 +79,7 @@ class UserSettings(BaseDocument):
     ]
 
 class Event(BaseDocument):
+    __collection__ = 'events'
     structure = {
       'user': User,
       'title': unicode,
@@ -94,6 +97,7 @@ class Event(BaseDocument):
     ]    
     
 class Share(BaseDocument):
+    __collection__ = 'shares'
     structure = {
       'user': User,
       'key': unicode,
