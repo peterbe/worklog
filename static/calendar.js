@@ -77,21 +77,12 @@ function _day_clicked(date, allDay, jsEvent, view) {
            });
 	   __setup_tag_autocomplete($('input[name="title"]:visible'));
 	   $('input[name="title"]:visible').focus();
-        },
-	hide: function(event, api) {
-	    //L("hide!");
-	     //api.destroy();
-	}
-	 
+        }
       }
    };
    //qtip_options = $.extend(qtip_options, __standard_qtip_options());
    current_tooltip = $(this);
-   //current_tooltip.css('border', '2px solid red');
-   //L(current_tooltip, current_tooltip.qtip());
-   
    current_tooltip.qtip(qtip_options);
-   //var api = current_tooltip.qtip();
 }
 
 function _event_clicked(event, jsEvent, view) {
@@ -101,54 +92,54 @@ function _event_clicked(event, jsEvent, view) {
    if (typeof event.editable != 'undefined')
      is_editable = event.editable;
    
+   L('is_editable', is_editable);
    if (is_editable)
      var url = '/event.json?id=' + event.id;
    else
      var url = '/event.html?id=' + event.id;
    
-   function _prepare_edit_event() {
-      $('form.edit').submit(function() {
+   function _prepare_edit_event(container) {
+      $('form', container).submit(function() {
          _setup_ajaxsubmit(this, event.id);
          return false;
       });
-      if ($('form.edit input[name="title"]:visible').size()) {
-	 __setup_tag_autocomplete($('form.edit input[name="title"]'));
-	 $('form.edit input[name="title"]').focus();
+      if ($('input[name="title"]', container).size()) {
+	 __setup_tag_autocomplete($('input[name="title"]', container));
+	 $('input[name="title"]', container).focus();
       } else {
 	 // it hasn't been loaded yet :(
 	 setTimeout(function() {
-	    __setup_tag_autocomplete($('form.edit input[name="title"]'));
-	    $('form.edit input[name="title"]').focus();
+	    __setup_tag_autocomplete($('input[name="title"]', container));
+	    $('input[name="title"]', container).focus();
 	 }, 500);
       }
       
-      if (!$('input[name="external_url"]').val()) {
-         $('input[name="external_url"]')
+      if (!$('input[name="external_url"]', container).val()) {
+         $('input[name="external_url"]', container)
            .addClass('placeholdervalue')
-             .val($('input[name="placeholdervalue"]').val());
+             .val($('input[name="placeholdervalue"]', container).val());
       }
       
-      $('input[name="external_url"]').bind('focus', function() {
-         if ($(this).val() == $('input[name="placeholdervalue"]').val()) {
+      $('input[name="external_url"]', container).bind('focus', function() {
+         if ($(this).val() == $('input[name="placeholdervalue"]', container).val()) {
             $(this).val('').removeClass('placeholdervalue');
          }
       }).bind('blur', function() {
          if (!$.trim($(this).val()))
-           $('input[name="external_url"]')
+           $('input[name="external_url"]', container)
              .addClass('placeholdervalue')
-               .val($('input[name="placeholdervalue"]').val());
+               .val($('input[name="placeholdervalue"]', container).val());
          else if ($(this).val().search('://') == -1)
            $(this).val('http://' + $(this).val());
       });
       
-      L($('a.delete'));
-      $('a.delete').click(function() {
-         var container = $(this).parents('div.delete');
-         $('.confirmation', container).show();
-         $('a.delete', container).hide();
+      $('a.delete', container).click(function() {
+         var parent = $(this).parents('div.delete');
+         $('.confirmation', parent).show();
+         $('a.delete', parent).hide();
          
-         //$('a.delete-cancel', container).unbind('click');
-         $('a.delete-confirm', container).click(function() {
+         $('a.delete-confirm', parent).unbind('click');
+         $('a.delete-confirm', parent).click(function() {
             close_current_tooltip();
             $.post('/event/delete', {id: event.id}, function() {
                decrement_total_no_events();
@@ -164,11 +155,12 @@ function _event_clicked(event, jsEvent, view) {
             return false;
          });
          
-         $('a.delete-cancel', container).unbind('click');
-         $('a.delete-cancel', container).click(function() {
-            var container = $(this).parents('div.delete');
-            $('a.delete').show();
-            $('.confirmation').hide();
+         $('a.delete-cancel', parent).unbind('click');
+         $('a.delete-cancel', parent).click(function() {
+            //var this_parent = $(this).parents('div.delete');
+            $('a.delete', parent).show();
+            $('.confirmation', parent).hide();
+	    return false;
          });
          return false
       });
@@ -184,24 +176,25 @@ function _event_clicked(event, jsEvent, view) {
           ajax: {
             url:url,
                success: function(data, status) {
-                  L($('#edit-form-container input[name="title"]').val());
-                  var clone = $('#edit-form-container').clone();
-                  $('input[name="title"]', clone).val(data.title);
-                  $('input[name="id"]', clone).val(data.id);
-                  this.set('content.text', clone);
+                  if (is_editable) {
+                     var clone = $('#edit-form-container').clone();
+                     $('input[name="title"]', clone).val(data.title);
+                     $('input[name="id"]', clone).val(data.id);
+                     // reason for this:
+                     // http://craigsworks.com/projects/forums/thread-can-t-remove-the-word-loading-with-this-set-content-text
+                     this.set('content.text', '&nbsp;');
+                     _prepare_edit_event(clone);
+                     this.set('content.text', clone);
+                  } else {
+                     this.set('content.text', data);
+                  }
                   return false;
-                  //if (is_editable)
-                  //  _prepare_edit_event();
-                  //else
-                  //  _prepare_preview_event();                  
                }
           }
       },
      position: {
           my: 'bottom middle',
 	  at: 'center',
- 	 // important so it doesn't move when move the mouse
-          //target: 'event'
           target:this
       },
       hide: {
@@ -217,46 +210,9 @@ function _event_clicked(event, jsEvent, view) {
           tip: {
               corner: 'middle bottom' 
           }
-      },
-      events: {
-        show: function(event, api) {
-           L("show!");
-        },
-        render: function(event, api) {
-           L("render");
-           
-      //       if (is_editable)
-      //         _prepare_edit_event();
-      //       else
-      //         _prepare_preview_event();
-        }
       }
    };
  
-   /*
-   var qtip_options = {
-      content: {
-           text: 'Please wait...',
-	   //text: get_edit_form(url, event.id, event.title, event.url)
-	   url: url
-	   //title: {
-           //  text: "Adding new event",
-	   //  button: "Cancel"
-	   //}
-      },
-      api: {
-          onContentUpdate: function() {
-             // for some reason qtip fires onContentUpdate() twice. The only difference
-             // between the two times is this.cache.toggle
-             if (!this.cache.toggle) return;
-             if (is_editable)
-               _prepare_edit_event();
-             else
-               _prepare_preview_event();
-          }
-      }
-   };
-    */
    //qtip_options = $.extend(qtip_options, __standard_qtip_options());
    current_tooltip = $(this);
    current_tooltip.qtip(qtip_options);
@@ -300,37 +256,6 @@ function __setup_tag_autocomplete(jelement) {
 	   return row[0] + ' ';
 	}
    });
-   /*
-   jelement.autocomplete(
-      minLength: 1,
-      delay: 100,
-      source: function(request, response ) {
-         // delegate back to autocomplete, but extract the last term
-
-         if (extractLast(request.term).charAt(0) != '@')
-           response([]);
-         else {
-            response($.ui.autocomplete.filter(
-                                               AVAILABLE_TAGS, extractLast(request.term)));
-         }
-      },
-      focus: function() {
-         // prevent value inserted on focus
-         return false;
-      },
-      select: function(event, ui ) {
-         var terms = split(this.value);
-         // remove the current input
-         terms.pop();
-         // add the selected item
-         terms.push(ui.item.value);
-         // add placeholder to get the comma-and-space at the end
-         terms.push('');
-         this.value = terms.join(' ');
-         return false;
-      }
-   });
-    */
 }
 
 function _setup_ajaxsubmit(element, event_id) {
@@ -593,20 +518,6 @@ $(function() {
    $('input.cancel').live('click', function() {
       close_current_tooltip(this);
    });
-   
-   // Sooner or later we're going to need the qip
-   /*
-   $.getScript(JS_URLS.qtip, function() {
-      __craigs_tip();
-      return;
-      	 L("Setting up qTip");
-      $('.fc-view td').css('border', '1px solid red').css('background-color','#efefef');
-	 $('.fc-view td').qtip({
-            content:$('#add-form-container form')
-	 });
-   });
-    */
-
 });
 
 
