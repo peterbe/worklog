@@ -2,7 +2,7 @@
     // Reference on use of outermost function() call and other JS modular design issues:
     // http://www.adequatelygood.com/2010/3/JavaScript-Module-Pattern-In-Depth
     
-    var gc_base_url = "http://worklog/";
+    var gc_base_url = "http://donecal.com/";
     
     // Get first 3 characters of path
     var conversationPath = location.pathname.substring(0,3);
