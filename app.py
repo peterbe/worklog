@@ -1105,7 +1105,7 @@ class Bookmarklet(EventsHandler):
         title = u""
         doc_title = self.get_argument('doc_title', u'')
         if doc_title:
-            tags = self._suggest_tags(user, doc_title)
+            tags = self._suggest_tags(user, doc_title, external_url=external_url)
             if tags:
                 title = ' '.join(tags) + ' '
         self.render("bookmarklet.html", 
@@ -1113,10 +1113,12 @@ class Bookmarklet(EventsHandler):
                     title=title,
                     error_title=None)
 
-    def _suggest_tags(self, user, title):
+    def _suggest_tags(self, user, title, external_url=None):
         """given a user and a title (e.g. 'Tra the la [Foo]') return a list of
         tags that are in that string. Disregard English stopwords."""
         tags = []
+        # XXX: Idea! Use the external_url to compare with past entries by doing a 
+        # regular expression search on the start of the URL
         return ['@%s' % x for x in tags]
     
     def post(self):
@@ -1147,7 +1149,17 @@ class Bookmarklet(EventsHandler):
                     title=title,
                     error_title="No title entered")
         
+@route(r'/report/$')
+class ReportHandler(BaseHandler):
+    
+    def get(self):
+        options = self.get_base_options()
+        user = self.get_current_user()
+        #print user
+        options['first_date'] = datetime.date(2010, 6, 10)
+        options['last_date'] = datetime.date.today()
         
+        self.render("report/index.html", **options)
     
 def main():
     tornado.options.parse_command_line()
