@@ -8,6 +8,7 @@ from cStringIO import StringIO
 from utils.timesince import smartertimesince
 from subprocess import Popen, PIPE
 from utils import mkdir
+from utils.truncate import truncate_words
 
 try:
     import pygments
@@ -25,7 +26,18 @@ class Footer(tornado.web.UIModule):
         return self.render_string("modules/footer.html",
           calendar_link=self.request.path != '/'
          )
-         
+
+
+class TruncateWords(tornado.web.UIModule):
+    def render(self, string, max_words=20):
+        return truncate_words(string, max_words)
+
+class TruncateString(tornado.web.UIModule):
+    def render(self, string, max_length=30):
+        if len(string) > max_length:
+            return string[:max_length] + '...'
+        return string
+    
 class Settings(tornado.web.UIModule):
     def render(self, settings):
         return self.render_string("modules/settings.html",

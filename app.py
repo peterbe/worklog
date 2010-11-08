@@ -1095,7 +1095,7 @@ class HelpHandler(BaseHandler):
         options['code_pythondonecal_1'] = code.strip()
 
 @route(r'/bookmarklet/')
-class Bookmarklet(BaseHandler):
+class Bookmarklet(EventsHandler):
     
     def get(self):
         external_url = self.get_argument('external_url', u'')
@@ -1110,15 +1110,43 @@ class Bookmarklet(BaseHandler):
                 title = ' '.join(tags) + ' '
         self.render("bookmarklet.html", 
                     external_url=external_url, 
-                    title=title)
-        
+                    title=title,
+                    error_title=None)
+
     def _suggest_tags(self, user, title):
         """given a user and a title (e.g. 'Tra the la [Foo]') return a list of
         tags that are in that string. Disregard English stopwords."""
         tags = []
-        
-        
         return ['@%s' % x for x in tags]
+    
+    def post(self):
+        title = self.get_argument("title", u'')
+        external_url = self.get_argument("external_url", u'')
+        use_current_url = niceboolean(self.get_argument("use_current_url", False))
+        if not use_current_url:
+            external_url = ''
+        
+        if title:
+            user = self.get_current_user()
+        
+            if not user:
+                user = self.db.User()
+                user.save()
+            event, created = self.create_event(user)
+            
+            if not self.get_secure_cookie('user'):
+                # if you're not logged in, set a cookie for the user so that
+                # this person can save the events without having a proper user
+                # account.
+                self.set_secure_cookie("guid", str(user.guid), expires_days=14)
+            
+            
+        else:
+            self.render("bookmarklet.html", 
+                    external_url=external_url,
+                    title=title,
+                    error_title="No title entered")
+        
         
     
 def main():

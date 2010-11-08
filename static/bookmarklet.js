@@ -196,7 +196,8 @@
         var container = div();
         container.id = "bigt__container";
         container.style.position = "absolute";
-        container.style.top = scrollPos().y + (Geometry.getViewportHeight() - gCanvasHeightFull)/2  + "px";
+        //container.style.top = scrollPos().y + (Geometry.getViewportHeight() - gCanvasHeightFull)  + "px";
+       container.style.top = scrollPos().y + 50  + "px";
         container.style.right = (Geometry.getViewportWidth() - gCanvasWidth)/2 + "px";
         container.style.zIndex = 100000;
 
@@ -249,7 +250,7 @@
         //insertSizeDiv("bigt__halfWinDiv","bigt__halfWinImg",halfWin, "Half size bookmarklet window",2,"half_win.png",9);
         //insertSizeDiv("bigt__fullWinDiv","bigt__fullWinImg",windowActive, "Full size bookmarklet window",1,"full_win_selected.png",18);
         
-        //insertSizeDiv("bigt__closeWinDiv","bigt__closeWinImg",closeFrame, "Close bookmarklet window",0,"close_x.png",18);         
+        insertSizeDiv("bigt__closeWinDiv","bigt__closeWinImg",closeFrame, "Close bookmarklet window",0,"/static/css/fancybox/fancy_close.png",18);
         
         document.body.appendChild(container);
 
@@ -315,30 +316,31 @@
             
             img_link_div = div();
             img_link_div.id = divId;
-            img_link_div.onmouseover = highlightDiv;
-            img_link_div.onmouseout = unhighlightDiv;
+            //img_link_div.onmouseover = highlightDiv;
+            //img_link_div.onmouseout = unhighlightDiv;
             img_link_div.style.backgroundColor = "#FFFFFF";
             img_link_div.onclick = func;
-            img_link_div.style.width = "18px";
-            img_link_div.style.height = "18px";
+            img_link_div.style.width = "25px";
+            img_link_div.style.height = "24px";
             img_link_div.style.border = "0px none";
             img_link_div.title = titleMsg;
             img_link_div.style.position = "absolute";
             img_link_div.style.zIndex = 3;
             img_link_div.style.top = kShadowSize/2 + 2 + "px";
-            img_link_div.style.right = kShadowSize/2 + 2 + (18 + 4) * order + "px";
+            img_link_div.style.right = kShadowSize/2 + 2 + (24 + 4) * order + "px";
             container.appendChild(img_link_div); 
             
             img_link = document.createElement('img');
             img_link.id = imgId;
-            img_link.src = gc_base_url + "static/images/bookmarklet/" + imgSrc;
-            img_link.width = 18;
-            img_link.height = imgHeight;
+            img_link.src = gc_base_url + imgSrc;
+            img_link.width = 25;
+            img_link.height = 24;
             img_link.style.position = "absolute";
             img_link.style.zIndex = 3;
             img_link.style.top = "0px";
             img_link.style.right = "0px";
-            img_link_div.appendChild(img_link);   
+            img_link_div.appendChild(img_link);
+           return img_link_div;
         }
     }
     
@@ -414,7 +416,7 @@
     }
     
     
-    
+    /*
     function minWin(){
         gCanvasWidth = gCanvasWidthMin;
         gCanvasHeight = gCanvasHeightMin;
@@ -463,8 +465,9 @@
             container.style.top = scrollPos().y + "px";
         };
     }
+   */
     
-    
+   /*
     function halfWin(){
         gCanvasWidth = gCanvasWidthFull;
         gCanvasHeight = gCanvasHeightHalf;
@@ -512,7 +515,7 @@
         window.onscroll = function() {
             container.style.top = scrollPos().y + (Geometry.getViewportHeight() - gCanvasHeightFull)/2  + "px";
         };
-    }
+    }*/
     
     function fullWin(){
         gCanvasWidth = gCanvasWidthFull;
@@ -530,12 +533,12 @@
         canvas.style.height = gCanvasHeight + "px";
         
         //var img_logo = byId('bigt__logo');
-        var minWinDiv = byId('bigt__minWinDiv');
-        var minWinImg = byId('bigt__minWinImg');
-        var halfWinDiv = byId('bigt__halfWinDiv');
-        var halfWinImg = byId('bigt__halfWinImg');
-        var fullWinDiv = byId('bigt__fullWinDiv');
-        var fullWinImg = byId('bigt__fullWinImg');
+        //var minWinDiv = byId('bigt__minWinDiv');
+        //var minWinImg = byId('bigt__minWinImg');
+        //var halfWinDiv = byId('bigt__halfWinDiv');
+        //var halfWinImg = byId('bigt__halfWinImg');
+        //var fullWinDiv = byId('bigt__fullWinDiv');
+        //var fullWinImg = byId('bigt__fullWinImg');
         
         // Logo not visible
         //img_logo.style.visibility = "hidden";
@@ -545,15 +548,16 @@
         //minWinImg.src = gc_base_url + "static/images/bookmarklet/min_win.png";
         
         // Half Window is no longer active
-        halfWinDiv.onclick = halfWin;
-        halfWinImg.src = gc_base_url + "static/images/bookmarklet/half_win.png";
+        //halfWinDiv.onclick = halfWin;
+        //halfWinImg.src = gc_base_url + "static/images/bookmarklet/half_win.png";
         
         // Full Window is now active
-        fullWinDiv.onclick = windowActive;
-        fullWinImg.src = gc_base_url + "static/images/bookmarklet/full_win_selected.png";
+        //fullWinDiv.onclick = windowActive;
+        //fullWinImg.src = gc_base_url + "static/images/bookmarklet/full_win_selected.png";
         
         // Reposition window to center
-        container.style.top = scrollPos().y + (Geometry.getViewportHeight() - gCanvasHeightFull)/2  + "px";
+        //container.style.top = scrollPos().y + (Geometry.getViewportHeight() - gCanvasHeightFull)/2  + "px";
+       container.style.top = scrollPos().y + 60  + "px";
         container.style.right = (Geometry.getViewportWidth() - gCanvasWidth)/2 + "px";
         
         // Keep container in same relative position at top 
@@ -573,6 +577,7 @@
         var canvas = byId('bigt__canvas'); // Parent is container
         //var shadow = byId('bigt__shadow'); // Parent is container
         var container = byId('bigt__container');
+       var close_div = byId('bigt__closeWinDiv');
         
         // Remove container elements starting with lowest.
         //
@@ -583,7 +588,8 @@
         //
         my_iframe.parentNode.removeChild(my_iframe);
         canvas.parentNode.removeChild(canvas);
-        shadow.parentNode.removeChild(shadow);
+        close_div.parentNode.removeChild(close_div);
+        //shadow.parentNode.removeChild(shadow);
         container.parentNode.removeChild(container);
         
 
@@ -640,7 +646,7 @@
     function handleOnkeyup(e){
         var evtobj=window.event? event : e;
 	var unicode=evtobj.charCode? evtobj.charCode : evtobj.keyCode;
-
+       
         // Close bookmarklet on Escape
 	if(unicode == 27){
             closeFrame();
@@ -654,4 +660,5 @@
     document.onkeyup = handleOnkeyup;
 
     bookmarklet();
+   
 })();
