@@ -41,17 +41,27 @@ $(function() {
       });
    });
 
-      $('a.user-settings').fancybox({
-         'width': '75%',
-         'height': '75%',
-         'scrolling': 'no',
-         'transitionIn': 'none',
-         'transitionOut': 'none',
-         //'type': 'iframe',
-         onClosed: function() {
-            //location.href='/'; // works but not ideal
-         }
-      });
+   $('a.user-settings').fancybox({
+      'width': '75%',
+      'height': '75%',
+      'scrolling': 'no',
+      'transitionIn': 'none',
+      'transitionOut': 'none',
+      //'type': 'iframe',
+      onClosed: function() {
+	 //location.href='/'; // works but not ideal
+      }
+   });
+   
+   $('a.vimeovideo').fancybox({
+      'width': '45%',
+      'height': '75%',
+      
+      'transitionIn': 'none',
+      'transitionOut': 'none',
+      'type': 'iframe'
+      
+   });
       
       $('a.share').fancybox({
          'width': '75%',

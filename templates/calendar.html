@@ -52,12 +52,20 @@
                 <ul>
                 </ul>
               </div>
-
+	      
               <div class="plot" id="days-plot">
               </div>
               <div class="plot" id="hours-plot">
               </div>
-
+	      
+              {% if not user %}
+	      <p><strong>What on earch <em>is</em> this?</strong><br>
+	      <a href="/help/show_vimeo_video" class="vimeovideo"><img src="{{ static_url("images/vimeovideo.png") }}" alt="Introduction to DoneCal.com on Vimeo"></a><br>
+	      <a href="/help/show_vimeo_video" class="vimeovideo">Watch an introduction video</a>
+	      </p>
+	      
+	      {% end %}
+	      
 	      
 	    </div>
 	    

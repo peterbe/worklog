@@ -685,6 +685,26 @@ class EditEventHandler(BaseEventHandler):
 @route('/events/stats(\.json|\.xml|\.txt)?')
 class EventStatsHandler(BaseHandler):
     def get(self, format):
+        
+        stats = self.get_stats_data()
+                
+        if format == '.json':
+            self.write_json(stats)
+        elif format == '.xml':
+            self.write_xml(stats)
+        elif format == '.txt':
+            out = cStringIO.StringIO()
+            for key, values in stats.items():
+                out.write('%s:\n' % key.upper().replace('_', ' '))
+                
+                for tag, num in values:
+                    tag = re.sub('</?em>', '*', tag)
+                    out.write('  %s%s\n' % (tag.ljust(40), num))
+                out.write('\n')
+                
+            self.write_txt(out.getvalue())
+            
+    def get_stats_data(self):
         days_spent = defaultdict(float)
         hours_spent = defaultdict(float)
         user = self.get_current_user()
@@ -723,24 +743,9 @@ class EventStatsHandler(BaseHandler):
         # flatten as a list
         days_spent = sorted(days_spent.items())
         hours_spent = sorted([(x,y) for (x, y) in hours_spent.items() if y])
-        stats = dict(days_spent=days_spent,
-                     hours_spent=hours_spent)
-                
-        if format == '.json':
-            self.write_json(stats)
-        elif format == '.xml':
-            self.write_xml(stats)
-        elif format == '.txt':
-            out = cStringIO.StringIO()
-            for key, values in stats.items():
-                out.write('%s:\n' % key.upper().replace('_', ' '))
-                
-                for tag, num in values:
-                    tag = re.sub('</?em>', '*', tag)
-                    out.write('  %s%s\n' % (tag.ljust(40), num))
-                out.write('\n')
-                
-            self.write_txt(out.getvalue())
+        return dict(days_spent=days_spent,
+                    hours_spent=hours_spent)
+                     
         
             
 @route('/user/settings(.js|/)')
@@ -1148,6 +1153,9 @@ class Bookmarklet(EventsHandler):
                     external_url=external_url,
                     title=title,
                     error_title="No title entered")
+                    
+                    
+                    
         
 @route(r'/report/$')
 class ReportHandler(BaseHandler):
@@ -1160,6 +1168,34 @@ class ReportHandler(BaseHandler):
         options['last_date'] = datetime.date.today()
         
         self.render("report/index.html", **options)
+        
+        
+        
+        
+@route(r'/report(\.xls|\.json|\.js|\.xml|\.txt)?')
+class ReportDataHandler(EventStatsHandler):
+    def get(self, format=None):
+        user = self.get_current_user()        
+        stats = self.get_stats_data()
+        
+        if format == '.xls':
+            raise NotImplementedError
+        elif format in ('.json', '.js'):
+            self.write_json(stats, javascript=format=='.js')
+        elif format == '.xml':
+            self.write_xml(stats)
+        elif format == '.txt':
+            out = cStringIO.StringIO()
+            for key, values in stats.items():
+                out.write('%s:\n' % key.upper().replace('_', ' '))
+                
+                for tag, num in values:
+                    tag = re.sub('</?em>', '*', tag)
+                    out.write('  %s%s\n' % (tag.ljust(40), num))
+                out.write('\n')
+                
+            self.write_txt(out.getvalue())
+        
     
 def main():
     tornado.options.parse_command_line()
