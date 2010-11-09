@@ -7,20 +7,30 @@
     
   </div>
   
-  <div class="edit-url" {% if url %}style="display:none"{% end %}>
-    {% if url %}
-    <input name="external_url" size="35" value="{{ url }}">
-    {% else %}
-    <input name="external_url" size="35" value="">
-    {% end %}
-    <input type="hidden" name="placeholdervalue" value="URL: (optional)">
-  </div>
   
   {% if url %}
   <div class="see-url">
     <a href="{{ url }}" onclick="window.open('{{ url }}');return false">{{ url }}</a>
   </div>
   {% end %}
+  
+  <div id="more-editing">
+  
+    <div class="edit-url" {% if url %}style="display:none"{% end %}>
+      {% if url %}
+        <input name="external_url" size="35" value="{{ url }}">
+      {% else %}
+        <input name="external_url" size="35" value="">
+      {% end %}
+      <input type="hidden" name="placeholdervalue" value="URL: (optional)">
+    </div>
+  
+    <div class="edit-description">
+      <textarea name="description" cols="40" rows="6">{{ description }}</textarea>
+    </div>
+  
+  </div>
+  
   
   <div class="delete">
     <p>

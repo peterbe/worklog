@@ -187,7 +187,15 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['event']['title'], data['title'])
+        self.assertTrue('description' not in struct['event'])
         self.assertTrue(db.Event.one({'title':'New title'}))
+
+        data['description'] = '\nA longer description\n'
+        response = self.post('/event/edit', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['event']['description'], data['description'].strip())
+        self.assertTrue(db.Event.one({'description': data['description'].strip()}))
         
         # edit URL (wrong)
         data = {'id': event_id,
@@ -242,7 +250,15 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct.get('title'), data['title'])
+        self.assertTrue('description' not in struct)
         
+        event_obj.description = u"A description"
+        event_obj.save()
+        
+        response = self.get(url, dict(id=event_id), headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['description'], event_obj.description)
         
     def test_get_event_stats(self):
         db = self.get_db()

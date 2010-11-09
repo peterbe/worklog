@@ -62,6 +62,7 @@ class APITestCase(base.BaseHTTPTestCase):
         event1.start = datetime.datetime.today()
         event1.end = datetime.datetime.today()
         event1.external_url = u'http://www.peterbe.com'
+        event1.description = u'A longer description'
         event1.save()
         
         struct = json.loads(self.get('/api/events.json', data).body)
@@ -71,6 +72,7 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertEqual(struct['events'][0]['id'], str(event1._id))
         self.assertEqual(struct['events'][0]['allDay'], True)
         self.assertEqual(struct['events'][0]['external_url'], event1.external_url)
+        self.assertEqual(struct['events'][0]['description'], event1.description)
         self.assertEqual(struct.get('tags'), [])
         
         # some time in the middle of the current month
@@ -102,7 +104,8 @@ class APITestCase(base.BaseHTTPTestCase):
         xml = response.body
         #print xml
         self.assertTrue('<allDay>false</allDay>' in xml)
-        self.assertTrue('<external_url/>' in xml)
+        self.assertTrue('external_url' not in xml)
+        self.assertTrue('description' not in xml)
         self.assertTrue('<tag>@Tag</tag>' in xml)
         
     def test_posting_events(self):

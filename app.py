@@ -133,8 +133,10 @@ class BaseHandler(tornado.web.RequestHandler):
                     id=str(item['_id']))
             
         data.update(**kwargs)
-        if 'external_url' in item:
+        if item.get('external_url'):
             data['external_url'] = item['external_url']
+        if item.get('description'):
+            data['description'] = item['description']
             
         if serialize:
             for key, value in data.items():
@@ -623,7 +625,7 @@ class EditEventHandler(BaseEventHandler):
             assert action == 'edit'
             title = self.get_argument('title')
             external_url = self.get_argument('external_url', u"")
-            if external_url == u"URL: (optional)":
+            if external_url == self.get_argument('placeholdervalue_external_url', None):
                 external_url = u""
             if external_url:
                 # check that it's valid
@@ -631,6 +633,9 @@ class EditEventHandler(BaseEventHandler):
                 parsed = urlparse(external_url)
                 if not (parsed.scheme and parsed.netloc):
                     raise tornado.web.HTTPError(400, "Invalid URL (%s)" % external_url)
+            description = self.get_argument('description', u"").strip()
+            if description == self.get_argument('placeholdervalue_description', None):
+                description = u""
 
         user = self.get_current_user()
         if not user:
@@ -667,6 +672,7 @@ class EditEventHandler(BaseEventHandler):
             tags = list(set([x[1:] for x in re.findall('@\w+', title)]))
             event.title = title
             event.external_url = external_url
+            event.description = description
             event.tags = tags
             if getattr(event, 'url', -1) != -1:
                 # NEED MIGRATION SCRIPTS!

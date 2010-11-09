@@ -88,6 +88,7 @@ class Event(BaseDocument):
       'end': datetime.datetime,
       'tags': [unicode],
       'external_url': unicode,
+      'description': unicode,
     }
     use_autorefs = True
     required_fields = ['user', 'title', 'all_day', 'start', 'end']

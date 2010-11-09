@@ -97,6 +97,9 @@ hr {
 p {
 	margin-bottom: 1.5em;
 }
+form.edit-form p, form.add-form p {
+	margin-bottom: 0;
+}
 ul, ol {
 	margin: 0 0 1.5em 1.5em;
 }
@@ -180,15 +183,16 @@ sub {
 
 input[type=text],
 textarea {
-	background: #eee;
+	/*background: #eee;*/
 	border-color: #aaa #ddd #ddd #aaa;
 	border-style: solid;
 	border-width: 1px;
 }
+/*
 input[type=text]:focus,
 textarea:focus {
 	background: #fff;
-}
+}*/
 textarea {
 	padding-left: 3px;
 	width: 98%;

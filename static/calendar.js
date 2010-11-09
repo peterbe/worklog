@@ -105,20 +105,31 @@ function _event_clicked(event, jsEvent, view) {
       if (!$('input[name="external_url"]', container).val()) {
          $('input[name="external_url"]', container)
            .addClass('placeholdervalue')
-             .val($('input[name="placeholdervalue"]', container).val());
+             .val($('input[name="placeholdervalue_external_url"]', container).val());
       }
 
-      $('input[name="external_url"]', container).bind('focus', function() {
-         if ($(this).val() == $('input[name="placeholdervalue"]', container).val()) {
-            $(this).val('').removeClass('placeholdervalue');
+      //$('input[name="external_url"]', container).bind('focus', function() {
+      //   if ($(this).val() == $('input[name="placeholdervalue"]', container).val()) {
+      //      $(this).val('').removeClass('placeholdervalue');
+      //   }
+      //}).bind('blur', function() {
+      //   if (!$.trim($(this).val()))
+      //     $('input[name="external_url"]', container)
+      //       .addClass('placeholdervalue')
+      //         .val($('input[name="placeholdervalue"]', container).val());
+      //   else if ($(this).val().search('://') == -1)
+      //     $(this).val('http://' + $(this).val());
+      //});
+      
+      $('a.more-editing', container).click(function() {
+         if ($('div.more-editing:visible', container).length) {
+            $('div.more-editing', container).hide();
+            $(this).text('More options?');
+         } else {
+            $('div.more-editing', container).show();
+            $(this).text('Less options?');
          }
-      }).bind('blur', function() {
-         if (!$.trim($(this).val()))
-           $('input[name="external_url"]', container)
-             .addClass('placeholdervalue')
-               .val($('input[name="placeholdervalue"]', container).val());
-         else if ($(this).val().search('://') == -1)
-           $(this).val('http://' + $(this).val());
+         return false;
       });
 
       $('a.delete', container).click(function() {
@@ -168,11 +179,32 @@ function _event_clicked(event, jsEvent, view) {
                      var clone = $('#edit-form-container').clone();
                      $('input[name="title"]', clone).val(data.title);
                      $('input[name="id"]', clone).val(data.id);
+                     if (data.external_url) {
+                        $('input[name="external_url"]', clone).val(data.external_url);
+                     } else {
+                        $('input[name="external_url"]', clone)
+                          .addClass('placeholdervalue')
+                            .val($('input[name="placeholdervalue_external_url"]', clone).val());
+                     }
+                     if (data.description) {
+                        $('textarea[name="description"]', clone).val(data.description);
+                     } else {
+                        $('textarea[name="description"]', clone)
+                          .addClass('placeholdervalue')
+                          .val($('input[name="placeholdervalue_description"]', clone).val());
+                     }
                      // reason for this:
                      // http://craigsworks.com/projects/forums/thread-can-t-remove-the-word-loading-with-this-set-content-text
                      this.set('content.text', '&nbsp;');
                      _prepare_edit_event(clone);
                      this.set('content.text', clone);
+                     
+                     // doing this after because a.more-editing is not visible until it's 
+                     // gone into the qtip
+                     if (data.description || data.external_url) {
+                        $('a.more-editing').click();
+                     }
+                     
                   } else {
                      this.set('content.text', data);
                   }
@@ -507,6 +539,21 @@ $(function() {
 
    $('input.cancel').live('click', function() {
       close_current_tooltip(this);
+   });
+   $('input.placeholdervalue, textarea.placeholdervalue').live('focus', function() {
+      var placeholdervalue_text = $('input[name="placeholdervalue_'+$(this).attr('name') + '"]').val();
+      if ($(this).val() == placeholdervalue_text) {
+         $(this).val('').removeClass('placeholdervalue');
+      }
+      $(this).blur(function() {
+         var placeholdervalue_text = $('input[name="placeholdervalue_'+$(this).attr('name') + '"]').val();
+         if ($.trim($(this).val())) {
+            if ($(this).attr('name') == 'external_url' && $(this).val().search('://') == -1)
+              $(this).val('http://' + $(this).val());
+         } else {
+            $(this).addClass('placeholdervalue').val(placeholdervalue_text);
+         }
+      });         
    });
 });
 

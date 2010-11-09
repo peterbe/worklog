@@ -13,7 +13,7 @@
 	#calendar { 
 	margin: 10px;
 	}
-        input.placeholdervalue { color:#ccc; }
+        input.placeholdervalue, textarea.placeholdervalue { color:#ccc; }
         #settings-box {
           margin-top:50px;
         }
@@ -83,7 +83,7 @@
 </div>
 
 <div id="edit-form-container" style="display:none">
-<form method="post" class="add-form" action="/event/edit">
+<form method="post" class="edit-form" action="/event/edit">
   <div>
     <input type="hidden" name="id">
     <input name="title" autocomplete="off" size="35">
@@ -92,13 +92,23 @@
     <input type="submit" value="Save">
     <input type="button" class="cancel" value="Cancel">
   </div>
-  <div class="edit-url" style="display:none">
-  </div>
   <div class="see-url" style="display:none">
   </div>
+  
+  <div class="more-editing" style="display:none">
+    <div class="edit-url">
+      <input name="external_url" size="35">
+      <input type="hidden" name="placeholdervalue_external_url" value="URL: (optional)">
+    </div>
+    <div class="edit-description">
+      <textarea name="description" cols="40" rows="6"></textarea>
+      <input type="hidden" name="placeholdervalue_description" value="Description: (optional)">
+    </div>
+  </div>
+  <p><a href="#" class="more-editing">More options?</a></p>
   <div class="delete">
     <p>
-    <a href="#" class="delete">Delete?</a>
+      <a href="#" class="delete">Delete?</a>    
       <span class="confirmation" style="display:none">Are you sure?
         <a href="#" class="delete-confirm">Yes</a>
         <a href="#" class="delete-cancel">No</a>
