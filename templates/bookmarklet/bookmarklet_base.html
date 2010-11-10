@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>DoneCal bookmarklet</title>
+    {{ modules.Static("css/style.css") }}
+    <style type="text/css">
+#wrap {
+        padding:10px;  
+	-moz-box-shadow:4px 4px 4px rgba(0, 0, 0, 0.3);
+}
+h1 {
+	font-size: 19px;
+	line-height: 1.158em;
+    
+}
+.title_input {
+    margin:30px;
+}
+input[name="title"] { 
+    font-size:15px;
+    width:80%;
+}    
+
+body {
+  background-color:transparent;
+}
+
+label.bold { font-weight:bold; } 
+.error { color:red; font-weight:bold; }
+p { margin-bottom:0.4em; }
+
+p.options { float:right; }
+</style>
+
+    {% block extra_head %}{% end %}
+    </head>
+    <body>
+<div id="wrap">
+{% block content %}{% end %}
+</div>
+{% block extrajs %}{% end %}
+</body>
+</html>

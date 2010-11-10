@@ -1,0 +1,63 @@
+{% extends "bookmarklet_base.html" %}
+
+{% block content %}
+<h1>Quickly save something on DoneCal</h1>
+<form action="." method="post">
+<div class="title_input">
+{% if error_title %}
+<span class="error">Error: {{ error_title }}</span><br/>
+{% end %}
+<input name="title" id="id_title" size="35" value="{{ title }}">
+</div>
+
+{% if external_url %}
+<p>
+  <input type="checkbox" id="id_use_current_url" name="use_current_url" value="1" checked>
+  <label for="id_use_current_url">Remember that it was here on
+  <em>{{ modules.TruncateString(external_url, 35) }}</em>
+  </label>
+  <input type="hidden" name="external_url" value="{{ external_url }}">
+</p>  
+{% end %}
+
+<p class="options" id="open-more-options"><a href="#" onclick="more_options()">more options</a></p>
+
+<div id="more-options" style="display:none">
+  <p class="options"><a href="#" onclick="less_options()">less options</a></p>
+  <p><label for="length" class="bold">Length:</label><br>
+  &nbsp;  &nbsp;
+  <label for="id_all_day">all day <input type="radio" name="length" id="id_all_day" value="all_day" checked></label>
+  <label for="id_05h">half hour<input type="radio" name="length" id="id_05h" value="0.5"></label>
+  <label for="id_1h">one hour<input type="radio" name="length" id="id_1h" value="1"></label>
+  </p>
+  <p><label for="description" class="bold">Description:</label>
+  <textarea name="description" cols="40" rows="4"></textarea>
+  </p>
+</div>
+
+<div>
+  <input type="hidden" id="id_now" name="now" value="">
+  <input type="submit" value="Save on DoneCal">
+</div>
+{{ xsrf_form_html() }}
+</form>
+{% end %}
+
+
+{% block extrajs %}
+<script type="text/javascript">
+function more_options() {
+  document.getElementById('more-options').style['display']='';
+  document.getElementById('open-more-options').style['display']='none';
+}
+function less_options() {
+  document.getElementById('more-options').style['display']='none';
+  document.getElementById('open-more-options').style['display']='';
+}
+window.onload = function() {
+  var now = new Date();
+  document.getElementById('id_now').value = now.getTime();
+  document.getElementById('id_title').focus();
+};
+</script>
+{% end %}

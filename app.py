@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 import httplib
+from urlparse import urlparse
 from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import InvalidId, ObjectId
@@ -393,11 +394,25 @@ class EventsHandler(BaseHandler):
         self.write_event(event, format)
         
            
-    def create_event(self, user):
-        title = self.get_argument("title")
+    def create_event(self, user, title=None, description=None, all_day=None,
+                     external_url=None, start=None, end=None):
+        if title is None:
+            title = self.get_argument("title")
         
-        all_day = niceboolean(self.get_argument("all_day", False))
-        if self.get_argument("date", None):
+        if all_day is None:
+            all_day = niceboolean(self.get_argument("all_day", False))
+            
+        if start is not None:
+            # manually setting this
+            if not isinstance(start, datetime.datetime):
+                raise tornado.web.HTTPError(400, "start must be a datetime instance")
+            if end is not None:
+                if not isinstance(end, datetime.datetime):
+                    raise tornado.web.HTTPError(400, "end must be a datetime instance")
+            elif all_day:
+                end = start
+                
+        elif self.get_argument("date", None):
             date = self.get_argument("date")
             try:
                 date = parse_datetime(date)
@@ -452,6 +467,12 @@ class EventsHandler(BaseHandler):
         event.all_day = all_day
         event.start = start
         event.end = end
+        if description is not None:
+            assert isinstance(description, unicode), type(description)
+            event.description = description
+        if external_url is not None:
+            assert isinstance(external_url, unicode), type(external_url)
+            event.external_url = external_url
         event.save()
         
         return event, True
@@ -629,7 +650,6 @@ class EditEventHandler(BaseEventHandler):
                 external_url = u""
             if external_url:
                 # check that it's valid
-                from urlparse import urlparse
                 parsed = urlparse(external_url)
                 if not (parsed.scheme and parsed.netloc):
                     raise tornado.web.HTTPError(400, "Invalid URL (%s)" % external_url)
@@ -1042,6 +1062,7 @@ class HelpHandler(BaseHandler):
         self.application.settings['template_path']
         if page == '':
             page = 'index'
+            
         filename = "help/%s.html" % page.lower()
         if os.path.isfile(os.path.join(self.application.settings['template_path'],
                                        filename)):
@@ -1114,30 +1135,75 @@ class Bookmarklet(EventsHandler):
         user = self.get_current_user()
         
         title = u""
-        doc_title = self.get_argument('doc_title', u'')
-        if doc_title:
-            tags = self._suggest_tags(user, doc_title, external_url=external_url)
+        #doc_title = self.get_argument('doc_title', u'')
+        if external_url:#doc_title:
+            tags = self._suggest_tags(user, external_url)
             if tags:
                 title = ' '.join(tags) + ' '
-        self.render("bookmarklet.html", 
+        self.render("bookmarklet/index.html", 
                     external_url=external_url, 
                     title=title,
                     error_title=None)
 
-    def _suggest_tags(self, user, title, external_url=None):
+    def _suggest_tags(self, user, external_url):
         """given a user and a title (e.g. 'Tra the la [Foo]') return a list of
         tags that are in that string. Disregard English stopwords."""
-        tags = []
-        # XXX: Idea! Use the external_url to compare with past entries by doing a 
-        # regular expression search on the start of the URL
-        return ['@%s' % x for x in tags]
+        def wrap_tags(tags):
+            return ['@%s' % x for x in tags]
+        
+        # look at the last event with the same URL and copy the tags used in
+        # that event
+        search = {'user.$id': user._id,
+                  'external_url': external_url
+                  }
+        for event in self.db[Event.__collection__].find(search):
+            return wrap_tags(event['tags'])
+        
+        # nothing found, try limiting the search
+        parsed_url = urlparse(external_url)
+        search_url = parsed_url.scheme + '://' + parsed_url.netloc 
+        search['external_url'] = re.compile(re.escape(search_url), re.I)
+        for event in self.db[Event.__collection__].find(search):
+            return wrap_tags(event['tags'])
+        
+        return wrap_tags([])
     
     def post(self):
-        title = self.get_argument("title", u'')
+        title = self.get_argument("title", u'').strip()
         external_url = self.get_argument("external_url", u'')
+        description = self.get_argument("description", None)
         use_current_url = niceboolean(self.get_argument("use_current_url", False))
         if not use_current_url:
-            external_url = ''
+            external_url = u''
+            
+        if not title and description and description.strip():
+            description = description.strip()
+            if len(description.splitlines()) > 1:
+                title = description.splitlines()[0]
+                description = description.splitlines()[1:]
+                description = '\n'.join(description)
+                description = description.strip()
+            else:
+                if len(description) > 50:
+                    title = description[:50] + '...'
+                else:
+                    title = description
+                    description = u''
+                
+        if not self.get_argument('now', None):
+            return self.write("'now' not sent. Javascript must be enabled")
+                
+        start = parse_datetime(self.get_argument('now'))
+        end = None
+        
+        length = self.get_argument('length', 'all_day')
+        try:
+            length = float(length)
+            all_day = False
+            end = start + datetime.timedelta(hours=length)
+        except ValueError:
+            # then it's an all_day
+            all_day = True
         
         if title:
             user = self.get_current_user()
@@ -1145,7 +1211,15 @@ class Bookmarklet(EventsHandler):
             if not user:
                 user = self.db.User()
                 user.save()
-            event, created = self.create_event(user)
+                
+            event, created = self.create_event(user,
+              title=title,
+              description=description,
+              external_url=external_url,
+              all_day=all_day,
+              start=start,
+              end=end,
+            )
             
             if not self.get_secure_cookie('user'):
                 # if you're not logged in, set a cookie for the user so that
@@ -1153,9 +1227,9 @@ class Bookmarklet(EventsHandler):
                 # account.
                 self.set_secure_cookie("guid", str(user.guid), expires_days=14)
             
-            
+            self.render("bookmarklet/posted.html")
         else:
-            self.render("bookmarklet.html", 
+            self.render("bookmarklet/index.html", 
                     external_url=external_url,
                     title=title,
                     error_title="No title entered")
@@ -1169,7 +1243,6 @@ class ReportHandler(BaseHandler):
     def get(self):
         options = self.get_base_options()
         user = self.get_current_user()
-        #print user
         options['first_date'] = datetime.date(2010, 6, 10)
         options['last_date'] = datetime.date.today()
         

@@ -1,5 +1,6 @@
 import base64
 import unittest
+from pprint import pprint
 from time import mktime, time
 import re
 import datetime
@@ -698,7 +699,175 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue('guid=;' in response.headers['Set-Cookie'])
         self.assertTrue('shares=;' in response.headers['Set-Cookie'])
         self.assertTrue('hidden_shares=;' in response.headers['Set-Cookie'])
-        
-        
 
+    def test_bookmarklet_with_cookie(self):
+        db = self.get_db()
+        today = datetime.date.today()
+        
+        data = {'title': "Foo", 
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        response = self.post('/events', data)
+        self.assertEqual(response.code, 200) 
+        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        cookie = 'guid=%s;' % guid_cookie
+        guid = base64.b64decode(guid_cookie.split('|')[0])
+        self.assertEqual(db.User.find({'guid':guid}).count(), 1)
+        user = db.User.one({'guid':guid})
+        
+        response = self.get('/bookmarklet/', headers={'Cookie':cookie})
+        self.assertTrue('external_url' not in response.body)
+
+        data = {'external_url': 'http://www.peterbe.com/page'}
+        response = self.get('/bookmarklet/', data, headers={'Cookie':cookie})
+        self.assertTrue('value="%s"' % data['external_url'] in response.body)
+
+        # post something now
+        # ...but fail first
+        data = dict()
+        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.body, "'now' not sent. Javascript must be enabled")
+        
+        future = datetime.datetime.now() + datetime.timedelta(hours=2)
+        data = dict(now=mktime(future.timetuple()))
+        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertTrue('Error: No title entered' in response.body)
+        
+        data['title'] = u" Saving the day "
+        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertTrue('Thanks!' in response.body)
+        
+        event = db.Event.one({'title':data['title'].strip(),
+                              'user.$id':user._id})
+        self.assertEqual(event.all_day, True)
+        self.assertEqual(
+          event.start.strftime('%Y%m%d%H%M'),
+          future.strftime('%Y%m%d%H%M')
+        )
+        self.assertEqual(
+          event.end.strftime('%Y%m%d%H%M'),
+          future.strftime('%Y%m%d%H%M')
+        )
+        
+        # now test posting something without a title but with a long description
+        data['title'] = ''
+        data['description'] = 'now test posting something without a title but '\
+                              'with a long description with email@address.com '\
+                              'in the description'
+        past = future - datetime.timedelta(hours=2)
+        data['now'] = mktime(past.timetuple())
+        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        event = db.Event.one({'user.$id':user._id, 
+                              'title': re.compile('^now')})
+
+        self.assertTrue(event.title.endswith('...'))
+        self.assertTrue(len(event.title) < len(event.description))
+        self.assertEqual(event.description, data['description'])
+        self.assertEqual(event.tags, [])
+        
+        # try again, writing on multiple lines
+        data['description'] = 'Line one\nLine two\nLine three'
+        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        event = db.Event.one({'user.$id':user._id, 
+                              'title': re.compile('^Line')})
+        self.assertEqual(event.title, u"Line one")
+        self.assertEqual(event.description, u"Line two\nLine three")
+        
+        # one more time when the description is short
+        data['description'] = "@mytag one word"
+        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        event = db.Event.one({'user.$id':user._id,
+                              'title': data['description']})
+        self.assertEqual(event.description, u"")
+        self.assertEqual(event.tags, [u'mytag'])
+        
+        # try making it a half hour event
+        data['length'] = '0.5'
+        data['title'] = "half hour event"
+        data['description'] = ''
+        data['now'] = mktime(future.timetuple())
+        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        event = db.Event.one({'user.$id':user._id,
+                              'title': data['title']})
+        diff_seconds = (event.end - event.start).seconds
+        self.assertEqual(diff_seconds, 60 * 30)
+        self.assertTrue(not event.all_day)
+        
+        
+    def test_bookmarklet_with_cookie_with_suggested_tags(self):
+        db = self.get_db()
+        today = datetime.date.today()
+        
+        data = {'title': "Foo", 
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        response = self.post('/events', data)
+        self.assertEqual(response.code, 200) 
+        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        cookie = 'guid=%s;' % guid_cookie
+        guid = base64.b64decode(guid_cookie.split('|')[0])
+        self.assertEqual(db.User.find({'guid':guid}).count(), 1)
+        user = db.User.one({'guid':guid})
+        
+        response = self.get('/bookmarklet/', headers={'Cookie':cookie})
+        self.assertTrue('external_url' not in response.body)
+
+        data = {'external_url': 'http://www.peterbe.com/page',
+                'use_current_url': 'yes',
+                'title': '@donecal is da @bomb',
+                'now':mktime(today.timetuple())}
+        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        self.assertTrue('Thank' in response.body)
+        event = db.Event.one(dict(title=data['title']))
+        self.assertEqual(event.tags, [u'donecal', u'bomb'])
+        self.assertEqual(event.external_url, data['external_url'])
+        
+        data = {'external_url': 'http://www.peterbe.com/some/other/page',}
+        response = self.get('/bookmarklet/', data, headers={'Cookie':cookie})
+        self.assertTrue('value="@donecal @bomb "' in response.body)
+        
+        
+    def test_help_pages(self):
+        # index
+        response = self.get('/help/')
+        self.assertEqual(response.code, 200)
+        self.assertTrue('Help' in response.body)
+        
+        # about
+        response = self.get('/help/About')
+        self.assertEqual(response.code, 200)
+        self.assertTrue('Peter Bengtsson' in response.body)
+        
+        response = self.get('/help/abOUt')
+        self.assertEqual(response.code, 200)
+        self.assertTrue('Peter Bengtsson' in response.body)        
+
+        # Bookmarklet
+        response = self.get('/help/Bookmarklet')
+        self.assertEqual(response.code, 200)
+        self.assertTrue('Bookmarklet' in response.body)
+        
+        # API
+        response = self.get('/help/API')
+        self.assertEqual(response.code, 200)
+        self.assertTrue('API' in response.body)
+        
+        # start using the app and the API page will be different
+        db = self.get_db()
+        today = datetime.date.today()
+        data = {'title': "Foo", 
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        response = self.post('/events', data)
+        self.assertEqual(response.code, 200) 
+        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        cookie = 'guid=%s;' % guid_cookie
+        guid = base64.b64decode(guid_cookie.split('|')[0])
+        
+        response = self.get('/help/API', headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertTrue(guid in response.body)
         
