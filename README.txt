@@ -1,6 +1,12 @@
 About worklog
 =============
 
+Dependencies, installation
+--------------------------
+
+See INSTALL.txt
+
+
 To run the unit tests
 ---------------------
 

@@ -46,11 +46,26 @@
   
 </table>
 
+
+<div id="export-options">
+  <h2>Export options</h2>
+  <p><a class="excel-export" href="/report/export.xls">Download as Excel export</a></p>
+</div>
+
 {% end %}	    
 {% block extrajs %}
 <script type="text/javascript">
 var minDate = new Date({{ first_date.year }}, {{ first_date.month }}-1, {{ first_date.day }});
 var maxDate = new Date({{ last_date.year }}, {{ last_date.month }}-1, {{ last_date.day }});
+$(function() {
+  var href = $('a.excel-export').unbind('click').click(function() {
+    var start = startDate.datepicker('getDate');
+    var end = endDate.datepicker('getDate');
+    window.open($(this).attr('href')+'?start=' + start.getTime() + '&end=' + end.getTime());
+    return false;
+  });
+  
+});
 </script>
 {{ modules.Static("ext/jquery-ui-1.8.6.slider.datepicker.min.js", "report.js") }}
 {% end %}

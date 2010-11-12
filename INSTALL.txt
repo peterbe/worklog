@@ -1,0 +1,22 @@
+INSTALLATION
+============
+
+Tornado
+-------
+
+Install latest tornado from github.
+
+
+Python Dependencies
+-------------------
+
+All pip installable apps are mentioned in `external_apps.txt`
+
+ $ pip install -r external_apps.txt
+
+Linux dependencies
+------------------
+
+python-lxml
+
+

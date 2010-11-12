@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 #
 import httplib
+from cStringIO import StringIO
 from urlparse import urlparse
 from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import InvalidId, ObjectId
 from time import mktime, sleep, time
 from types import ClassType
-import cStringIO
 import datetime
 import os.path
 import re
@@ -325,7 +325,7 @@ class EventsHandler(BaseHandler):
             for event in self.db[Event.__collection__].find(search):
                 events.append(self.transform_fullcalendar_event(event, True))
                 tags.update(event['tags'])
-                
+        
         for share in self.share_keys_to_share_objects(shares):
             share_user = self.db[User.__collection__].one(dict(_id=share['user'].id))
             search['user.$id'] = share_user['_id']
@@ -366,7 +366,7 @@ class EventsHandler(BaseHandler):
         elif format == '.xml':
             self.write_xml(data)
         elif format == '.txt':
-            out = cStringIO.StringIO()
+            out = StringIO()
             out.write('ENTRIES\n')
             for event in data['events']:
                 pprint(event, out)
@@ -557,7 +557,7 @@ class BaseEventHandler(BaseHandler):
         elif format == '.xml':
             self.write_xml(data)
         elif format == '.txt':
-            out = cStringIO.StringIO()
+            out = StringIO()
             out.write('EVENT\n')
             pprint(data, out)
             out.write("\n")
@@ -719,7 +719,7 @@ class EventStatsHandler(BaseHandler):
         elif format == '.xml':
             self.write_xml(stats)
         elif format == '.txt':
-            out = cStringIO.StringIO()
+            out = StringIO()
             for key, values in stats.items():
                 out.write('%s:\n' % key.upper().replace('_', ' '))
                 
@@ -1247,8 +1247,30 @@ class ReportHandler(BaseHandler):
         options['last_date'] = datetime.date.today()
         
         self.render("report/index.html", **options)
+
+@route(r'/report/export\.xls$')
+class ExcelExportHandler(ReportHandler):
+    
+    #@tornado.web.asynchronous
+    def get(self):
+        self.set_header("Content-Type", "application/vnd.ms-excel; charset=UTF-8")
+        out = StringIO()
+        from excel_export import export_events
         
+        export_events(self.get_events(), out, user=self.get_current_user())
+        self.write(out.getvalue())
+     #   self.finish()
         
+    def get_events(self):
+        user = self.get_current_user()
+        start = parse_datetime(self.get_argument('start'))
+        end = parse_datetime(self.get_argument('end'))
+        search = {}
+        search['start'] = {'$gte': start}
+        search['end'] = {'$lte': end}
+        search['user.$id'] = user['_id']
+        
+        return self.db[Event.__collection__].find(search).sort('start')
         
         
 @route(r'/report(\.xls|\.json|\.js|\.xml|\.txt)?')
@@ -1264,7 +1286,7 @@ class ReportDataHandler(EventStatsHandler):
         elif format == '.xml':
             self.write_xml(stats)
         elif format == '.txt':
-            out = cStringIO.StringIO()
+            out = StringIO()
             for key, values in stats.items():
                 out.write('%s:\n' % key.upper().replace('_', ' '))
                 
