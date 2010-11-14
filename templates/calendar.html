@@ -1,35 +1,7 @@
 {% extends "base.html" %}
 {% block extra_head %}
-       {{ modules.Static("css/fullcalendar.css") }}
-       {{ modules.Static("css/jquery.jqplot.min.css", "css/jquery.autocomplete.css", "css/jquery.qtip.css") }}
-        <!--<link rel="stylesheet" type="text/css" href="{{ static_url("css/fullcalendar.css") }}">
-        <link rel="stylesheet" type="text/css" href="{{ static_url("css/jquery.jqplot.min.css") }}">
-        <link rel="stylesheet" type="text/css" href="{{ static_url("css/jquery.autocomplete.css") }}">-->
-	<style type="text/css">
-	h2.fc-header-title {
-	  font-size: 130%;
-	  font-weight: bold;
-	}
-	#calendar { 
-	margin: 10px;
-	}
-        input.placeholdervalue, textarea.placeholdervalue { color:#ccc; }
-        #settings-box {
-          margin-top:50px;
-        }
-	a.share-hider {
-	  font-size:10px; 
-	  float:right;
-	}
-        input.cancel { font-size:0.8em;}
-	.ui-tooltip, .qtip { max-width:540px; }
-        .ui-tooltip-wrapper {
-          background-color:#EEEEEE;
-          border-color:#cdcdcd;
-        }
-	
-	
-	</style>
+{{ modules.Static("css/ext/fullcalendar.css", "css/calendar.css") }}
+{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/ext/jquery.autocomplete.css", "css/ext/jquery.qtip.css") }}
 {% end %}
 
 {% block content %}

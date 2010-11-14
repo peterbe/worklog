@@ -5,7 +5,7 @@
  * 
  * About: Version
  * 
- * 0.9.7r618 
+ * 0.9.7r635 
  * 
  * About: Copyright & License
  * 
@@ -187,6 +187,20 @@
     };
     
     $.jqplot.enablePlugins = $.jqplot.config.enablePlugins;
+    
+    // canvas related tests taken from modernizer:
+    // Copyright © 2009–2010 Faruk Ates.
+    // http://www.modernizr.com
+    
+    $.jqplot.support_canvas = function() {
+        return !!document.createElement('canvas').getContext;
+    };
+            
+    $.jqplot.support_canvas_text = function() {
+        return !!(document.createElement('canvas').getContext && typeof document.createElement('canvas').getContext('2d').fillText == 'function');
+    };
+    
+    $.jqplot.use_excanvas = ($.browser.msie && !$.jqplot.support_canvas()) ? true : false;
     
     /**
      * 
@@ -390,10 +404,12 @@
         // renderer specific options.  See <$.jqplot.LinearAxisRenderer> for options.
         this.rendererOptions = {};
         // prop: showTicks
-        // wether to show the ticks (both marks and labels) or not.
+        // Wether to show the ticks (both marks and labels) or not.
+        // Will not override showMark and showLabel options if specified on the ticks themselves.
         this.showTicks = true;
         // prop: showTickMarks
-        // wether to show the tick marks (line crossing grid) or not.
+        // Wether to show the tick marks (line crossing grid) or not.
+        // Overridden by showTicks and showMark option of tick itself.
         this.showTickMarks = true;
         // prop: showMinorTicks
         // Wether or not to show minor ticks.  This is renderer dependent.
@@ -442,6 +458,18 @@
         this.renderer = new this.renderer();
         // set the axis name
         this.tickOptions.axis = this.name;
+        // if showMark or showLabel tick options not specified, use value of axis option.
+        // showTicks overrides showTickMarks.
+        if (this.tickOptions.showMark == null) {
+            this.tickOptions.showMark = this.showTicks;
+        }
+        if (this.tickOptions.showMark == null) {
+            this.tickOptions.showMark = this.showTickMarks;
+        }
+        if (this.tickOptions.showLabel == null) {
+            this.tickOptions.showLabel = this.showTicks;
+        }
+        
         if (this.label == null || this.label == '') {
             this.showLabel = false;
         }
@@ -1245,7 +1273,7 @@
         this._elem.css({ position: 'absolute', left: this._offsets.left, top: this._offsets.top });
         
         this._elem.addClass(klass);
-        if ($.browser.msie) {
+        if ($.jqplot.use_excanvas) {
             window.G_vmlCanvasManager.init_(document);
             elem = window.G_vmlCanvasManager.initElement(elem);
         }
@@ -1320,6 +1348,14 @@
         // The data should be in the form of an array of 2D or 1D arrays like
         // > [ [[x1, y1], [x2, y2],...], [y1, y2, ...] ].
         this.data = [];
+        // prop dataRenderer
+        // A callable which can be used to preprocess data passed into the plot.
+        // Will be called with 2 arguments, the plot data and a reference to the plot.
+        this.dataRenderer;
+        // prop dataRendererOptions
+        // Options that will be passed to the dataRenderer.
+        // Can be of any type.
+        this.dataRendererOptions;
         // The id of the dom element to render the plot into
         this.targetId = null;
         // the jquery object for the dom target.
@@ -1533,12 +1569,21 @@
                 throw "Canvas dimension not set";
             }
             
+            if (options.dataRenderer && typeof(options.dataRenderer) == "function") {
+                if (options.dataRendererOptions) {
+                    this.dataRendererOptions = options.dataRendererOptions;
+                }
+                this.dataRenderer = options.dataRenderer;
+                data = this.dataRenderer(data, this, this.dataRendererOptions);
+            }
+            
             if (data == null) {
                 throw{
                     name: "DataError",
                     message: "No data to plot."
                 };
             }
+            
             if (data.constructor != Array || data.length == 0 || data[0].constructor != Array || data[0].length == 0) {
                 throw{
                     name: "DataError",
@@ -2271,56 +2316,6 @@
 
             return {offsets:go, gridPos:gridPos, dataPos:dataPos};
         }
-        
-        // function getNeighborPoint(plot, x, y) {
-        //     var ret = null;
-        //     var s, i, d0, d, j, r, k;
-        //     var threshold, t;
-        //     for (var k=plot.seriesStack.length-1; k>-1; k--) {
-        //         i = plot.seriesStack[k];
-        //         s = plot.series[i];
-        //         r = s.renderer;
-        //         if (s.show) {
-        //             t = s.markerRenderer.size/2+s.neighborThreshold;
-        //             threshold = (t > 0) ? t : 0;
-        //             for (var j=0; j<s.gridData.length; j++) {
-        //                 p = s.gridData[j];
-        //                 // neighbor looks different to OHLC chart.
-        //                 if (r.constructor == $.jqplot.OHLCRenderer) {
-        //                     if (r.candleStick) {
-        //                         var yp = s._yaxis.series_u2p;
-        //                         if (x >= p[0]-r._bodyWidth/2 && x <= p[0]+r._bodyWidth/2 && y >= yp(s.data[j][2]) && y <= yp(s.data[j][3])) {
-        //                             return {seriesIndex: i, pointIndex:j, gridData:p, data:s.data[j]};
-        //                         }
-        //                     }
-        //                     // if an open hi low close chart
-        //                     else if (!r.hlc){
-        //                         var yp = s._yaxis.series_u2p;
-        //                         if (x >= p[0]-r._tickLength && x <= p[0]+r._tickLength && y >= yp(s.data[j][2]) && y <= yp(s.data[j][3])) {
-        //                             return {seriesIndex: i, pointIndex:j, gridData:p, data:s.data[j]};
-        //                         }
-        //                     }
-        //                     // a hi low close chart
-        //                     else {
-        //                         var yp = s._yaxis.series_u2p;
-        //                         if (x >= p[0]-r._tickLength && x <= p[0]+r._tickLength && y >= yp(s.data[j][1]) && y <= yp(s.data[j][2])) {
-        //                             return {seriesIndex: i, pointIndex:j, gridData:p, data:s.data[j]};
-        //                         }
-        //                     }
-        //                     
-        //                 }
-        //                 else {
-        //                     d = Math.sqrt( (x-p[0]) * (x-p[0]) + (y-p[1]) * (y-p[1]) );
-        //                     if (d <= threshold && (d <= d0 || d0 == null)) {
-        //                        d0 = d;
-        //                        return {seriesIndex: i, pointIndex:j, gridData:p, data:s.data[j]};
-        //                     }
-        //                 }
-        //             } 
-        //         }
-        //     }
-        //     return ret;
-        // }
         
         
         // function to check if event location is over a area area
@@ -3214,10 +3209,10 @@
         this._elem = $(elem);
         this._elem.addClass('jqplot-grid-canvas');
         this._elem.css({ position: 'absolute', left: 0, top: 0 });
-        if ($.browser.msie) {
+        if ($.jqplot.use_excanvas) {
             window.G_vmlCanvasManager.init_(document);
         }
-        if ($.browser.msie) {
+        if ($.jqplot.use_excanvas) {
             elem = window.G_vmlCanvasManager.initElement(elem);
         }
         this._top = this._offsets.top;
@@ -4143,11 +4138,11 @@
         if (!this.isTrendline && this.fill) {
         
             // prop: highlightMouseOver
-            // True to highlight slice when moused over.
+            // True to highlight area on a filled plot when moused over.
             // This must be false to enable highlightMouseDown to highlight when clicking on an area on a filled plot.
             this.highlightMouseOver = true;
             // prop: highlightMouseDown
-            // True to highlight when a mouse button is pressed over a area on a filled plot.
+            // True to highlight when a mouse button is pressed over an area on a filled plot.
             // This will be disabled if highlightMouseOver is true.
             this.highlightMouseDown = false;
             // prop: highlightColor
@@ -4629,14 +4624,12 @@
                 elem.appendTo(this._elem);
             }
     
-            if (this.showTicks) {
-                var t = this._ticks;
-                for (var i=0; i<t.length; i++) {
-                    var tick = t[i];
-                    if (tick.showLabel && (!tick.isMinorTick || this.showMinorTicks)) {
-                        var elem = tick.draw(ctx);
-                        elem.appendTo(this._elem);
-                    }
+            var t = this._ticks;
+            for (var i=0; i<t.length; i++) {
+                var tick = t[i];
+                if (tick.showLabel && (!tick.isMinorTick || this.showMinorTicks)) {
+                    var elem = tick.draw(ctx);
+                    elem.appendTo(this._elem);
                 }
             }
         }
@@ -4659,7 +4652,7 @@
         var w = 0;
         var h = 0;
         var lshow = (this._label == null) ? false : this._label.show;
-        if (this.show && this.showTicks) {
+        if (this.show) {
             var t = this._ticks;
             for (var i=0; i<t.length; i++) {
                 var tick = t[i];
@@ -4734,26 +4727,12 @@
                 if (ut.constructor == Array) {
                     t.value = ut[0];
                     t.label = ut[1];
-                    if (!this.showTicks) {
-                        t.showLabel = false;
-                        t.showMark = false;
-                    }
-                    else if (!this.showTickMarks) {
-                        t.showMark = false;
-                    }
                     t.setTick(ut[0], this.name);
                     this._ticks.push(t);
                 }
                 
                 else {
                     t.value = ut;
-                    if (!this.showTicks) {
-                        t.showLabel = false;
-                        t.showMark = false;
-                    }
-                    else if (!this.showTickMarks) {
-                        t.showMark = false;
-                    }
                     t.setTick(ut, this.name);
                     this._ticks.push(t);
                 }
@@ -5047,13 +5026,7 @@
                 tt = this.min + i * this.tickInterval;
                 var t = new this.tickRenderer(this.tickOptions);
                 // var t = new $.jqplot.AxisTickRenderer(this.tickOptions);
-                if (!this.showTicks) {
-                    t.showLabel = false;
-                    t.showMark = false;
-                }
-                else if (!this.showTickMarks) {
-                    t.showMark = false;
-                }
+
                 t.setTick(tt, this.name);
                 this._ticks.push(t);
             }
@@ -5495,17 +5468,20 @@
                 ctx.arc(points[0], points[1], points[2], points[3], points[4], true);                
             }
             else {
-                ctx.moveTo(points[0][0], points[0][1]);
-                for (var i=1; i<points.length; i++) {
+                var move = true;
+                for (var i=0; i<points.length; i++) {
+                    // skip to the first non-null point and move to it.
                     if (points[i][0] != null && points[i][1] != null) {
-                        ctx.lineTo(points[i][0], points[i][1]);                        
-                    }
-                    // if null value, skip ahead a point and move to it
-                    else {
-                        i++;
-                        if (i < points.length) {
+                        if (move) {
                             ctx.moveTo(points[i][0], points[i][1]);
+                            move = false;
                         }
+                        else {
+                            ctx.lineTo(points[i][0], points[i][1]);
+                        }
+                    }
+                    else {
+                        move = true;
                     }
                 }
                 
@@ -5621,17 +5597,20 @@
             }
         }
         else {
-            ctx.moveTo(points[0][0], points[0][1]);
-            for (var i=1; i<points.length; i++) {
+            var move = true;
+            for (var i=0; i<points.length; i++) {
+                // skip to the first non-null point and move to it.
                 if (points[i][0] != null && points[i][1] != null) {
-                    ctx.lineTo(points[i][0], points[i][1]);                        
-                }
-                // if null value, skip ahead a point and move to it
-                else {
-                    i++;
-                    if (i < points.length) {
+                    if (move) {
                         ctx.moveTo(points[i][0], points[i][1]);
+                        move = false;
                     }
+                    else {
+                        ctx.lineTo(points[i][0], points[i][1]);
+                    }
+                }
+                else {
+                    move = true;
                 }
             }
             if (closePath) {

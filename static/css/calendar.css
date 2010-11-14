@@ -1,0 +1,21 @@
+	h2.fc-header-title {
+	  font-size: 130%;
+	  font-weight: bold;
+	}
+	#calendar { 
+	margin: 10px;
+	}
+        input.placeholdervalue, textarea.placeholdervalue { color:#ccc; }
+        #settings-box {
+          margin-top:50px;
+        }
+	a.share-hider {
+	  font-size:10px; 
+	  float:right;
+	}
+        input.cancel { font-size:0.8em;}
+	.ui-tooltip, .qtip { max-width:540px; }
+        .ui-tooltip-wrapper {
+          background-color:#EEEEEE;
+          border-color:#cdcdcd;
+        }
