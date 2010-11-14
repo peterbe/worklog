@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block extra_head %}
-{{ modules.Static("css/ext/fullcalendar.css", "css/calendar.css") }}
-{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/ext/jquery.autocomplete.css", "css/ext/jquery.qtip.css") }}
+{{ modules.Static("css/ext/fullcalendar.css") }}
+{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/ext/jquery.autocomplete.css", "css/ext/jquery.qtip.css", "css/calendar.css") }}
 {% end %}
 
 {% block content %}
@@ -28,6 +28,10 @@
               <div class="plot" id="days-plot">
               </div>
               <div class="plot" id="hours-plot">
+              </div>
+              
+              <div>
+                <p style="text-align:center"><a href="/report/">Get the full report</a>
               </div>
 	      
               {% if not user %}

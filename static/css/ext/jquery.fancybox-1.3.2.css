@@ -35,7 +35,7 @@
 	left: 0;
 	width: 40px;
 	height: 480px;
-	background-image: url('fancybox.png');
+	background-image: url('fancybox/fancybox.png');
 }
 
 #fancybox-overlay {
@@ -100,7 +100,7 @@
 	right: -15px;
 	width: 30px;
 	height: 30px;
-	background: transparent url('fancybox.png') -40px 0px;
+	background: transparent url('fancybox/fancybox.png') -40px 0px;
 	cursor: pointer;
 	z-index: 1103;
 	display: none;
@@ -138,7 +138,7 @@
 	width: 35%;
 	cursor: pointer;
 	outline: none;
-	background: transparent url('blank.gif');
+	background: transparent url('fancybox/blank.gif');
 	z-index: 1102;
 	display: none;
 }
@@ -164,12 +164,12 @@
 }
 
 #fancybox-left-ico {
-	background-image: url('fancybox.png');
+	background-image: url('fancybox/fancybox.png');
 	background-position: -40px -30px;
 }
 
 #fancybox-right-ico {
-	background-image: url('fancybox.png');
+	background-image: url('fancybox/fancybox.png');
 	background-position: -40px -60px;
 }
 
@@ -200,13 +200,13 @@
 	top: -20px;
 	left: 0;
 	width: 100%;
-	background-image: url('fancybox-x.png');
+	background-image: url('fancybox/fancybox-x.png');
 }
 
 #fancybox-bg-ne {
 	top: -20px;
 	right: -20px;
-	background-image: url('fancybox.png');
+	background-image: url('fancybox/fancybox.png');
 	background-position: -40px -162px;
 }
 
@@ -214,14 +214,14 @@
 	top: 0;
 	right: -20px;
 	height: 100%;
-	background-image: url('fancybox-y.png');
+	background-image: url('fancybox/fancybox-y.png');
 	background-position: -20px 0px;
 }
 
 #fancybox-bg-se {
 	bottom: -20px;
 	right: -20px;
-	background-image: url('fancybox.png');
+	background-image: url('fancybox/fancybox.png');
 	background-position: -40px -182px; 
 }
 
@@ -229,14 +229,14 @@
 	bottom: -20px;
 	left: 0;
 	width: 100%;
-	background-image: url('fancybox-x.png');
+	background-image: url('fancybox/fancybox-x.png');
 	background-position: 0px -20px;
 }
 
 #fancybox-bg-sw {
 	bottom: -20px;
 	left: -20px;
-	background-image: url('fancybox.png');
+	background-image: url('fancybox/fancybox.png');
 	background-position: -40px -142px;
 }
 
@@ -244,13 +244,13 @@
 	top: 0;
 	left: -20px;
 	height: 100%;
-	background-image: url('fancybox-y.png');
+	background-image: url('fancybox/fancybox-y.png');
 }
 
 #fancybox-bg-nw {
 	top: -20px;
 	left: -20px;
-	background-image: url('fancybox.png');
+	background-image: url('fancybox/fancybox.png');
 	background-position: -40px -122px;
 }
 
@@ -306,7 +306,7 @@
 
 #fancybox-title-float-left {
 	padding-left: 15px;
-	background: url('fancybox.png') -40px -90px no-repeat;
+	background: url('fancybox/fancybox.png') -40px -90px no-repeat;
 }
 
 #fancybox-title-float-main {
@@ -314,12 +314,12 @@
 	line-height: 29px;
 	font-weight: bold;
 	padding-bottom: 3px;
-	background: url('fancybox-x.png') 0px -40px;
+	background: url('fancybox/fancybox-x.png') 0px -40px;
 }
 
 #fancybox-title-float-right {
 	padding-left: 15px;
-	background: url('fancybox.png') -55px -90px no-repeat;
+	background: url('fancybox/fancybox.png') -55px -90px no-repeat;
 }
 
 /* IE6 */

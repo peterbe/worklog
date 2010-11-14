@@ -1,7 +1,7 @@
 {% extends "../base.html" %}
 
 {% block extra_head %}
-{{ modules.Static("css/smoothness/jquery-ui-1.8.6.slider.datepicker.css", "css/report.css") }}
+{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/smoothness/jquery-ui-1.8.6.slider.datepicker.css", "css/report.css") }}
 {% end %}
 
 {% block content_inner %}
@@ -17,35 +17,45 @@
 <strong>To:</strong>
 <input type="text" id="to_date" name="to_date" value="">
 </p>
-<!--
-<label for="from">From</label> 
-<input type="text" id="from" name="from" value="" readonly="readonly" /> 
-<label for="to">to</label> 
-<input type="text" id="to" name="to" value="" readonly="readonly" />
--->
 </form>
 
-<table id="report">
-  <tbody class="head">
-    <tr>
-      <th class="label">Days spent</th>
-      <th>Days</th>
-    </tr>
-  </tbody>
-  <tbody id="days_spent">
-  </tbody>
+<div id="report">
+
+  <div id="days">
+  <h2>Days</h2>
+  <table style="float:left">
+    <tbody class="head">
+      <tr>
+        <th>&nbsp;</th>
+        <th>Days</th>
+      </tr>
+    </tbody>
+    <tbody id="days_spent"">
+    </tbody>
+  </table>
+  <div class="plot" id="days-plot" style="margin-left:340px;width:390px">
+  </div>
   
-  <tbody class="head">
-    <tr>
-      <th class="label">Hours spent</th>
-      <th>Hours</th>
-    </tr>
-  </tbody>  
-  <tbody id="hours_spent">
-  </tbody>
+  </div>
   
-</table>
-<h2>TEST</h2>
+  <div id="hours">
+  <h2>Hours</h2>
+  <table style="float:left">
+    <tbody class="head">
+      <tr>
+        <th>&nbsp;</th>
+        <th>Hours</th>
+      </tr>
+    </tbody>  
+    <tbody id="hours_spent">
+    </tbody>
+  </table>
+  <div class="plot" id="hours-plot" style="margin-left:340px;width:390px">
+  </div>
+  </div>
+
+</div>
+
 {% end %}	    
 {% block sidebar %}
 
@@ -78,8 +88,7 @@ $(function() {
     window.open($(this).attr('href')+'?start=' + start.getTime() + '&end=' + end.getTime());
     return false;
   });
-  
 });
 </script>
-{{ modules.Static("ext/jquery-ui-1.8.6.slider.datepicker.min.js", "report.js") }}
+{{ modules.Static("ext/jquery-ui-1.8.6.slider.datepicker.min.js", "ext/jquery.jqplot.js", "ext/jqplot.pieRenderer.js", "ext/jqplot.highlighter.js", "report.js") }}
 {% end %}

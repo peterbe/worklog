@@ -94,8 +94,9 @@ class Application(tornado.web.Application):
         self.database_name = database_name and database_name or options.database_name
         self.con = Connection()
         self.con.register([Event, User, UserSettings, Share])
-        #self.db = Connection()
         
+def title_to_tags(title):
+    return list(set([x[1:] for x in re.findall(r'\B@[\w\-\.]+', title, re.U)]))
 
 class BaseHandler(tornado.web.RequestHandler):
     @property
@@ -452,8 +453,8 @@ class EventsHandler(BaseHandler):
                 date = datetime.datetime(date.year, date.month, date.day, 0, 0, 0)
                 start = end = date
                 all_day = True
-        
-        tags = list(set([x[1:] for x in re.findall(r'\B@[\w\-\.]+', title)]))
+
+        tags = title_to_tags(title)
         self.case_correct_tags(tags, user)
         
         event = self.db.Event.one({
@@ -694,7 +695,7 @@ class EditEventHandler(BaseEventHandler):
             event.all_day = all_day
             event.save()
         elif action == 'edit':
-            tags = list(set([x[1:] for x in re.findall('@\w+', title)]))
+            tags = title_to_tags(title)
             event.title = title
             event.external_url = external_url
             event.description = description
@@ -1368,18 +1369,21 @@ class ReportHandler(BaseHandler):
         
         self.render("report/index.html", **options)
 
-@route(r'/report/export\.xls$')
-class ExcelExportHandler(ReportHandler):
+@route(r'/report/export(\.xls|\.csv)$')
+class ExportHandler(ReportHandler):
     
-    #@tornado.web.asynchronous
-    def get(self):
+    @tornado.web.asynchronous
+    def get(self, format):
         self.set_header("Content-Type", "application/vnd.ms-excel; charset=UTF-8")
         out = StringIO()
-        from excel_export import export_events
-        
-        export_events(self.get_events(), out, user=self.get_current_user())
+        if format == '.xls':
+            from export.excel_export import export_events
+            export_events(self.get_events(), out, user=self.get_current_user())
+        elif format == '.csv':
+            from export.csv_export import export_events
+            export_events(self.get_events(), out, user=self.get_current_user())
         self.write(out.getvalue())
-     #   self.finish()
+        self.finish()
         
     def get_events(self):
         user = self.get_current_user()

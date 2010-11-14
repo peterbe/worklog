@@ -1,3 +1,7 @@
+* (MEDIUM) consider implemented error reports using
+  _handle_request_exception()
+  http://groups.google.com/group/python-tornado/browse_thread/thread/2adc599bbdcad194/5c5d16f82dd74209
+  
 * (HIGH) Bug: try changing user setting to start on a monday (FIXED?)
 
 * (HIGH) render the shared classes in calendar.html on page load (and

@@ -1,4 +1,4 @@
-tbody.head th { padding-top:20px; font-weight:bold; }
+tbody.head th { font-weight:bold; }
 #report tr.total td { font-weight:bold }
 #report td.label { padding-left:10px; }
 #report .label { width:200px; }
@@ -29,4 +29,9 @@ tbody.head th { padding-top:20px; font-weight:bold; }
 #export-options h2 {
     font-size: 19px;
     margin-bottom:20px;
+}
+
+#report h2 {
+    margin-top:40px;
+    margin-bottom:0;
 }

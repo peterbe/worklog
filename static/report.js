@@ -54,8 +54,8 @@ function refresh_date_range() {
    $.getJSON('/report.json', {
     start: startDate.datepicker('getDate').getTime(),
     end: endDate.datepicker('getDate').getTime()}, function(response) {
+       $('tbody#days_spent tr').remove();
        if (response.days_spent && response.days_spent.length) {
-          $('tbody#days_spent tr').remove();
           var total = 0.0;
           $.each(response.days_spent, function(i, e) {
              $('tbody#days_spent').append(
@@ -67,11 +67,20 @@ function refresh_date_range() {
           $('tbody#days_spent').append(
              $('<tr></tr>').addClass('total').append(
                $('<td></td>').text('Total').addClass('label')
-                ).append($('<td></td>').text(total)));          
+                ).append($('<td></td>').text(total)));
+	  
+	  $.jqplot('days-plot', [response.days_spent], {
+             title: '',
+             grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
+             highlighter: {sizeAdjust: 7.5},
+             seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:3, padding:7, border:false}},
+             legend:{show:true}
+	  });
+	  
        }
        
+       $('tbody#hours_spent tr').remove();
        if (response.hours_spent && response.hours_spent.length) {
-          $('tbody#hours_spent tr').remove();
           var total = 0.0;
           $.each(response.hours_spent, function(i, e) {
              $('tbody#hours_spent').append(
@@ -83,8 +92,17 @@ function refresh_date_range() {
           $('tbody#hours_spent').append(
              $('<tr></tr>').addClass('total').append(
                $('<td></td>').text('Total').addClass('label')
-                ).append($('<td></td>').text(total)));          
+                ).append($('<td></td>').text(total)));
+          
+          $.jqplot('hours-plot', [response.hours_spent], {
+             title: '',
+             grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
+             seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:3, padding:7, border:false}},
+           legend:{show:true}
+          });          
        }
+       
+       
        
        $('#report').fadeTo(200, 1.0);
 
@@ -94,6 +112,8 @@ function refresh_date_range() {
 
 
 $(function() {
+   $.jqplot.config.enablePlugins = true;
+   
    var hash_code_regex = /(\d{4}),(\d{1,2}),(\d{1,2})/;
    if (hash_code_regex.test(location.hash)) {
       var _match = location.hash.match(hash_code_regex);
@@ -147,6 +167,7 @@ $(function() {
             }}).
         keyup(function() { resync(); });
    
-    resync();
+
+   resync();
    refresh_date_range();
 });
