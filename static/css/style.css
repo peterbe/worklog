@@ -505,7 +505,7 @@ the Post and Page Edit screens.
 	font-size: 13px;
 }
 
-#content_inner img {
+#content_inner .inline {
         -moz-border-radius:3px 3px 3px 3px;
 	border: 1px solid #D3D3D3;
 	padding: 4px;

@@ -12,23 +12,35 @@ var dateformat = 'd M yy';
 
 
 function resync(values) {
-    if (values) {
-        var date = new Date(minDate.getTime());
-        date.setDate(date.getDate() + values[0]);
-        startDate.val($.datepicker.formatDate(dateformat, date));
-        date = new Date(minDate.getTime());
-        date.setDate(date.getDate() + values[1]);
-        endDate.val($.datepicker.formatDate(dateformat, date));
-    }
-    else {
-        var start = daysDiff(minDate, startDate.datepicker('getDate') || minDate);
-        var end = daysDiff(minDate, endDate.datepicker('getDate') || maxDate);
-        start = Math.min(start, end);
-        slider.slider('values', 0, start);
-        slider.slider('values', 1, end);
-    }
-    startDate.datepicker('option', 'maxDate', endDate.datepicker('getDate') || maxDate);
-    endDate.datepicker('option', 'minDate', startDate.datepicker('getDate') || minDate);
+   if (values) {
+      var date = new Date(minDate.getTime());
+      date.setDate(date.getDate() + values[0]);
+      startDate.val($.datepicker.formatDate(dateformat, date));
+      date = new Date(minDate.getTime());
+      date.setDate(date.getDate() + values[1]);
+      endDate.val($.datepicker.formatDate(dateformat, date));
+   } else {
+      var start = daysDiff(minDate, startDate.datepicker('getDate') || minDate);
+      var end = daysDiff(minDate, endDate.datepicker('getDate') || maxDate);
+      start = Math.min(start, end);
+      slider.slider('values', 0, start);
+      slider.slider('values', 1, end);
+   }
+   startDate.datepicker('option', 'maxDate', endDate.datepicker('getDate') || maxDate);
+   endDate.datepicker('option', 'minDate', startDate.datepicker('getDate') || minDate);
+   
+   
+   $('a.download-export').each(function(i, e) {
+      var href = $(this).attr('href');
+      if (href.search(/start=/)==-1) {
+         href += '?start=' + startDate.datepicker('getDate').getTime() + 
+	   '&end=' + endDate.datepicker('getDate').getTime();
+      } else {
+         href = href.replace(/start=(\d+)/, 'start=' + startDate.datepicker('getDate').getTime());
+         href = href.replace(/end=(\d+)/, 'end=' + endDate.datepicker('getDate').getTime());
+      }
+      $(this).attr('href', href);
+   });
 }
 
 function daysDiff(d1, d2) {
@@ -36,6 +48,7 @@ function daysDiff(d1, d2) {
 }
 
 function refresh_date_range() {
+   $('#report').fadeTo(0, 0.2);
    //console.log(startDate.datepicker('getDate').getTime());
    //console.log(endDate.datepicker('getDate').getTime());
    $.getJSON('/report.json', {
@@ -73,6 +86,8 @@ function refresh_date_range() {
                 ).append($('<td></td>').text(total)));          
        }
        
+       $('#report').fadeTo(200, 1.0);
+
     });
     
 }

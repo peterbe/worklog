@@ -2,3 +2,31 @@ tbody.head th { padding-top:20px; font-weight:bold; }
 #report tr.total td { font-weight:bold }
 #report td.label { padding-left:10px; }
 #report .label { width:200px; }
+
+#export-options p {
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    padding:15px 10px 15px 5px;
+}
+#export-options p a {
+    padding-left:50px;
+}
+#excel-export {
+    background-image: url('icons/x-office-spreadsheet.png') ;
+}  
+#csv-export {
+    background-image: url('icons/text-csv.png') ;
+}  
+#pdf-export {
+    background-image: url('icons/application-pdf.png') ;
+}  
+
+
+#export-options {
+    margin-top:150px;
+}
+
+#export-options h2 {
+    font-size: 19px;
+    margin-bottom:20px;
+}

@@ -45,11 +45,25 @@
   </tbody>
   
 </table>
-
+<h2>TEST</h2>
+{% end %}	    
+{% block sidebar %}
 
 <div id="export-options">
   <h2>Export options</h2>
-  <p><a class="excel-export" href="/report/export.xls">Download as Excel export</a></p>
+  <p id="excel-export">
+    <a class="download-export" href="/report/export.xls">Download as Excel file</a>
+  </p>
+
+  <p id="csv-export">
+    <a class="download-export" href="/report/export.csv">Download as CSV file</a>
+  </p>
+  
+  <!--
+  <p id="pdf-export">
+    <a class="download-export" href="/report/export.pdf">Download as PDF file</a>
+  </p>
+  -->
 </div>
 
 {% end %}	    

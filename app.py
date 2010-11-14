@@ -771,9 +771,18 @@ class EventStatsHandler(BaseHandler):
         if '' in hours_spent:
             hours_spent['<em>Untagged</em>'] = hours_spent.pop('')
         
+        def cmp_tags(one, two):
+            
+            if one.startswith('<em>Untagged'):
+                return -1
+            elif two.startswith('<em>Untagged'):
+                return 1
+            return cmp(one.lower(), two.lower())
+        
         # flatten as a list
-        days_spent = sorted(days_spent.items())
-        hours_spent = sorted([(x,y) for (x, y) in hours_spent.items() if y])
+        days_spent = sorted(days_spent.items(), lambda x,y: cmp_tags(x[0], y[0]))
+        hours_spent = sorted([(x,y) for (x, y) in hours_spent.items() if y],
+                             lambda x,y: cmp_tags(x[0], y[0]))
         return dict(days_spent=days_spent,
                     hours_spent=hours_spent)
                      
