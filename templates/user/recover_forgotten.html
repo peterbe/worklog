@@ -1,0 +1,27 @@
+{% extends "../base.html" %}
+
+{% block content_inner %}
+
+<h2>Recover forgotten password</h2>
+<form class="recover" action="." method="post">
+
+{% if error %}
+<p class="error">Error: {{ error }}</p>
+{% end %}
+
+<div>
+<label>New password:</label>
+<input name="password" type="password"><br>
+
+<input type="submit" value="Change password">
+</div>
+
+{{ xsrf_form_html() }}
+</form>
+
+{% end %}
+
+
+{% block extrajs %}
+{{ modules.Static("recover.js") }}
+{% end %}

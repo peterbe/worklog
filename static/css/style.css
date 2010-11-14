@@ -76,6 +76,7 @@ body, input, textarea {
 	line-height: 1.5;
 }
 
+
 /* Headings */
 h1,h2,h3,h4,h5,h6 {
 	clear: both;
@@ -923,6 +924,7 @@ p.taxonomy-people {
   margin-bottom: 20px;
 }
 
+/* Form rendering */
 
 /* Form validation */
 ul.errormsgs li {

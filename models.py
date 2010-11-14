@@ -2,6 +2,7 @@ from hashlib import md5
 import uuid
 import datetime
 from mongokit import Document
+from utils import encrypt_password
 
 class BaseDocument(Document):
     structure = {
@@ -38,6 +39,9 @@ class User(BaseDocument):
        'unique': True},
     ]
     
+    def set_password(self, raw_password):
+        self.password = encrypt_password(raw_password)
+        
     def check_password(self, raw_password):
         """
         Returns a boolean of whether the raw_password was correct. Handles

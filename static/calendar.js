@@ -1,10 +1,3 @@
-function L() {
-   if (window.console && window.console.log)
-   for (var i = 0, l = arguments.length; i < l; i++)
-     console.log(arguments[i]);
-}
-
-
 function __standard_qtip_options() {
   return {
    show: {

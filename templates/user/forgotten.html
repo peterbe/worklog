@@ -1,0 +1,31 @@
+{% extends "../base.html" %}
+
+{% block content_inner %}
+
+<h2>Forgotten password</h2>
+{% if success %}
+<p class="success">{{ success }}</p>
+{% else %}
+<form class="forgotten" action="/user/forgotten/" method="post">
+
+{% if error %}
+<p class="error">Error: {{ error }}</p>
+{% end %}
+
+<div>
+<label>E-mail:</label>
+<input name="email" value=""><br>
+
+<input type="submit" value="Send password reset instructions">
+</div>
+
+{{ xsrf_form_html() }}
+</form>
+{% end %}
+
+{% end %}
+
+
+{% block extrajs %}
+{{ modules.Static("forgotten.js") }}
+{% end %}

@@ -54,13 +54,11 @@ $(function() {
    });
    
    $('a.vimeovideo').fancybox({
-      'width': '45%',
-      'height': '75%',
-      
+      'width': '60%',
+      'height': '65%',
       'transitionIn': 'none',
       'transitionOut': 'none',
       'type': 'iframe'
-      
    });
       
       $('a.share').fancybox({

@@ -1,0 +1,7 @@
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
+
+EMAIL_HOST_USER = None
+EMAIL_HOST_PASSWORD = None
+
+EMAIL_USE_TLS = False

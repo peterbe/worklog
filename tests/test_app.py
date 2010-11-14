@@ -12,7 +12,7 @@ from tornado.web import RequestHandler, _O
 from base import BaseHTTPTestCase
 from utils import encrypt_password
 from models import Event, User
-
+import utils.send_mail as mail
         
 class ApplicationTestCase(BaseHTTPTestCase):
     
@@ -870,4 +870,69 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/help/API', headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         self.assertTrue(guid in response.body)
+        
+    def test_reset_password(self):
+        # sign up first
+        data = dict(email="peterbe@gmail.com", 
+                    password="secret",
+                    first_name="Peter",
+                    last_name="Bengtsson")
+        response = self.post('/user/signup/', data, follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        
+        data.pop('password')
+        user = self.get_db().users.User.one(data)
+        self.assertTrue(user)
+        
+        
+        response = self.get('/user/forgotten/')
+        self.assertEqual(response.code, 200)
+        
+        response = self.post('/user/forgotten/', dict(email="bogus"))
+        self.assertEqual(response.code, 400)
+
+        response = self.post('/user/forgotten/', dict(email="valid@email.com"))
+        self.assertEqual(response.code, 200)
+        self.assertTrue('Error' in response.body)
+        self.assertTrue('valid@email.com' in response.body)
+        
+        response = self.post('/user/forgotten/', dict(email="PETERBE@gmail.com"))
+        self.assertEqual(response.code, 200)
+        self.assertTrue('success' in response.body)
+        self.assertTrue('peterbe@gmail.com' in response.body)
+        
+        sent_email = mail.outbox[0]
+        self.assertTrue('peterbe@gmail.com' in sent_email.to)
+        
+        links = [x.strip() for x in sent_email.body.split() 
+                 if x.strip().startswith('http')]
+        from urlparse import urlparse
+        link = [x for x in links if x.count('recover')][0]
+        # pretending to click the link in the email now
+        url = urlparse(link).path
+        response = self.get(url)
+        self.assertEqual(response.code, 200)
+
+        self.assertTrue('name="password"' in response.body)
+        
+        data = dict(password='secret')
+        response = self.post(url, data, follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        
+        user_cookie = self._decode_cookie_value('user', response.headers['Set-Cookie'])
+        guid = base64.b64decode(user_cookie.split('|')[0])
+        self.assertEqual(user.guid, guid)
+        cookie = 'user=%s;' % user_cookie
+        
+        response = self.get('/', headers={'Cookie': cookie})
+        self.assertTrue("Peter" in response.body)
+
+        
+        
+        
+        
+        
+        
+
+        
         

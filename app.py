@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 import httplib
+from hashlib import md5
 from cStringIO import StringIO
 from urlparse import urlparse
 from pprint import pprint
@@ -22,12 +23,13 @@ import unicodedata
 from tornado.options import define, options
 
 from models import Event, User, UserSettings, Share
-from utils import parse_datetime, encrypt_password, niceboolean, \
+from utils import parse_datetime, niceboolean, \
   DatetimeParseError, valid_email
 from utils.routes import route
 from utils.git import get_git_revision
 from utils.decorators import login_required
 from utils.datatoxml import dict_to_xml
+from utils.send_mail import send_email
 
 import ui_modules
 ################################################################################
@@ -77,6 +79,9 @@ class Application(tornado.web.Application):
             debug=options.debug,
             optimize_static_content=optimize_static_content,
             git_revision=get_git_revision(),
+            #email_backend='utils.send_mail.backends.console.EmailBackend',
+            email_backend='utils.send_mail.backends.smtp.EmailBackend',
+            webmaster='noreply@donecal.com',
             CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__), 
                                       "static", "compiler.jar"),
             YUI_LOCATION=os.path.join(os.path.dirname(__file__), 
@@ -929,6 +934,112 @@ class AccountHandler(BaseHandler):
         user.save()
         
         self.redirect('/')
+    
+hex_to_int = lambda s: int(s, 16)
+int_to_hex = lambda i: hex(i).replace('0x', '')
+
+@route('/user/forgotten/')
+class ForgottenPasswordHandler(BaseHandler):
+    
+    def get(self, error=None, success=None):
+        options = self.get_base_options()
+        options['error'] = error
+        options['success'] = success
+        self.render("user/forgotten.html", **options)
+        
+#    @tornado.web.asynchronous
+    def post(self):
+        email = self.get_argument('email')
+        if not valid_email(email):
+            raise tornado.web.HTTPError(400, "Not a valid email address")
+        
+        existing_user = self.find_user(email)
+        if not existing_user:
+            self.get(error="%s is a valid email address but no account exists matching this" % \
+              email)
+            return
+        
+        from tornado.template import Loader
+        loader = Loader(self.application.settings['template_path'])
+                      
+        recover_url = self.lost_url_for_user(existing_user._id)
+        recover_url = self.request.full_url() + recover_url
+        email_body = loader.load('user/reset_password.txt')\
+          .generate(recover_url=recover_url,
+                    first_name=existing_user.first_name,
+                    signature=self.application.settings['title'])
+                    
+        #if not isinstance(email_body, unicode):
+        #    email_body = unicode(email_body, 'utf-8')
+            
+        if 1:#try:
+            assert send_email(self.application.settings['email_backend'],
+                      "Password reset for on %s" % self.application.settings['title'],
+                      email_body,
+                      self.application.settings['webmaster'],
+                      [existing_user.email])
+            
+        else:#finally:
+            pass #self.finish()
+        
+        return self.get(success="Password reset instructions sent to %s" % existing_user.email)
+        
+    ORIGIN_DATE = datetime.date(2000, 1, 1)
+    
+    
+    def lost_url_for_user(self, user_id):
+        days = int_to_hex((datetime.date.today() - self.ORIGIN_DATE).days)
+        secret_key = self.application.settings['cookie_secret']
+        hash = md5(secret_key + days + str(user_id)).hexdigest()
+        return 'recover/%s/%s/%s/'%\
+                       (user_id, days, hash)
+
+    def hash_is_valid(self, user_id, days, hash):
+        secret_key = self.application.settings['cookie_secret']
+        if md5(secret_key + days + str(user_id)).hexdigest() != hash:
+            return False # Hash failed
+        # Ensure days is within a week of today
+        days_now = (datetime.date.today() - self.ORIGIN_DATE).days
+        days_old = days_now - hex_to_int(days)
+        return days_old < 7
+    
+    
+@route('/user/forgotten/recover/(\w+)/([a-f0-9]+)/([a-f0-9]{32})/$')
+class RecoverForgottenPasswordHandler(ForgottenPasswordHandler):
+    def get(self, user_id, days, hash, error=None):
+        if not self.hash_is_valid(user_id, days, hash):
+            return self.write("Error. Invalid link. Expired probably")
+        user = self.db.User.one({'_id': ObjectId(user_id)})
+        if not user:
+            return self.write("Error. Invalid user")
+        
+        options = self.get_base_options()
+        options['error'] = error
+        self.render("user/recover_forgotten.html", **options)
+        
+    def post(self, user_id, days, hash):
+        if not self.hash_is_valid(user_id, days, hash):
+            raise tornado.web.HTTPError(400, "invalid hash")
+        
+        new_password = self.get_argument('password')
+        if len(new_password) < 4:
+            raise tornado.web.HTTPError(400, "password too short")
+        
+        user = self.db.User.one({'_id': ObjectId(user_id)})
+        if not user:
+            raise tornado.web.HTTPError(400, "invalid hash")
+        
+        user.set_password(new_password)
+        user.save()
+        
+        self.set_secure_cookie("guid", str(user.guid), expires_days=100)
+        self.set_secure_cookie("user", str(user.guid), expires_days=100)
+        
+        self.redirect("/")
+        
+        
+
+
         
 @route('/user/signup/')
 class SignupHandler(BaseHandler):
@@ -971,7 +1082,7 @@ class SignupHandler(BaseHandler):
             user = self.db.User()
             user.save()
         user.email = email
-        user.password = encrypt_password(password)
+        user.set_password(password)
         user.first_name = first_name
         user.last_name = last_name
         user.save()
