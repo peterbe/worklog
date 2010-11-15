@@ -52,8 +52,8 @@ function refresh_date_range() {
    //console.log(startDate.datepicker('getDate').getTime());
    //console.log(endDate.datepicker('getDate').getTime());
    $.getJSON('/report.json', {
-    start: startDate.datepicker('getDate').getTime(),
-    end: endDate.datepicker('getDate').getTime()}, function(response) {
+      start: startDate.datepicker('getDate').getTime(),
+	end: endDate.datepicker('getDate').getTime()}, function(response) {
        $('tbody#days_spent tr').remove();
        if (response.days_spent && response.days_spent.length) {
           var total = 0.0;
@@ -69,13 +69,16 @@ function refresh_date_range() {
                $('<td></td>').text('Total').addClass('label')
                 ).append($('<td></td>').text(total)));
 	  
+	  /*
 	  $.jqplot('days-plot', [response.days_spent], {
              title: '',
              grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
-             highlighter: {sizeAdjust: 7.5},
+	       highligther: { show:true },
+             //highlighter: {sizeAdjust: 7.5},
              seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:3, padding:7, border:false}},
              legend:{show:true}
 	  });
+	   */
 	  
        }
        
@@ -94,20 +97,61 @@ function refresh_date_range() {
                $('<td></td>').text('Total').addClass('label')
                 ).append($('<td></td>').text(total)));
           
+	  /*
           $.jqplot('hours-plot', [response.hours_spent], {
              title: '',
+	       highligther: { show:true },
              grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
              seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:3, padding:7, border:false}},
            legend:{show:true}
-          });          
+          });
+	   */
        }
-       
-       
-       
        $('#report').fadeTo(200, 1.0);
-
     });
-    
+   
+   
+   $.getJSON('/report.json', {
+      interval:'1 week',
+        all_day: true,
+      start: startDate.datepicker('getDate').getTime(),
+      end: endDate.datepicker('getDate').getTime()
+   }, function(response) {
+      $('#days-plot').html('');
+      $.jqplot('days-plot', response.data, {
+         title: 'Days spent per week',
+         legend: {show:true, labels: response.tags, placement: 'outside'},
+         axes: {
+            xaxis: { ticks: response.ticks, tickOptions: {formatString: '%d'}},
+             yaxis: { min:0 }
+         },
+         highlighter: {
+            formatString: '<div class="jqplot-highlighter">week %s: %s days</div>',
+              bringSeriesToFront: true
+         }
+      });
+   });
+   
+   $.getJSON('/report.json', {
+      interval:'1 week',
+      start: startDate.datepicker('getDate').getTime(),
+      end: endDate.datepicker('getDate').getTime()
+   }, function(response) {
+      $('#hours-plot').html('');
+      $.jqplot('hours-plot', response.data, {
+         title: 'Hours spent per week',
+         legend: {show:true, labels: response.tags, placement: 'outside'},
+         axes: {
+            xaxis: { ticks: response.ticks, tickOptions: {formatString: '%d'}},
+             yaxis: { min:0 }
+         },
+         highlighter: {
+            formatString: '<div class="jqplot-highlighter">week %s: %s hours</div>',
+              bringSeriesToFront: true
+         }
+      });
+   });
+   
 }
 
 

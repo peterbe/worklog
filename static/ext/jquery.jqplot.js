@@ -5568,7 +5568,7 @@
         ctx.fillStyle = opts.fillStyle || this.fillStyle;
         ctx.beginPath();
         if (isarc) {
-            ctx.arc(points[0], points[1], points[2], points[3], points[4], true);   
+            ctx.arc(points[0], points[1], points[2], points[3], points[4], true);
             if (closePath) {
                 ctx.closePath();
             }

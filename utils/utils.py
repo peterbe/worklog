@@ -17,6 +17,8 @@ def parse_datetime(datestr):
             return datetime.datetime.fromtimestamp(float(datestr))
     raise DatetimeParseError(datestr)
 
+def datetime_to_date(dt):
+    return datetime.date(dt.year, dt.month, dt.day)
 
 def encrypt_password(raw_password, log_rounds=10): 
     salt = bcrypt.gensalt(log_rounds=log_rounds)

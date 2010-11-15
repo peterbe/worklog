@@ -24,7 +24,7 @@ from tornado.options import define, options
 
 from models import Event, User, UserSettings, Share
 from utils import parse_datetime, niceboolean, \
-  DatetimeParseError, valid_email
+  DatetimeParseError, valid_email, datetime_to_date
 from utils.routes import route
 from utils.git import get_git_revision
 from utils.decorators import login_required
@@ -153,6 +153,13 @@ class BaseHandler(tornado.web.RequestHandler):
                     data[key] = timestamp
             
         return data
+    
+    def _serialize_dict(self, data):
+        for key, value in data.items():
+            if isinstance(value, (datetime.datetime, datetime.date)):
+                data[key] = mktime(value.timetuple())
+        return data
+        
     
     def case_correct_tags(self, tags, user):
         # the new correct case for these tags is per the parameter 'tags'
@@ -1400,8 +1407,12 @@ class ExportHandler(ReportHandler):
 @route(r'/report(\.xls|\.json|\.js|\.xml|\.txt)?')
 class ReportDataHandler(EventStatsHandler):
     def get(self, format=None):
-        user = self.get_current_user()        
-        stats = self.get_stats_data()
+        user = self.get_current_user()
+        if self.get_argument('interval', None):
+            stats = self.get_lumped_stats_data(
+              self.get_argument('interval'))
+        else:
+            stats = self.get_stats_data()
         
         if format == '.xls':
             raise NotImplementedError
@@ -1420,6 +1431,82 @@ class ReportDataHandler(EventStatsHandler):
                 out.write('\n')
                 
             self.write_txt(out.getvalue())
+            
+    def get_lumped_stats_data(self, interval):
+        """
+        return a dict with two keys:
+          * data
+          * tags
+        Each is a list. tags[0] might be 'Project X' and data[0] is the its data.
+        The data is of tuples like this: (date, count)
+        """
+        user = self.get_current_user()
+        if not user:
+            raise tornado.web.HTTPError(400, "no user")
+        search = {}
+        search['user.$id'] = user._id
+        search['all_day'] = niceboolean(self.get_argument('all_day', False))
+        
+        #if self.get_argument('start', None):
+        start = parse_datetime(self.get_argument('start'))
+        start = datetime.datetime(start.year, start.month, start.day, 0,0,0)
+        search['start'] = {'$gte': start}
+        #if self.get_argument('end', None):
+        end = parse_datetime(self.get_argument('end'))
+        search['end'] = {'$lte': end}
+            
+        last_date = end
+        tags = {}
+        date = start#first_date
+        for entry in self.db[Event.__collection__].find(search):
+            for tag in entry['tags']:
+                if tag not in tags:
+                    tags[tag] = []
+                    
+        tags[''] = []
+        if 'start' in search:
+            search.pop('start')
+        if 'end' in search:
+            search.pop('end')
+            
+        if interval == '1 week':
+            interval = datetime.timedelta(days=7)
+        else:
+            raise NotImplementedError(interval)
+        ticks = []
+        tick = 1
+        while date < last_date:
+            this_search = dict(search, 
+                               start={'$gte':date}, 
+                               end={'$lt': date + interval})
+            _found = defaultdict(float)
+            for entry in self.db[Event.__collection__].find(this_search):
+                if search['all_day']:
+                    d = (entry['end'] - entry['start']).days + 1
+                else:
+                    d = (entry['end'] - entry['start']).seconds / 3600.0
+                
+                these_tags = entry['tags'] and entry['tags'] or ['']
+                
+                for tag in these_tags:
+                    _found[tag] += d
+            
+            for t in tags.keys():
+                tags[t].append(_found.get(t, 0))
+                    
+            date += interval
+            ticks.append(tick)
+            tick += 1
+                
+        all_tags = []
+        all_data = []
+        if '' in tags:
+            tags['<em>Untagged</em>'] = tags.pop('')
+        for key in tags:
+            all_tags.append(key)
+            all_data.append(tags[key])
+        
+        return dict(data=all_data, tags=all_tags, ticks=ticks)
         
     
 def main():

@@ -33,7 +33,7 @@
     <tbody id="days_spent"">
     </tbody>
   </table>
-  <div class="plot" id="days-plot" style="margin-left:340px;width:390px">
+  <div class="plot" id="days-plot" style="margin-left:340px;width:490px">
   </div>
   
   </div>
@@ -50,7 +50,7 @@
     <tbody id="hours_spent">
     </tbody>
   </table>
-  <div class="plot" id="hours-plot" style="margin-left:340px;width:390px">
+  <div class="plot" id="hours-plot" style="margin-left:340px;width:490px">
   </div>
   </div>
 
@@ -90,5 +90,5 @@ $(function() {
   });
 });
 </script>
-{{ modules.Static("ext/jquery-ui-1.8.6.slider.datepicker.min.js", "ext/jquery.jqplot.js", "ext/jqplot.pieRenderer.js", "ext/jqplot.highlighter.js", "report.js") }}
+{{ modules.Static("ext/jquery-ui-1.8.6.slider.datepicker.min.js", "ext/jquery.jqplot.js", "ext/jqplot.dateAxisRenderer.js", "ext/jqplot.highlighter.js","report.js") }}
 {% end %}
