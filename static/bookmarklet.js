@@ -251,7 +251,7 @@
         //insertSizeDiv("bigt__halfWinDiv","bigt__halfWinImg",halfWin, "Half size bookmarklet window",2,"half_win.png",9);
         //insertSizeDiv("bigt__fullWinDiv","bigt__fullWinImg",windowActive, "Full size bookmarklet window",1,"full_win_selected.png",18);
         
-        insertSizeDiv("bigt__closeWinDiv","bigt__closeWinImg",closeFrame, "Close bookmarklet window",0,"/static/css/fancybox/fancy_close.png",18);
+        insertSizeDiv("bigt__closeWinDiv","bigt__closeWinImg",closeFrame, "Close bookmarklet window",0,"static/css/ext/fancybox/fancy_close.png",18);
         
         document.body.appendChild(container);
 
