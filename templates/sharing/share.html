@@ -1,9 +1,17 @@
+<style type="text/css">
+.ui-draggable { cursor:move; }
+.ui-state-hover { background-color:#efefef; }
+.drag-hint { color:#666; margin-bottom:2px; }
+ul li { list-style:none; }
+#save-note { clear:left; font-size:0.8em; color:#666; margin-right:20px;}
+</style>
+
 <h2>Share your calendar</h2>
 
 
 
-<form action="/share/">
-
+<form action="/share/edit/" id="share" method="post"><!-- necessary to be allowed to display an input field -->
+<input type="hidden" name="id" value="{{ share_id }}">
 <div>
   <p>
   Give this URL to friends and family and they'll be able to view 
@@ -12,5 +20,35 @@
   </p>
 </div>
 
-</form>
+<p style="float:right">
+  <span id="save-note" style="display:none">saving...</span>
+  <a href="#" class="more-options">more options</a>
+</p>
 
+<div id="more-options" style="display:none">
+<p><strong>Specific tags:</strong>
+<select name="tags" style="display:none" multiple>
+{% for tag in chosen_tags %}<option value="{{ tag }}" selected>{{ tag }}</option>{% end %}
+{% for tag in available_tags %}<option value="{{ tag }}">{{ tag }}</option>{% end %}
+</select>
+</p>
+  <div id="tags-available" style="float:left; width:45%">
+    <p class="drag-hint">Drag from here...</p>
+    <ul>
+      {% for tag in available_tags %}
+      <li class="tag"><span>{{ tag }}</span></li>
+      {% end %}
+    </ul>
+  </div>
+  <div id="tags-chosen" style="float:right;border:1px solid #eee; width:45%">
+    <p class="drag-hint">...to here</p>
+    <ul>
+      {% for tag in chosen_tags %}
+      <li class="tag"><span>{{ tag }}</span></li>
+      {% end %}
+    </ul>
+  </div>  
+</div>
+
+
+</form>

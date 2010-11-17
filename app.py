@@ -236,6 +236,15 @@ class BaseHandler(tornado.web.RequestHandler):
             shares = ''
         keys = [x for x in shares.split(',') if x]
         return self.db[Share.__collection__].find({'key':{'$in':keys}})
+    
+    def get_all_available_tags(self, user):
+        tags = set()
+        search = {'user.$id': user['_id'],
+                  'tags': {'$ne': []}}
+        for event in self.db[Event.__collection__].find(search):
+            for tag in event['tags']:
+                tags.add(tag)
+        return tags
             
 
 class APIHandlerMixin(object):
@@ -342,6 +351,8 @@ class EventsHandler(BaseHandler):
         for share in self.share_keys_to_share_objects(shares):
             share_user = self.db[User.__collection__].one(dict(_id=share['user'].id))
             search['user.$id'] = share_user['_id']
+            if share['tags']:
+                search['tags'] = {'$in': share['tags']}
             className = 'share-%s' % share_user['_id']
             full_name = u"%s %s" % (share_user['first_name'], share_user['last_name'])
             full_name = full_name.strip()
@@ -885,7 +896,18 @@ class SharingHandler(BaseHandler):
         full_share_url = '%s://%s%s' % (self.request.protocol, 
                                         self.request.host,
                                         share_url)
-        self.render("sharing/share.html", full_share_url=full_share_url, shares=shares)
+                                        
+        chosen_tags = sorted(share.tags)
+        available_tags = sorted([x for x in self.get_all_available_tags(user)
+                                     if x not in chosen_tags])
+        
+        self.render("sharing/share.html", 
+                    share_id=str(share._id),
+                    full_share_url=full_share_url, 
+                    shares=shares,
+                    available_tags=available_tags,
+                    chosen_tags=chosen_tags,
+                    )
         
     def post(self):
         """toggle the hiding of a shared key"""
@@ -911,6 +933,31 @@ class SharingHandler(BaseHandler):
         
         self.write('Ok')
 
+@route('/share/edit/$')
+class EditSharingHandler(SharingHandler):
+    def post(self):
+        _id = self.get_argument('id')
+        tags = self.get_arguments('tags', [])
+        
+        user = self.get_current_user()
+        try:
+            share = self.db.Share.one({'_id': ObjectId(_id), 'user.$id': user._id})
+            if not share:
+                raise tornado.web.HTTPError(404, "Share not found")
+        except Invalid:
+            raise tornado.web.HTTPError(400, "Share ID not valid")
+        
+        #print "WAS"
+        #print share.tags
+        #print "WANTS TO"
+        #print repr(tags)
+        share.tags = tags
+        share.save()
+        
+        self.write("OK")
+        
+        
+        
         
 @route('/user/account/')
 class AccountHandler(BaseHandler):

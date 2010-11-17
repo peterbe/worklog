@@ -937,3 +937,14 @@ input.error {
 
 label.error { color:red; }
 label.valid { color:green; }
+
+.tag span, span.tag { 
+  font-size:90%;
+  background-color: #efefef;
+  border:1px solid #ccc;
+  padding:0px 5px;
+  -moz-border-radius:4px;
+  -webkit-border-radius:4px;
+    
+
+}

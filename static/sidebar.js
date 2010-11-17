@@ -68,19 +68,11 @@ $(function() {
          'transitionIn': 'none',
          'transitionOut': 'none',
          onComplete: function(array, index, opts) {
-            if ($('#close-sharing-open-account').size()) {
-               $('#close-sharing-open-account').click(function() {
-                  $('a.account').click();
-                  return false;
+            $.getScript(JS_URLS.jquery_form, function() {
+               $.getScript(JS_URLS.jquery_ui_droppable, function() {
+                  $.getScript(JS_URLS.share);
                });
-            } else {
-               if ($('#share_url').size()) {
-                  $('#share_url')[0].focus();
-                  $('#share_url')[0].select();
-               }
-            }
+            });
          }
       });
-      
-      
 });

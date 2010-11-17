@@ -101,19 +101,6 @@ function _event_clicked(event, jsEvent, view) {
              .val($('input[name="placeholdervalue_external_url"]', container).val());
       }
 
-      //$('input[name="external_url"]', container).bind('focus', function() {
-      //   if ($(this).val() == $('input[name="placeholdervalue"]', container).val()) {
-      //      $(this).val('').removeClass('placeholdervalue');
-      //   }
-      //}).bind('blur', function() {
-      //   if (!$.trim($(this).val()))
-      //     $('input[name="external_url"]', container)
-      //       .addClass('placeholdervalue')
-      //         .val($('input[name="placeholdervalue"]', container).val());
-      //   else if ($(this).val().search('://') == -1)
-      //     $(this).val('http://' + $(this).val());
-      //});
-      
       $('a.more-editing', container).click(function() {
          if ($('div.more-editing:visible', container).length) {
             $('div.more-editing', container).hide();
