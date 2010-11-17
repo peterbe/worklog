@@ -486,8 +486,9 @@ class ApplicationTestCase(BaseHTTPTestCase):
         event.start = datetime.datetime(2010,10, 13)
         event.end = datetime.datetime(2010,10, 13)
         event.all_day = True
-        event.tags = [u"tag"]
+        event.tags = [u"tag1"]
         event.save()
+        
         
         share = db.Share()
         share.user = user
@@ -500,12 +501,30 @@ class ApplicationTestCase(BaseHTTPTestCase):
         cookie = 'shares=%s;' % shares_cookie
         data = dict(start=mktime(datetime.datetime(2010,10,1).timetuple()),
                     end=mktime(datetime.datetime(2010,10,30).timetuple()))
-        response = self.get('/events.json', data, headers={'Cookie':cookie, 'A':"A"})
-        
+        response = self.get('/events.json', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['events'][0]['title'], event.title)
-        self.assertEqual(struct['tags'], [u"@tag"])
+        self.assertEqual(struct['tags'], [u"@tag1"])
+
+        event2 = db.Event()
+        event2.user = user
+        event2.title = u"Title 2"
+        event2.start = datetime.datetime(2010,10, 14)
+        event2.end = datetime.datetime(2010,10, 14)
+        event2.all_day = True
+        event2.tags = [u"tag2"]
+        event2.save()
+        
+        share.tags = [u'tag2']
+        share.save()
+        
+        response = self.get('/events.json', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['events'][0]['title'], event2.title)
+        
+        
 
         
     def test_user_settings(self):
@@ -549,7 +568,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         db = self.get_db()
         today = datetime.date.today()
         
-        data = {'title': "Foo", 
+        data = {'title': "@tag1 @tag2 Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
         response = self.post('/events', data)
@@ -571,11 +590,17 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         
         # expect there to be a full URL in the HTML
-        url = re.findall('value="(.*)"', response.body)[0]
+        url = re.findall('value="http(.*)"', response.body)[0]
         key = re.findall('share=(.*)', url)[0]
         share = db.Share.one(dict(key=key))
         self.assertTrue(share)
         self.assertEqual(share.user, user)
+        
+        data = {'id': str(share._id), 'tags':'tag2'}
+        response = self.post('/share/edit/', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        share = db.Share.one(dict(_id=share._id))
+        self.assertEqual(share.tags, [u'tag2'])
         
         # so a new user can start using this
         response = self.get('/', dict(share=key), follow_redirects=False)
@@ -602,6 +627,8 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue('hidden_shares' in response.body)
         # so will the share key
         self.assertTrue(share.key in response.body)
+        
+        
         
         
     def test_signup(self):
@@ -927,11 +954,6 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/', headers={'Cookie': cookie})
         self.assertTrue("Peter" in response.body)
 
-        
-        
-        
-        
-        
         
 
         
