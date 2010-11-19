@@ -1,4 +1,4 @@
-EMAIL_HOST = 'localhost'
+EMAIL_HOST = 'mail.fry-it.com'
 EMAIL_PORT = 25
 
 EMAIL_HOST_USER = None
