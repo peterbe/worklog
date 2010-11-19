@@ -113,6 +113,19 @@ function _event_clicked(event, jsEvent, view) {
       });
 
       $('a.delete', container).click(function() {
+            close_current_tooltip();
+            $.post('/event/delete/', {id: event.id}, function() {
+               decrement_total_no_events();
+               $('#calendar').fullCalendar('removeEvents', event.id);
+	       var view = $('#calendar').fullCalendar('getView');
+	       display_sidebar_stats_wrapped(view.start, view.end);
+	       __update_described_colors();
+               show_undo_delete("UNDO last delete", event.id);
+            });
+            return false;
+      });
+      /*
+      $('a.delete', container).click(function() {
          var parent = $(this).parents('div.delete');
          $('.confirmation', parent).show();
          $('a.delete', parent).hide();
@@ -120,13 +133,14 @@ function _event_clicked(event, jsEvent, view) {
          $('a.delete-confirm', parent).unbind('click');
          $('a.delete-confirm', parent).click(function() {
             close_current_tooltip();
-            $.post('/event/delete', {id: event.id}, function() {
+            $.post('/event/delete/', {id: event.id}, function() {
                decrement_total_no_events();
                $('#calendar').fullCalendar('removeEvents', event.id);
 	       //__update_described_colors();
 	       var view = $('#calendar').fullCalendar('getView');
 	       display_sidebar_stats_wrapped(view.start, view.end);
 	       __update_described_colors();
+               show_undo_delete("UNDO last delete", event.id);
                //$('#calendar').fullCalendar('refetchEvents');
                //$('#calendar').fullCalendar('render');
 
@@ -143,6 +157,7 @@ function _event_clicked(event, jsEvent, view) {
          });
          return false;
       });
+      */
    }
 
    /* This function is called when the qtip has opened for previewing */
@@ -220,7 +235,7 @@ function _event_clicked(event, jsEvent, view) {
 
 function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view) {
    __update_described_colors();
-   $.post('/event/resize', {days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
+   $.post('/event/resize/', {days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
@@ -232,7 +247,7 @@ function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view
 
 function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc) {
    __update_described_colors();
-   $.post('/event/move', {all_day: allDay, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
+   $.post('/event/move/', {all_day: allDay, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
@@ -328,11 +343,12 @@ function __inner_setup_ajaxsubmit(element, event_id) {
 	    // close any open qtip
             close_current_tooltip();
 
-            if (response.tags)
+            if (response.tags) {
               $.each(response.tags, function(i, tag) {
                 if ($.inArray(tag, AVAILABLE_TAGS) == -1)
                    AVAILABLE_TAGS.push(tag);
               });
+            }
 
 	    if (event_id)
 	      $('#calendar').fullCalendar('removeEvents', event_id);
@@ -431,6 +447,34 @@ function __update_described_colors() {
       if (!_share_toggles[className])
 	$('div.' + className, '#calendar').fadeOut(0);
    });
+}
+
+var undo_delete_timer;
+function show_undo_delete(text, event_id) {
+   if (undo_delete_timer) {
+      clearTimeout(undo_delete_timer);
+   }
+   $('#undo-delete a').remove();
+   $('#undo-delete:hidden').show();
+   $('#undo-delete')
+     .append($('<a href="#"></a>').text(text).click(function() {
+        $.post('/event/undodelete/', {id:event_id}, function(response) {
+           if (!SETTINGS.disable_sound && soundManager.enabled) {
+              soundManager.play('pling');
+           }
+           increment_total_no_events();
+           $('#calendar').fullCalendar('renderEvent', response.event);
+           var view = $('#calendar').fullCalendar('getView');
+           display_sidebar_stats_wrapped(view.start, view.end);
+           __update_described_colors();
+           $('#undo-delete').hide();
+        });
+        return false;
+     }));
+   
+   undo_delete_timer = setTimeout(function() {
+      $('#undo-delete:visible').fadeOut(800);
+   }, 5 * 1000);
 }
 
 function close_current_tooltip(parent) {

@@ -34,7 +34,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data)
+        response = self.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertTrue(struct.get('event'))
@@ -72,7 +72,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@fryit Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data, headers={'Cookie':cookie})
+        response = self.post('/events/', data, headers={'Cookie':cookie})
         struct = json.loads(response.body)
         self.assertTrue(struct.get('event'))
         self.assertEqual(struct.get('tags'), ['@fryit'])
@@ -87,7 +87,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@FryIT working on @Italy",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data, headers={'Cookie':cookie})
+        response = self.post('/events/', data, headers={'Cookie':cookie})
         struct = json.loads(response.body)
         self.assertTrue(struct.get('event'))
         self.assertEqual(struct.get('tags'), ['@Italy', '@FryIT'])
@@ -102,7 +102,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@It Experiment",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data, headers={'Cookie':cookie})
+        response = self.post('/events/', data, headers={'Cookie':cookie})
         
         self.assertEqual(db.User.find().count(), 1)
         # change the other ones from before
@@ -120,12 +120,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data)
+        response = self.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         event_id = struct['event']['id']
         
         event_obj = db.Event.one(dict(title="Foo"))
+        event_user = event_obj.user
         self.assertTrue(event_obj.all_day)
         
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
@@ -138,7 +139,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': 'true', # still
                 'days': '-1',
                 'minutes': 0}
-        response = self.post('/event/move', data, headers={'Cookie':cookie})
+        response = self.post('/event/move/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         new_start = struct['event']['start']
@@ -154,7 +155,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': '',
                 'days': '3',
                 'minutes': 0}
-        response = self.post('/event/resize', data, headers={'Cookie':cookie})
+        response = self.post('/event/resize/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         new_start = struct['event']['start']
@@ -169,7 +170,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': '',
                 'days': '0',
                 'minutes': 10}
-        response = self.post('/event/resize', data, headers={'Cookie':cookie})
+        response = self.post('/event/resize/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertTrue(struct.get('error'))
@@ -184,7 +185,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         
         # edit title
         data['title'] = 'New title'
-        response = self.post('/event/edit', data, headers={'Cookie':cookie})
+        response = self.post('/event/edit/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['event']['title'], data['title'])
@@ -192,7 +193,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(db.Event.one({'title':'New title'}))
 
         data['description'] = '\nA longer description\n'
-        response = self.post('/event/edit', data, headers={'Cookie':cookie})
+        response = self.post('/event/edit/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['event']['description'], data['description'].strip())
@@ -202,25 +203,27 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'id': event_id,
                 'title': 'New title',
                 'external_url': 'junk'}
-        response = self.post('/event/edit', data, headers={'Cookie':cookie})
+        response = self.post('/event/edit/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 400)
         # edit URL (right)
         data['external_url'] = 'http://www.peterbe.com'
-        response = self.post('/event/edit', data, headers={'Cookie':cookie})
+        response = self.post('/event/edit/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['event']['external_url'], data['external_url'])
         
         # delete
         data = {'id': '___'}
-        response = self.post('/event/delete', data, headers={'Cookie':cookie})
+        response = self.post('/event/delete/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 404)
         
         data['id'] = event_id
-        response = self.post('/event/delete', data, headers={'Cookie':cookie})
+        response = self.post('/event/delete/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         
-        self.assertTrue(not db.Event.find().count())
+        search = {'user.$id': event_user._id}
+        self.assertTrue(not db.Event.find(search).count())
+        
         
     def test_getting_event_for_edit_json(self):
         db = self.get_db()
@@ -228,7 +231,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data)
+        response = self.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         event_id = struct['event']['id']
@@ -275,7 +278,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data)
+        response = self.post('/events/', data)
         self.assertEqual(response.code, 200)
         
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
@@ -293,7 +296,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo2 @tagged",
                 'date': mktime(today.timetuple()),
                 'all_day': 'no'}
-        response = self.post('/events', data, headers={'Cookie':cookie})
+        response = self.post('/events/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         
         response = self.get('/events/stats.json', headers={'Cookie':cookie})
@@ -304,7 +307,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo3 @tagged",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data, headers={'Cookie':cookie})
+        response = self.post('/events/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         event = db.Event.one(dict(title=data['title']))
         event.end += datetime.timedelta(days=2)
@@ -333,7 +336,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data)
+        response = self.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         event_id = struct['event']['id']
@@ -387,7 +390,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data)
+        response = self.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         event_id = struct['event']['id']
@@ -412,7 +415,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         
         
         # you can't view this one yet
-        response = self.get('/event?id=%s' % event_id, headers={'Cookie':cookie})
+        response = self.get('/event/?id=%s' % event_id, headers={'Cookie':cookie})
         self.assertEqual(response.code, 403)
         
         # user2 needs to create a share
@@ -433,7 +436,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         shares_cookie = self._decode_cookie_value('shares', response.headers['Set-Cookie'])
         
         cookie += ';shares=%s' % shares_cookie
-        response = self.get('/event?id=%s' % event_id, headers={'Cookie':cookie})
+        response = self.get('/event/?id=%s' % event_id, headers={'Cookie':cookie})
         # shared but not shared with this user
         
         self.assertEqual(response.code, 403)
@@ -441,7 +444,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share.users = []
         share.save()
         
-        response = self.get('/event?id=%s' % event_id, headers={'Cookie':cookie})
+        response = self.get('/event/', {'id': event_id}, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         
     def test_events(self):
@@ -571,7 +574,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@tag1 @tag2 Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data)
+        response = self.post('/events/', data)
         self.assertEqual(response.code, 200)
         
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
@@ -734,7 +737,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data)
+        response = self.post('/events/', data)
         self.assertEqual(response.code, 200) 
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
@@ -831,7 +834,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data)
+        response = self.post('/events/', data)
         self.assertEqual(response.code, 200) 
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
@@ -888,7 +891,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events', data)
+        response = self.post('/events/', data)
         self.assertEqual(response.code, 200) 
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
@@ -953,8 +956,50 @@ class ApplicationTestCase(BaseHTTPTestCase):
         
         response = self.get('/', headers={'Cookie': cookie})
         self.assertTrue("Peter" in response.body)
-
         
-
+    def test_undo_delete_event(self):
+        """you can delete an event and then get it back by following the undo link"""
         
+        db = self.get_db()
+        today = datetime.date.today()
+        
+        data = {'title': "Foo", 
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        response = self.post('/events/', data)
+        self.assertEqual(response.code, 200) 
+        struct = json.loads(response.body)
+        event_id = struct['event']['id']
+        
+        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        cookie = 'guid=%s;' % guid_cookie
+        
+        guid = base64.b64decode(guid_cookie.split('|')[0])
+        self.assertEqual(db.User.find({'guid':guid}).count(), 1)
+        user = db.User.one({'guid':guid})
+        
+        self.assertEqual(db.Event.find({'user.$id':user._id}).count(), 1)
+        data['id'] = event_id
+        response = self.post('/event/delete/', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(db.Event.find({'user.$id':user._id}).count(), 0)
+        
+        # the delete will have created a new special user
+        undoer_guid = self._app.settings['UNDOER_GUID']
+        undoer = db.User.one(dict(guid=undoer_guid))
+        self.assertEqual(db.Event.find({'user.$id': undoer._id}).count(), 1)
+        
+        # to undo you just need to hit a URL
+        response = self.post('/event/undodelete/', {'id': event_id})
+        # but you can't do it without a cookie
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertTrue(struct.get('error'))
+        
+        response = self.post('/event/undodelete/', {'id': event_id}, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(db.Event.find({'user.$id': undoer._id}).count(), 0)
+        self.assertEqual(db.Event.find({'user.$id':user._id}).count(), 1)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['event']['title'], data['title'])
         

@@ -99,7 +99,12 @@ class Event(BaseDocument):
     
     indexes = [
       {'fields': ['user', 'start', 'end']},
-    ]    
+    ]
+    
+    def chown(self, user, save=False):
+        self.user = user
+        if save:
+            self.save()
     
 class Share(BaseDocument):
     __collection__ = 'shares'

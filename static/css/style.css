@@ -869,7 +869,7 @@ p.taxonomy-people {
   right:10px;
   top:0;
   width:245px;
-  z-index:99999;
+  z-index:99998;
   border-radius-bottomleft: 15px;
   border-radius-bottomright: 15px;
   -moz-border-radius-bottomleft:10px;
@@ -947,4 +947,21 @@ label.valid { color:green; }
   -webkit-border-radius:4px;
     
 
+}
+
+#undo-delete {
+  position:fixed;
+  top:0; 
+  /*width:200px;*/
+  left:250px;
+  z-index:99999;
+  border:1px solid #ccc;
+  background-color:#fff;
+  padding:3px 30px 9px 30px;
+  border-radius-bottomleft: 15px;
+  border-radius-bottomright: 15px;
+  -moz-border-radius-bottomleft:10px;
+  -moz-border-radius-bottomright:10px;
+  -webkit-border-radius:0 0 10px 10px;
+  opacity:0.7;
 }

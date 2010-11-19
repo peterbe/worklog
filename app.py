@@ -84,8 +84,9 @@ class Application(tornado.web.Application):
             webmaster='noreply@donecal.com',
             CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__), 
                                       "static", "compiler.jar"),
-            YUI_LOCATION=os.path.join(os.path.dirname(__file__), 
+            YUI_LOCATION=os.path.join(os.path.dirname(__file__),
                                       "static", "yuicompressor-2.4.2.jar"),
+            UNDOER_GUID=u'UNDOER', # must be a unicode string
         )
         tornado.web.Application.__init__(self, handlers, **settings)
         
@@ -227,9 +228,16 @@ class BaseHandler(tornado.web.RequestHandler):
         options['settings'] = settings
         
         options['git_revision'] = self.application.settings['git_revision']
-        options['total_no_events'] = self.db[Event.__collection__].find().count()
+        options['total_no_events'] = self._get_total_no_events()
         
         return options
+    
+    def _get_total_no_events(self):
+        search = dict()
+        undoer = self.get_undoer_user()
+        if undoer:
+            search['user.$id'] = {'$ne': undoer._id}
+        return self.db[Event.__collection__].find(search).count()
     
     def share_keys_to_share_objects(self, shares):
         if not shares: 
@@ -245,6 +253,16 @@ class BaseHandler(tornado.web.RequestHandler):
             for tag in event['tags']:
                 tags.add(tag)
         return tags
+    
+    def get_undoer_user(self, create_if_necessary=False):
+        guid = self.application.settings['UNDOER_GUID']
+        undoer = self.db.User.one(dict(guid=guid))
+        if undoer is None:
+            undoer = self.db.User()
+            undoer.guid = guid
+            undoer.save()
+        return undoer
+    
             
 
 class APIHandlerMixin(object):
@@ -320,7 +338,7 @@ class HomeHandler(BaseHandler):
 
         
          
-@route(r'/events(\.json|\.js|\.xml|\.txt)?')
+@route(r'/events(\.json|\.js|\.xml|\.txt|/)?')
 class EventsHandler(BaseHandler):
     
     def get(self, format=None):
@@ -516,7 +534,7 @@ class EventsHandler(BaseHandler):
             self.write(tornado.escape.json_encode(result))
 
         
-@route(r'/api/events(\.json|\.js|\.xml|\.txt)?')
+@route(r'/api/events(\.json|\.js|\.xml|\.txt|/)?')
 class APIEventsHandler(APIHandlerMixin, EventsHandler):
     
     def get(self, format=None):
@@ -590,7 +608,7 @@ class BaseEventHandler(BaseHandler):
             ui_module = ui_modules.EventPreview(self)
             self.write(ui_module.render(data))
         else:
-            raise NotImplementedError
+            raise NotImplementedError(format)
 
     def find_event(self, _id, user, shares):
         try:
@@ -623,13 +641,12 @@ class BaseEventHandler(BaseHandler):
             
         return event
     
-@route(r'/event(\.json|\.js|\.xml|\.txt|\.html)?')
+@route(r'/event(\.json|\.js|\.xml|\.txt|\.html|/)?')
 class EventHandler(BaseEventHandler):
     def get(self, format):
-        #if action == '':
-        #    action = 'preview'
-        #assert action in ('edit', 'preview')
-        
+        if format == '/':
+            format = None
+            
         _id = self.get_argument('id')
        
         user = self.get_current_user()
@@ -653,7 +670,7 @@ class EventHandler(BaseEventHandler):
         #    self.write(ui_module.render(event))
         #elif format == '
     
-@route(r'/event/(edit|resize|move|delete|)')
+@route(r'/event/(edit|resize|move|undodelete|delete|)/')
 class EditEventHandler(BaseEventHandler):
     
     def post(self, action):
@@ -664,7 +681,7 @@ class EditEventHandler(BaseEventHandler):
             minutes = int(self.get_argument('minutes'))
             if action == 'move':
                 all_day = niceboolean(self.get_argument('all_day', False))
-        elif action == 'delete':
+        elif action in ('delete', 'undodelete'):
             pass
         else:
             assert action == 'edit'
@@ -693,6 +710,10 @@ class EditEventHandler(BaseEventHandler):
             }
         except InvalidId:
             raise tornado.web.HTTPError(404, "Invalid ID")
+    
+        if action == 'undodelete':
+            undoer = self.get_undoer_user()
+            search['user.$id'] = undoer._id
         
         event = self.db.Event.one(search)
         if not event:
@@ -723,16 +744,22 @@ class EditEventHandler(BaseEventHandler):
                 del event['url']
             event.save()
         elif action == 'delete':
-            event.delete()
+            # we never actually delete. instead we chown the event to belong to 
+            # the special "undoer" user
+            undoer = self.get_undoer_user(create_if_necessary=True)
+            event.chown(undoer, save=True)
             return self.write("Deleted")
+        elif action == 'undodelete':
+            event.chown(user, save=True)
+            #return self.write("Delete undone")
         else:
-            raise NotImplementedError
+            raise NotImplementedError(action)
         
         return self.write_json(dict(event=self.transform_fullcalendar_event(event, True)))
     
         
             
-@route('/events/stats(\.json|\.xml|\.txt)?')
+@route('/events/stats(\.json|\.xml|\.txt|/)?')
 class EventStatsHandler(BaseHandler):
     def get(self, format):
         
@@ -959,7 +986,7 @@ class EditSharingHandler(SharingHandler):
         
         
         
-@route('/user/account/')
+@route('/user/account/$')
 class AccountHandler(BaseHandler):
     def get(self):
         if self.get_secure_cookie('user'):
@@ -1002,7 +1029,7 @@ class AccountHandler(BaseHandler):
 hex_to_int = lambda s: int(s, 16)
 int_to_hex = lambda i: hex(i).replace('0x', '')
 
-@route('/user/forgotten/')
+@route('/user/forgotten/$')
 class ForgottenPasswordHandler(BaseHandler):
     
     def get(self, error=None, success=None):
