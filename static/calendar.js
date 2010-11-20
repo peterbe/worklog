@@ -10,6 +10,29 @@ function __standard_qtip_options() {
   };
 }
 
+var g_origKeyUp;
+function unbind_esc_key() {
+  document.onkeyup = g_origKeyUp;
+}
+function bind_esc_key() {
+   function handleOnkeyup(e){
+      var evtobj=window.event? event : e;
+      var unicode=evtobj.charCode? evtobj.charCode : evtobj.keyCode;
+      
+      // Close bookmarklet on Escape
+      if (unicode == 27){
+	 close_current_tooltip();
+	 unbind_esc_key();
+      }
+   }
+   
+   // Preserve original onkeyup handler
+   g_origKeyUp = document.onkeyup;
+   
+   // Substitute new onkeyup
+   document.onkeyup = handleOnkeyup;
+}
+
 var current_tooltip;
 function _day_clicked(date, allDay, jsEvent, view) {
    var url = '/events';
@@ -64,6 +87,7 @@ function _day_clicked(date, allDay, jsEvent, view) {
    //qtip_options = $.extend(qtip_options, __standard_qtip_options());
    current_tooltip = $(this);
    current_tooltip.qtip(qtip_options);
+   bind_esc_key();
 }
 
 function _event_clicked(event, jsEvent, view) {
@@ -231,6 +255,7 @@ function _event_clicked(event, jsEvent, view) {
    //qtip_options = $.extend(qtip_options, __standard_qtip_options());
    current_tooltip = $(this);
    current_tooltip.qtip(qtip_options);
+   bind_esc_key();
 }
 
 function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view) {

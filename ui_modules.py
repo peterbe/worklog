@@ -22,9 +22,10 @@ except ImportError:
     
 
 class Footer(tornado.web.UIModule):
-    def render(self):
+    def render(self, user=None):
         return self.render_string("modules/footer.html",
-          calendar_link=self.request.path != '/'
+          calendar_link=self.request.path != '/',
+          user=user,
          )
 
 

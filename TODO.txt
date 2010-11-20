@@ -1,15 +1,18 @@
+* (HIGH) BUG: If you share a calendar on the tag "Tag" and then enter
+  a new event with tag "tAG" all events need to change from "Tag" to
+  "tAG". INCLUDING the shares. 
+
+* (MEDIUM) CSS icons instead of padlock
+  http://nicolasgallagher.com/pure-css-gui-icons/demo/
+  
 * (MEDIUM) consider implemented error reports using
   _handle_request_exception()
   http://groups.google.com/group/python-tornado/browse_thread/thread/2adc599bbdcad194/5c5d16f82dd74209
   
-* (HIGH) Bug: try changing user setting to start on a monday (FIXED?)
-
 * (HIGH) render the shared classes in calendar.html on page load (and
   see if that helps with the reloading etc)
   
 * (HIGH) Find out why all CSS is lost when an event is added
-
-* (MEDIUM) Finish the work on bookmarklets
 
 * (HIGH) moving an event resets colour on shared calendars
 
@@ -21,12 +24,6 @@
 * (LOW) tests for previewing and editing events in API
 
 * (MEDIUM) App for voting on feature requests
-
-* (MEDIUM) Improve test coverage
-
-* (LOW) Get in on http://tornado.poweredsites.org/
-
-* (HIGH) Write Help page
 
 * (MEDIUM) Write sample Ruby package for using API
 

@@ -1,5 +1,6 @@
+{% import tornado.escape %}
 <p>
-{{ event.title }}
+{{ tornado.escape.linkify(event.title, extra_params='target="_blank"') }}
 </p>
 
 {% if event.external_url %}
@@ -7,6 +8,8 @@
 <a href="{{ event.external_url }}">{{ event.external_url }}</a>
 </p>
 {% end %}
+
+<form style="float:right"><input type="button" class="cancel" value="Close"></form>
 
 <p style="font-size:10px">
 Added {{ add_ago }} ago 
