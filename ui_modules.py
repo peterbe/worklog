@@ -214,7 +214,7 @@ class StaticURL(tornado.web.UIModule):
         for part in ('.min.', '.minified.', '.pack.', '-jsmin.'):
             if part in file_name:
                 return True
-        #print "NOT", repr(file_name)
+        print "NOT", repr(file_name)
         return False
 
     

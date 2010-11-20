@@ -290,6 +290,7 @@ class BaseHandler(tornado.web.RequestHandler):
         
         options['git_revision'] = self.application.settings['git_revision']
         options['total_no_events'] = self._get_total_no_events()
+        options['debug'] = self.application.settings['debug']
         
         return options
     
