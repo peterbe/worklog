@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
 import httplib
+import traceback
 from hashlib import md5
 from cStringIO import StringIO
 from urlparse import urlparse
@@ -79,8 +80,9 @@ class Application(tornado.web.Application):
             debug=options.debug,
             optimize_static_content=optimize_static_content,
             git_revision=get_git_revision(),
-            #email_backend='utils.send_mail.backends.console.EmailBackend',
-            email_backend='utils.send_mail.backends.smtp.EmailBackend',
+            email_backend=options.debug and \
+                 'utils.send_mail.backends.console.EmailBackend' \
+              or 'utils.send_mail.backends.smtp.EmailBackend',
             webmaster='noreply@donecal.com',
             CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__), 
                                       "static", "compiler.jar"),
@@ -100,6 +102,65 @@ def title_to_tags(title):
     return list(set([x[1:] for x in re.findall(r'\B@[\w\-\.]+', title, re.U)]))
 
 class BaseHandler(tornado.web.RequestHandler):
+    def _handle_request_exception(self, exception):
+        if not isinstance(exception, tornado.web.HTTPError) and \
+          not self.application.settings['debug']:
+            # ie. a 500 error
+            try:
+                self._email_exception(exception)
+            except:
+                print "** Failing even to email exception **"
+                
+        super(BaseHandler, self)._handle_request_exception(exception)
+        
+    def _email_exception(self, exception):
+        import sys
+        from pprint import pprint
+        err_type, err_val, err_traceback = sys.exc_info()
+        error = u'%s: %s' % (err_type, err_val)
+        out = StringIO()
+        subject = "%r on %s" % (err_val, self.request.path)
+        print >>out, "TRACEBACK:"
+        traceback.print_exception(err_type, err_val, err_traceback, 500, out)
+        traceback_formatted = out.getvalue()
+        
+        print >>out, "\nREQUEST ARGUMENTS:"
+        arguments = self.request.arguments
+        if arguments.get('password') and arguments['password'][0]:
+            password = arguments['password'][0]
+            arguments['password'] = password[:2] + '*' * (len(password) -2)
+        pprint(arguments, out)
+        
+        print >>out, "\nCOOKIES:"
+        for cookie in self.cookies:
+            print >>out, "  %s:" % cookie,
+            print >>out, repr(self.get_secure_cookie(cookie))
+            
+        print >>out, "\nREQUEST:"
+        for key in ('full_url', 'protocol', 'query', 'remote_ip', 
+                    'request_time', 'uri', 'version'):
+            print >>out, "  %s:" % key,
+            value = getattr(self.request, key)
+            if callable(value):
+                try:
+                    value = value()
+                except:
+                    pass
+            print >>out, repr(value)
+            
+        print >>out, "\nGIT REVISION: ",
+        print >>out, get_git_revision()
+        
+        print >>out, "\nHEADERS:"
+        pprint(dict(self.request.headers), out)
+        
+        send_email(self.application.settings['email_backend'],
+                   subject, 
+                   out.getvalue(),
+                   self.application.settings['webmaster'],
+                   [self.application.settings['webmaster']],
+                   )
+    
     @property
     def db(self):
         return self.application.con[self.application.database_name]
