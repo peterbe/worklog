@@ -12,3 +12,4 @@ build/
 pip-log.txt
 run_mongo_data_browser.sh
 mongo_data_browser/
+.base64-image-conversions.pickle

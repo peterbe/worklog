@@ -9,9 +9,11 @@
 	<style type="text/css">
         #login {
           {% if user %}
-          background-image:url('{{ static_url("images/locked.gif") }}');
+          /*background-image:url('{{ static_url("images/locked.gif") }}');*/
+	  background-image:url('{{ modules.Static64("images/locked.gif") }}');
           {% else %}
-          background-image:url('{{ static_url("images/key.gif") }}');
+          /*background-image:url('{{ static_url("images/key.gif") }}');*/
+	  background-image:url('{{ modules.Static64("images/key.gif") }}');
           {% end %}
         }
 	</style>

@@ -1,5 +1,7 @@
 import re
+from base64 import encodestring
 import stat
+import cPickle
 from time import time
 import os
 from tempfile import gettempdir
@@ -312,4 +314,34 @@ class PlainStatic(tornado.web.UIModule):
             url = self.handler.static_url(each)
             html.append(template % dict(url=url))
         return "\n".join(html)
+        
+    
+_base64_conversion_file = '.base64-image-conversions.pickle'
+try:
+    _base64_conversions = cPickle.load(file(_base64_conversion_file))
+    #raise IOError
+except IOError:
+    _base64_conversions = {}
+    
+class Static64(tornado.web.UIModule):
+    def render(self, image_path):
+        already = _base64_conversions.get(image_path)
+        if already:
+            return already
+        
+        template = 'data:image/%s;base64,%s'
+        extension = os.path.splitext(os.path.basename(image_path))
+        extension = extension[-1][1:]
+        assert extension in ('gif','png'), extension
+        full_path = os.path.join(
+              self.handler.settings['static_path'], image_path)
+        data = encodestring(file(full_path,'rb').read()).replace('\n','')#.replace('\n','\\n')
+        result = template % (extension, data)
+        
+        _base64_conversions[image_path] = result
+        cPickle.dump(_base64_conversions, file(_base64_conversion_file, 'wb'))
+        return result
+        
+        
+        
         
