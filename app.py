@@ -113,7 +113,7 @@ class BaseHandler(tornado.web.RequestHandler):
                 
         super(BaseHandler, self)._handle_request_exception(exception)
         
-    def _email_exception(self, exception):
+    def _email_exception(self, exception): # pragma: no cover
         import sys
         from pprint import pprint
         err_type, err_val, err_traceback = sys.exc_info()
