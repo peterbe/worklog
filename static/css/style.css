@@ -965,3 +965,18 @@ label.valid { color:green; }
   -webkit-border-radius:0 0 10px 10px;
   opacity:0.7;
 }
+
+input {
+  color:#333;
+}
+input:focus {
+  color:#000;
+}	
+label {
+  display: block;
+  width: 150px;
+  float: left;
+  margin: 2px 2px 6px 4px;
+  text-align: right;
+}
+form br { clear: left; }

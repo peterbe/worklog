@@ -953,7 +953,6 @@ class UserSettingsHandler(BaseHandler):
         offline_mode = False
         
         user = self.get_current_user()
-        print "GET, user", repr(user)
         if user:
             user_settings = self.get_current_user_settings(user)
             if user_settings:
@@ -981,7 +980,6 @@ class UserSettingsHandler(BaseHandler):
         
     def post(self, format=None):
         user = self.get_current_user()
-        print "POST, user", repr(user)
         if not user:
             user = self.db.User()
             user.save()

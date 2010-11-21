@@ -2,6 +2,7 @@
 
 var f = $('form.login');
 var e = $('input[name="email"]', f);
+/*
 if (!e.val())
 e.val($('input[name="placeholdervalue"]', f).val())
     .addClass('placeholdervalue');
@@ -13,6 +14,7 @@ e.bind('focus', function() {
      $(this).val($('input[name="placeholdervalue"]', f).val())
        .addClass('placeholdervalue');
 });
+*/
 
 
 $.getScript(JS_URLS.validate, function() {

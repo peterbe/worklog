@@ -1,33 +1,27 @@
+<style type="text/css">
+label { text-align:left; width:230px; }
+</style>
+
 <h2>User settings</h2>    
 <form action="/user/settings/" method="post" class="user-settings">
 
-  <ol>
-    <li>
       <label for="id_monday_first">Monday first day of the week?</label>
       <input type="checkbox" id="id_monday_first" name="monday_first" {% if monday_first %}checked{% end %}>
-    </li>
-    
-    <li>
+      <br>
       <label for="id_hide_weekend">Hide weekend?</label>
       <input type="checkbox" id="id_hide_weekend" name="hide_weekend" {% if hide_weekend %}checked{% end %}>
-    </li>    
-    
-    <li>
+      <br>
       <label for="id_disable_sound">Disable sound?</label>
       <input type="checkbox" id="id_disable_sound" name="disable_sound" {% if disable_sound %}checked{% end %}>
-    </li>
+      <br>
     <!--    
-    <li>
       <label for="id_offline_mode">Offline mode?</label>
       <input type="checkbox" id="id_offline_mode" name="offline_mode" {% if offline_mode %}checked{% end %}>
-    </li>
     -->
     
-  </ol>
-  
-  <div>
+    
+    <label>&nbsp;</label>
     <input type="submit" value="Save">
-  </div>
   
 {{ xsrf_form_html() }}
 </form>

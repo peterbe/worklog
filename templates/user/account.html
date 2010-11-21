@@ -1,24 +1,32 @@
 <form action="/auth/login/" method="post" class="login">
-<p><strong>Yes!</strong>
-I have a login.</p>
+<!--<p><strong>Yes!</strong>
+I have a login.</p>-->
+<p>
+<!--<strong>No</strong>
+But I would like one.-->
+Already <strong>have an account</strong>
+</p>
 
 <div>
 <label>Email:</label>
 <input name="email" value=""><br>
-<input type="hidden" name="placeholdervalue" value="email" class="placeholdervalue">
 <label>Password:</label>
-<input type="password" name="password" value="">
+<input type="password" name="password" value=""><br>
+<label>&nbsp;</label>
 <input type="submit" value="Log in">
 </div>
 {{ xsrf_form_html() }}
 </form>
 
-<p><strong>Maybe</strong>
+<p><!--<strong>Maybe</strong>-->
 <a href="/user/forgotten/" class="forgotten">I just can't remember my password</a>.</p>
 
 <form action="/user/signup/" method="post" id="signup">
-<p><strong>No</strong>
-But I would like one.</p>
+<p>
+<!--<strong>No</strong>
+But I would like one.-->
+Create a <strong>new account</strong>
+</p>
 
 <div id="invalid-anything" style="display:none; margin-left:10px; color:red">
   <p>There are still some errors in the form. Please have a look.</p>
@@ -41,6 +49,7 @@ But I would like one.</p>
 <label>Last name:</label>
 <input name="last_name" value=""><br>
 
+<label>&nbsp;</label>
 <input type="submit" value="Create account">
 </div>
 
