@@ -11,7 +11,7 @@ from tornado.web import RequestHandler, _O
 #import app
 from base import BaseHTTPTestCase
 from utils import encrypt_password
-from models import Event, User
+from models import Event, User, Share
 import utils.send_mail as mail
         
 class ApplicationTestCase(BaseHTTPTestCase):
@@ -1045,6 +1045,52 @@ class ApplicationTestCase(BaseHTTPTestCase):
         # the settings we just made will be encoded as a JSON string inside the HTML
         self.assertTrue('"monday_first": true' in response.body)
         
+        
+    def test_share_tag_and_rename_tag(self):
+        """suppose one of your tags is 'Tag' and you have that shared with someone.
+        If you then enter a new event with the tag 'tAG' it needs to rename the tag 
+        on the share too"""
+        
+        db = self.get_db()
+        today = datetime.date.today()
+        data = {'title': "Foo @Tag",
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        response = self.post('/events/', data)
+        self.assertEqual(response.code, 200)
+        event = db.Event.one()
+        assert event.tags == [u'Tag']
+        user = db.User.one()
+        
+        share = db.Share()
+        share.user = user
+        share.tags = event.tags
+        share.save()
+        
+        self.assertTrue(db.Share.one(dict(tags=[u'Tag'])))
+        
+        # Post another one
+        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        cookie = 'guid=%s;' % guid_cookie
+        data = {'title': "@tAG New one",
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        response = self.post('/events/', data, headers={'Cookie': cookie})
+        self.assertEqual(response.code, 200)
+        assert db.Event.find().count() == 2
+        self.assertEqual(db.Event.find(dict(tags=[u'tAG'])).count(), 2)
+        
+        self.assertTrue(db.Share.one(dict(tags=[u'tAG'])))
+        
+        
+        
+        
+        
+        
+        
+        
+
+    
         
         
         

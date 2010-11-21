@@ -1,7 +1,3 @@
-* (HIGH) BUG: If you share a calendar on the tag "Tag" and then enter
-  a new event with tag "tAG" all events need to change from "Tag" to
-  "tAG". INCLUDING the shares. 
-
 * (MEDIUM) Help page saying I don't care about Internet Explorer
 
 * (MEDIUM) render the shared classes in calendar.html on page load (and

@@ -237,24 +237,35 @@ class BaseHandler(tornado.web.RequestHandler):
         base_search = {
           'user.$id': user._id,
         }
+        
+        def get_checked_tags(event_tags, new_tag):
+            checked_tags = []
+            for t in event_tags:
+                if t != tag and t.lower() == tag.lower():
+                    checked_tags.append(tag)
+                else:
+                    checked_tags.append(t)
+            return checked_tags
+        
         for tag in tags:
             search = dict(base_search, 
                           tags=re.compile(re.escape(tag), re.I))
             
             for event in self.db[Event.__collection__].find(search):
-                checked_tags = []
-                for t in event['tags']:
-                    if t != tag and t.lower() == tag.lower():
-                        checked_tags.append(tag)
-                    else:
-                        checked_tags.append(t)
+                checked_tags = get_checked_tags(event['tags'], tag)
                 if event['tags'] != checked_tags:
                     event['tags'] = checked_tags
                     # because 'event' is just a dict, we need to turn it into an object
                     # before we can save it
                     event_obj = self.db.Event(event)
                     event_obj.save()
-        
+                    
+            for share in self.db[Share.__collection__].find(search):
+                checked_tags = get_checked_tags(share['tags'], tag)
+                if share['tags'] != checked_tags:
+                    share['tags'] = checked_tags
+                    obj = self.db.Share(share)
+                    obj.save()
         
     def find_user(self, email):
         return self.db.User.one(dict(email=\
