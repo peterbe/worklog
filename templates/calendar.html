@@ -29,17 +29,17 @@
               <div class="plot" id="hours-plot">
               </div>
               
+              {% if user %}
               <div>
                 <p style="text-align:center"><a href="/report/">Get the full report</a>
               </div>
-	      
-              {% if not user %}
+              {% else %}
 	      <p><strong>What on earth <em>is</em> this?</strong><br>
 	      <a href="/help/show_vimeo_video" class="vimeovideo"><img src="{{ static_url("images/vimeovideo.png") }}" alt="Introduction to DoneCal.com on Vimeo"></a><br>
 	      <a href="/help/show_vimeo_video" class="vimeovideo">Watch an introduction video</a>
 	      </p>
+              {% end %}
 	      
-	      {% end %}
 	      
 	      
 	    </div>

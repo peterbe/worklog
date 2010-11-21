@@ -275,7 +275,10 @@ class BaseHandler(tornado.web.RequestHandler):
         return bool(self.find_user(email))
     
     def get_base_options(self):
-        options = {}
+        # The templates rely on these variables
+        options = dict(user=None,
+                       user_name=None)
+                       
         # default settings
         settings = dict(hide_weekend=False,
                         monday_first=False,
@@ -286,12 +289,15 @@ class BaseHandler(tornado.web.RequestHandler):
         user_name = None
         
         if user:
-            if user.first_name:
-                user_name = user.first_name
-            elif user.email:
-                user_name = user.email
-            else:
-                user_name = "stranger"
+            if self.get_secure_cookie('user'):
+                options['user'] = user
+                if user.first_name:
+                    user_name = user.first_name
+                elif user.email:
+                    user_name = user.email
+                else:
+                    user_name = "stranger"
+                options['user_name'] = user_name
                 
             # override possible settings
             user_settings = self.get_current_user_settings(user)
@@ -301,8 +307,7 @@ class BaseHandler(tornado.web.RequestHandler):
                 settings['disable_sound'] = user_settings.disable_sound
                 settings['offline_mode'] = getattr(user_settings, 'offline_mode', False)
                 
-        options['user'] = user
-        options['user_name'] = user_name
+        
         options['settings'] = settings
         
         options['git_revision'] = self.application.settings['git_revision']
@@ -395,8 +400,6 @@ class HomeHandler(BaseHandler):
 
         # default settings
         options = self.get_base_options()
-        
-        user = options['user']
         
         hidden_shares = self.get_secure_cookie('hidden_shares')
         if not hidden_shares: 
@@ -950,6 +953,7 @@ class UserSettingsHandler(BaseHandler):
         offline_mode = False
         
         user = self.get_current_user()
+        print "GET, user", repr(user)
         if user:
             user_settings = self.get_current_user_settings(user)
             if user_settings:
@@ -977,6 +981,7 @@ class UserSettingsHandler(BaseHandler):
         
     def post(self, format=None):
         user = self.get_current_user()
+        print "POST, user", repr(user)
         if not user:
             user = self.db.User()
             user.save()

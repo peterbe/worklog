@@ -540,7 +540,6 @@ $(function() {
             // we've already downloaded all tags
             ops.include_tags = 'none';
          }
-         L(ops);
          $.getJSON(url, ops, function(response) {
             callback(response.events);
             if (response.sharers)
