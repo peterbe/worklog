@@ -1090,10 +1090,6 @@ class EditSharingHandler(SharingHandler):
         except Invalid:
             raise tornado.web.HTTPError(400, "Share ID not valid")
         
-        #print "WAS"
-        #print share.tags
-        #print "WANTS TO"
-        #print repr(tags)
         share.tags = tags
         share.save()
         
