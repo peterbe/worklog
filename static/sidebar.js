@@ -48,8 +48,11 @@ $(function() {
       'transitionIn': 'none',
       'transitionOut': 'none',
       //'type': 'iframe',
-      onClosed: function() {
+      onComplete: function() {
 	 //location.href='/'; // works but not ideal
+         if (location.hash) {
+            $('<input name="anchor" type="hidden">').val(location.hash).appendTo($('form.user-settings'));
+         }
       }
    });
    
@@ -61,18 +64,18 @@ $(function() {
       'type': 'iframe'
    });
       
-      $('a.share').fancybox({
-         'width': '75%',
-         'height': '75%',
-         'scrolling': 'no',
-         'transitionIn': 'none',
-         'transitionOut': 'none',
-         onComplete: function(array, index, opts) {
-            $.getScript(JS_URLS.jquery_form, function() {
-               $.getScript(JS_URLS.jquery_ui_droppable, function() {
-                  $.getScript(JS_URLS.share);
-               });
+   $('a.share').fancybox({
+      'width': '75%',
+      'height': '75%',
+      'scrolling': 'no',
+      'transitionIn': 'none',
+      'transitionOut': 'none',
+      onComplete: function(array, index, opts) {
+         $.getScript(JS_URLS.jquery_form, function() {
+            $.getScript(JS_URLS.jquery_ui_droppable, function() {
+               $.getScript(JS_URLS.share);
             });
-         }
-      });
+         });
+      }
+   });
 });

@@ -166,6 +166,13 @@ class BaseHandler(tornado.web.RequestHandler):
         return self.application.con[self.application.database_name]
 
     def get_current_user(self):
+        # the 'user' cookie is for securely logged in people
+        guid = self.get_secure_cookie("user")
+        if guid:
+            return self.db.User.one({'guid': guid})
+        
+        # the 'guid' cookie is for people who have posted something but not 
+        # logged in
         guid = self.get_secure_cookie("guid")
         if guid:
             return self.db.User.one({'guid': guid})
@@ -264,17 +271,16 @@ class BaseHandler(tornado.web.RequestHandler):
                         disable_sound=False,
                         offline_mode=False)
 
-        user = self.get_secure_cookie('user')
+        user = self.get_current_user()
         user_name = None
         
         if user:
-            user = self.db.User.one(dict(guid=user))
             if user.first_name:
                 user_name = user.first_name
             elif user.email:
                 user_name = user.email
             else:
-                user_name = "Someonewithoutaname"
+                user_name = "stranger"
                 
             # override possible settings
             user_settings = self.get_current_user_settings(user)
@@ -418,7 +424,10 @@ class EventsHandler(BaseHandler):
         data = dict()
         
         if include_tags == 'all':
-            tags = self.get_all_available_tags(user)
+            if user:
+                tags = self.get_all_available_tags(user)
+            else:
+                tags = set()
         else:
             include_tags = niceboolean(include_tags)
             tags = set()
@@ -920,7 +929,7 @@ class EventStatsHandler(BaseHandler):
                      
         
             
-@route('/user/settings(.js|/)')
+@route('/user/settings(\.js|/)$')
 class UserSettingsHandler(BaseHandler):
     def get(self, format=None):
         # default initials
@@ -975,9 +984,16 @@ class UserSettingsHandler(BaseHandler):
                 
         for key in ('monday_first', 'hide_weekend', 'disable_sound', 'offline_mode'):
             user_settings[key] = bool(self.get_argument(key, None))
+            
         user_settings.save()
-        self.redirect("/")
-        #self.render("user/settings-saved.html")
+        url = "/"
+        if self.get_argument('anchor', None):
+            if self.get_argument('anchor').startswith('#'):
+                url += self.get_argument('anchor')
+            else:
+                url += '#%s' % self.get_argument('anchor')
+            
+        self.redirect(url)
         
 @route('/share/$')
 class SharingHandler(BaseHandler):
@@ -1209,7 +1225,7 @@ class RecoverForgottenPasswordHandler(ForgottenPasswordHandler):
         user.set_password(new_password)
         user.save()
         
-        self.set_secure_cookie("guid", str(user.guid), expires_days=100)
+        #self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
         
         self.redirect("/")
@@ -1264,7 +1280,7 @@ class SignupHandler(BaseHandler):
         user.last_name = last_name
         user.save()
         
-        self.set_secure_cookie("guid", str(user.guid), expires_days=100)
+        #self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
             
         self.redirect('/')
@@ -1325,7 +1341,7 @@ class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
         if not user.check_password(password):
             return self.write("Error. Incorrect password")
             
-        self.set_secure_cookie("guid", str(user.guid), expires_days=100)
+        #self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
         
         self.redirect("/")

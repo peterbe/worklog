@@ -958,6 +958,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue('name="password"' in response.body)
         
         data = dict(password='secret')
+        
         response = self.post(url, data, follow_redirects=False)
         self.assertEqual(response.code, 302)
         
@@ -968,6 +969,8 @@ class ApplicationTestCase(BaseHTTPTestCase):
         
         response = self.get('/', headers={'Cookie': cookie})
         self.assertTrue("Peter" in response.body)
+        
+        
         
     def test_undo_delete_event(self):
         """you can delete an event and then get it back by following the undo link"""
@@ -1014,4 +1017,34 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(db.Event.find({'user.$id':user._id}).count(), 1)
         struct = json.loads(response.body)
         self.assertEqual(struct['event']['title'], data['title'])
+        
+    def test_change_settings_without_logging_in(self):
+        # without even posting something, change your settings
+        db = self.get_db()
+        assert not db.UserSettings.find().count()
+        
+        data = dict(disable_sound=True, monday_first=True)
+        # special client side trick
+        data['anchor'] = '#month,2010,11,1'
+        
+        response = self.post('/user/settings/', data, follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        self.assertTrue(response.headers['Location'].endswith(data['anchor']))
+
+        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        cookie = 'guid=%s;' % guid_cookie
+        guid = base64.b64decode(guid_cookie.split('|')[0])
+        
+        self.assertEqual(db.User.find({'guid':guid}).count(), 1)
+        user = db.User.one({'guid':guid})
+        self.assertEqual(db.UserSettings.find({'user.$id':user._id}).count(), 1)
+        
+        # pick up the cookie and continue to the home page
+        response = self.get(response.headers['Location'], headers={'Cookie': cookie})
+        self.assertEqual(response.code, 200)
+        # the settings we just made will be encoded as a JSON string inside the HTML
+        self.assertTrue('"monday_first": true' in response.body)
+        
+        
+        
         
