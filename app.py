@@ -407,15 +407,22 @@ class EventsHandler(BaseHandler):
         user = self.get_current_user()
         shares = self.get_secure_cookie('shares')
         
-        data = self.get_events_data(user, shares)
+        data = self.get_events_data(user, shares, 
+                           include_tags=self.get_argument('include_tags', None))
         self.write_events_data(data, format)
         
         
-    def get_events_data(self, user, shares):
-        events = []
-        sharers = []
-        tags = set()
-
+    def get_events_data(self, user, shares, include_tags=False):
+        events = list()
+        sharers = list()
+        data = dict()
+        
+        if include_tags == 'all':
+            tags = self.get_all_available_tags(user)
+        else:
+            include_tags = niceboolean(include_tags)
+            tags = set()
+            
         start = parse_datetime(self.get_argument('start'))
         end = parse_datetime(self.get_argument('end'))
         search = {}
@@ -426,8 +433,9 @@ class EventsHandler(BaseHandler):
             search['user.$id'] = user['_id']
             for event in self.db[Event.__collection__].find(search):
                 events.append(self.transform_fullcalendar_event(event, True))
-                tags.update(event['tags'])
-        
+                if include_tags and include_tags != 'all':
+                    tags.update(event['tags'])
+
         for share in self.share_keys_to_share_objects(shares):
             share_user = self.db[User.__collection__].one(dict(_id=share['user'].id))
             search['user.$id'] = share_user['_id']
@@ -449,15 +457,15 @@ class EventsHandler(BaseHandler):
                     True,
                     className=className,
                     editable=False))
-                tags.update(event['tags'])
-                
-        tags = list(tags)
-        tags.sort(lambda x, y: cmp(x.lower(), y.lower()))
-        tags = ['@%s' % x for x in tags]
-        data = dict(events=events,
-                    tags=tags)
-                    
-                    
+        
+        data['events'] = events
+        
+        if include_tags:
+            tags = list(tags)
+            tags.sort(lambda x, y: cmp(x.lower(), y.lower()))
+            tags = ['@%s' % x for x in tags]
+            data['tags'] = tags
+            
         if sharers:
             sharers.sort(lambda x,y: cmp(x['full_name'], y['full_name']))
             data['sharers'] = sharers
@@ -616,7 +624,23 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
         
         shares = self.get_argument('shares', u'')#self.get_secure_cookie('shares')
         
-        data = self.get_events_data(user, shares)
+        data = self.get_events_data(user, shares,
+            include_tags=self.get_argument('include_tags', None))
+            
+        if format == '.js':
+            # pack the dict into a tuple instead.
+            _events = []
+            for event in data['events']:
+                _events.append((
+                  event['title'],
+                  event['start'],
+                  event['end'],
+                  event['allDay'],
+                  event['id'],
+                  event.get('external_url', u''),
+                  event.get('description', u''),
+                ))
+            data['events'] = _events
         self.write_events_data(data, format)
         
         

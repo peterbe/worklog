@@ -460,6 +460,11 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue('application/json' in response.headers['Content-Type'])
         self.assertTrue('UTF-8' in response.headers['Content-Type'])
         struct = json.loads(response.body)
+        self.assertEqual(struct, dict(events=[]))
+
+        data['include_tags'] = 'yes'
+        response = self.get(url, data)
+        struct = json.loads(response.body)
         self.assertEqual(struct, dict(events=[], tags=[]))
         
         url = '/events.js'
@@ -508,7 +513,14 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['events'][0]['title'], event.title)
-        self.assertEqual(struct['tags'], [u"@tag1"])
+        self.assertTrue('tags' not in struct)
+        
+        data['include_tags'] = 'yes'
+        response = self.get('/events.json', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        #self.assertEqual(struct['tags'], [u"@tag1"])
+        self.assertEqual(struct['tags'], [])
 
         event2 = db.Event()
         event2.user = user

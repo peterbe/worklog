@@ -52,6 +52,10 @@ class APITestCase(base.BaseHTTPTestCase):
         
         struct = json.loads(response.body)
         self.assertEqual(struct.get('events'), [])
+        self.assertTrue('tags' not in struct)
+        
+        response = self.get('/api/events.json', dict(data, include_tags='yes'))
+        struct = json.loads(response.body)
         self.assertEqual(struct.get('tags'), [])
         
         # post an event
@@ -65,7 +69,8 @@ class APITestCase(base.BaseHTTPTestCase):
         event1.description = u'A longer description'
         event1.save()
         
-        struct = json.loads(self.get('/api/events.json', data).body)
+        response = self.get('/api/events.json', data)
+        struct = json.loads(response.body)
         self.assertTrue(struct.get('events'))
         self.assertEqual(len(struct['events']), 1)
         self.assertEqual(struct['events'][0]['title'], event1.title)
@@ -73,7 +78,24 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertEqual(struct['events'][0]['allDay'], True)
         self.assertEqual(struct['events'][0]['external_url'], event1.external_url)
         self.assertEqual(struct['events'][0]['description'], event1.description)
-        self.assertEqual(struct.get('tags'), [])
+        self.assertTrue('tags' not in struct)
+        #self.assertEqual(struct.get('tags'), [])
+        
+        # test the ultra-compact .js format which is a JSON type structure
+        # but as a list instead of a hash table
+        response = self.get('/api/events.js', data)
+        self.assertEqual(response.code, 200)
+        # the javascript format is a JSON format but instead of dict it's 
+        # returned as a tuple
+        struct = json.loads(response.body)
+        list1 = struct['events'][0]
+        self.assertEqual(list1[0], event1.title)
+        self.assertEqual(list1[1], mktime(event1.start.timetuple()))
+        self.assertEqual(list1[2], mktime(event1.end.timetuple()))
+        self.assertEqual(list1[3], True)
+        self.assertEqual(list1[4], str(event1._id))
+        self.assertEqual(list1[5], event1.external_url)
+        self.assertEqual(list1[6], event1.description)
         
         # some time in the middle of the current month
         this_month = datetime.datetime(today.year, today.month, 15, 13, 0)
@@ -89,15 +111,17 @@ class APITestCase(base.BaseHTTPTestCase):
 
         struct = json.loads(self.get('/api/events.json', data).body)
         self.assertEqual(len(struct['events']), 1)
-        self.assertEqual(struct.get('tags'), [])
+        self.assertTrue('tags' not in struct)
+        #self.assertEqual(struct.get('tags'), [])
 
         data['start'] += 60 * 60 * 24 * 30
         data['end'] += 60 * 60 * 24 * 30
-        struct = json.loads(self.get('/api/events.json', data).body)
+        response = self.get('/api/events.json', data)
+        struct = json.loads(response.body)
         self.assertEqual(len(struct['events']), 1)
-        
         self.assertEqual(struct['events'][0]['title'], event2.title)
-        self.assertEqual(struct.get('tags'), ['@Tag'])
+        response = self.get('/api/events.json', dict(data, include_tags='all'))
+        struct = json.loads(response.body)
         
         response = self.get('/api/events.xml', data)
         self.assertEqual(response.code, 200)
@@ -106,7 +130,10 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertTrue('<allDay>false</allDay>' in xml)
         self.assertTrue('external_url' not in xml)
         self.assertTrue('description' not in xml)
+        response = self.get('/api/events.xml', dict(data, include_tags='all'))
+        xml = response.body
         self.assertTrue('<tag>@Tag</tag>' in xml)
+
         
     def test_posting_events(self):
         response = self.post('/api/events.json', {})

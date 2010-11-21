@@ -509,7 +509,7 @@ function close_current_tooltip(parent) {
    }
 }
 
-var AVAILABLE_TAGS = [];
+var AVAILABLE_TAGS;
 
 $(function() {
    var defaultView = 'month';
@@ -530,28 +530,36 @@ $(function() {
    }
 
    $('#calendar').fullCalendar({
-      //events: '/events.json',
       events: function(start, end, callback) {
- 	var url = '/events.json?start=' + start.getTime() + '&end=' + end.getTime();
- 	$.getJSON(url, function(response) {
-           callback(response.events);
-           if (response.sharers)
-             __display_current_sharers(response.sharers);
-           if (response.tags)
-             $.each(response.tags, function(i, tag) {
-                if ($.inArray(tag, AVAILABLE_TAGS) == -1)
-                  AVAILABLE_TAGS.push(tag);
-             });
-           //if (response.hidden_shares)
-           //  $.each(response.hidden_shares, function(i, share) {
-           //     _share_toggles[share.className] = true;
-           //     $('li.' + share.className, '#current-sharers').fadeTo(300, 0.4);
-           //
-           //  });
-
-        });
+         var url = '/events.json';//?start=' + start.getTime() + '&end=' + end.getTime();
+         var ops = {start: start.getTime(), end: end.getTime()};
+         if ('undefined' === typeof AVAILABLE_TAGS) {
+            ops.include_tags = 'all';
+            AVAILABLE_TAGS = [];
+         } else {
+            // we've already downloaded all tags
+            ops.include_tags = 'none';
+         }
+         L(ops);
+         $.getJSON(url, ops, function(response) {
+            callback(response.events);
+            if (response.sharers)
+              __display_current_sharers(response.sharers);
+            if (response.tags)
+              $.each(response.tags, function(i, tag) {
+                 if ($.inArray(tag, AVAILABLE_TAGS) == -1)
+                   AVAILABLE_TAGS.push(tag);
+              });
+            //if (response.hidden_shares)
+            //  $.each(response.hidden_shares, function(i, share) {
+            //     _share_toggles[share.className] = true;
+            //     $('li.' + share.className, '#current-sharers').fadeTo(300, 0.4);
+            //
+            //  });
+            // 
+         });
       },
-
+      
       header: {
            left: 'prev,next today',
            center: 'title',

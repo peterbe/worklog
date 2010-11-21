@@ -12,6 +12,9 @@
 
 * (HIGH) moving an event resets colour on shared calendars
 
+* (MEDIUM) Consider changing from using .json in AJAX to .js which is
+  also JSON but much lighter since it doesn't have keys. 
+  
 * (MEDIUM) Help page about playing sounds
   http://www.schillmania.com/projects/soundmanager2/demo/flashblock/
 
