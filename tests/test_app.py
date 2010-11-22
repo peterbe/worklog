@@ -446,6 +446,75 @@ class ApplicationTestCase(BaseHTTPTestCase):
         
         response = self.get('/event/', {'id': event_id}, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
+    
+    def test_sharing_with_yourself(self):
+        """test using the share on yourself"""
+        db = self.get_db()
+        # post one yourself first so that you become someone
+        today = datetime.datetime.today()
+        data = {'title': "Foo", 
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        response = self.post('/events/', data)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        event_id = struct['event']['id']
+        
+        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        cookie = 'guid=%s;' % guid_cookie
+        guid = base64.b64decode(guid_cookie.split('|')[0])
+
+        user = db.User.one()
+        self.assertEqual(user.guid, guid)
+        user.email = u'test@peterbe.com'
+        user.save()
+        
+        share = db.Share()
+        share.user = user
+        share.key = u'foo'
+        share.save()
+        
+        # use it yourself
+        response = self.get('/?share=%s' % share.key, headers={'Cookie':cookie},
+                            follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        self.assertTrue('Set-Cookie' not in response.headers) # because no cookie is set
+        #shares_cookie = self._decode_cookie_value('shares', response.headers['Set-Cookie'])
+        
+        user2 = db.User()
+        user2.email = u'one@two.com'
+        user2.save()
+        
+        share2 = db.Share()
+        share2.user = user2
+        share2.key = u'foo2'
+        share2.save()
+        
+        response = self.get('/?share=%s' % share2.key, headers={'Cookie':cookie},
+                            follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        #self.assertTrue('Set-Cookie' not in response.headers) # because no cookie is set
+        shares_cookie = self._decode_cookie_value('shares', response.headers['Set-Cookie'])
+        cookie += 'shares=%s;' % shares_cookie
+        shares = base64.b64decode(shares_cookie.split('|')[0])
+        self.assertEqual(shares, 'foo2')
+        
+        user3 = db.User()
+        user3.email = u'ass@three.com'
+        user3.save()
+        
+        share3 = db.Share()
+        share3.user = user3
+        share3.key = u'foo3'
+        share3.save()
+        
+        response = self.get('/?share=%s' % share3.key, headers={'Cookie':cookie},
+                            follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        shares_cookie = self._decode_cookie_value('shares', response.headers['Set-Cookie'])
+        shares = base64.b64decode(shares_cookie.split('|')[0])
+        self.assertEqual(shares, 'foo2,foo3')
+        
         
     def test_events(self):
         url = '/events.json'

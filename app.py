@@ -388,14 +388,20 @@ class HomeHandler(BaseHandler):
                 shared_keys = []
             else:
                 shared_keys = [x.strip() for x in shared_keys.split(',')
-                               if x.strip() and self.db.Share.one(dict(key=x))]
+                               if x.strip() and \
+                               self.db[Share.__collection__].one(dict(key=x))]
             
             key = self.get_argument('share')
             share = self.db.Share.one(dict(key=key))
-            if share.key not in shared_keys:
+            user = self.get_current_user()
+            if user and user == share.user:
+                # could flash a message or something here
+                pass
+            elif share.key not in shared_keys:
                 shared_keys.append(share.key)
                 
-            self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=70)
+            if shared_keys:
+                self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=70)
             return self.redirect('/')
 
         # default settings
