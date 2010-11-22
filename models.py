@@ -77,10 +77,9 @@ class UserSettings(BaseDocument):
       'offline_mode': False,
     }
     
-    # This doesn't work so you have to run this in a mongodb shell
-    # > db.user_settings.ensureIndex({"user.$id":1}, {unique:true});
     indexes = [
-      {'fields': 'user',
+      {'fields': 'user.$id',
+       'check': False,
        'unique': True},
     ]
 
@@ -99,10 +98,8 @@ class Event(BaseDocument):
     use_autorefs = True
     required_fields = ['user', 'title', 'all_day', 'start', 'end']
     
-    # Doesn't work, you have to manually run this one in a mongodb shell
-    # > db.events.ensureIndex({"user.$id":1, start:1, end:1});
     indexes = [
-      {'fields': ['user', 'start', 'end']},
+      {'fields': ['user.$id', 'start', 'end'], 'check':False},
     ]
     
     def chown(self, user, save=False):
@@ -124,10 +121,8 @@ class Share(BaseDocument):
     
     required_fields = ['user']
 
-    # Doesn't work, you need to run:
-    # > db.shares.ensureIndex({"user.$id":1})
     indexes = [
-      {'fields': ['user']},
+      {'fields': ['user.$id'], 'check':False},
       {'fields': ['key'], 'unique': True},
     ]
     

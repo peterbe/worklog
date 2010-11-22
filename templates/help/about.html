@@ -35,5 +35,17 @@ The following stack is being used to make things run:
   <li><a href="http://jquery.com/">jQuery</a> for the client side rendering</li>
 </ul>
 
+<p>Please please please send me feedback. Ideas, bug reports, praise, etc. <br>
+My email address is <a href="mailto:p" id="my-email-address">p</a>
+</p>
+
 {% end %}
 
+{% block extrajs %}
+<script type="text/javascript">
+$(function() {
+  var e = "mail" + "@" + "peterbe.com";
+  $('#my-email-address').attr('href', 'mailto:' + e).text(e);
+});
+</script>
+{% end %}
