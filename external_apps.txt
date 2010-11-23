@@ -6,3 +6,4 @@ pymongo>=1.9
 simplejson
 xlwt
 lxml
+python-dateutil

@@ -318,8 +318,9 @@ function __inner_setup_ajaxsubmit_offline(element, event_id) {
 
       // assume that all will go well
       //
-      if (!event_id)
-	increment_total_no_events();
+      if (!event_id) {
+         increment_total_no_events();
+      }
 
       // close any open qtip
       close_current_tooltip();
@@ -363,6 +364,13 @@ function __inner_setup_ajaxsubmit(element, event_id) {
             }
             if (!event_id) {
                increment_total_no_events();
+         
+               if ($('#introduction-video').size()) {
+                  $('#introduction-video').hide('slow');
+                  if ($('#report-link:hidden').size()) {
+                     $('#report-link').show('slow');
+                  }
+               }               
             }
 
 	    // close any open qtip
@@ -542,13 +550,23 @@ $(function() {
          }
          $.getJSON(url, ops, function(response) {
             callback(response.events);
-            if (response.sharers)
-              __display_current_sharers(response.sharers);
-            if (response.tags)
+            if (response.sharers) {
+               __display_current_sharers(response.sharers);
+            }
+            if (response.tags) {
               $.each(response.tags, function(i, tag) {
                  if ($.inArray(tag, AVAILABLE_TAGS) == -1)
                    AVAILABLE_TAGS.push(tag);
               });
+            }
+            if (response.events.length) {
+               if ($('#introduction-video').size()) {
+                  $('#introduction-video').hide('slow');
+                  if ($('#report-link:hidden').size()) {
+                     $('#report-link').show('slow');
+                  }
+               }
+            }
             //if (response.hidden_shares)
             //  $.each(response.hidden_shares, function(i, share) {
             //     _share_toggles[share.className] = true;

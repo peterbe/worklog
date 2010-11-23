@@ -215,15 +215,16 @@ class BaseHandler(tornado.web.RequestHandler):
             data['description'] = item['description']
             
         if serialize:
-            for key, value in data.items():
-                if isinstance(value, (datetime.datetime, datetime.date)):
-                    #time_tuple = (2008, 11, 12, 13, 59, 27, 2, 317, 0)
-                    timestamp = mktime(value.timetuple())
-                    data[key] = timestamp
+            self.serialize_dict(data)
+            #for key, value in data.items():
+            #    if isinstance(value, (datetime.datetime, datetime.date)):
+            #        #time_tuple = (2008, 11, 12, 13, 59, 27, 2, 317, 0)
+            #        timestamp = mktime(value.timetuple())
+            #        data[key] = timestamp
             
         return data
     
-    def _serialize_dict(self, data):
+    def serialize_dict(self, data):
         for key, value in data.items():
             if isinstance(value, (datetime.datetime, datetime.date)):
                 data[key] = mktime(value.timetuple())
@@ -1563,8 +1564,18 @@ class ReportHandler(BaseHandler):
     def get(self):
         options = self.get_base_options()
         user = self.get_current_user()
-        options['first_date'] = datetime.date(2010, 6, 10)
-        options['last_date'] = datetime.date.today()
+        if not user:
+            return self.write("Error. You need to be logged in to get the report")
+        
+        search = {'user.$id': user._id}
+        try:
+            first_event = self.db[Event.__collection__].find(search).sort('start', 1).limit(1)[0]
+            last_event = self.db[Event.__collection__].find(search).sort('start', -1).limit(1)[0]
+        except IndexError:
+            return self.write("Error. Sorry, can't use this until you have some events entered")
+        
+        options['first_date'] = first_event['start']
+        options['last_date'] = last_event['start']
         
         self.render("report/index.html", **options)
 
@@ -1699,8 +1710,112 @@ class ReportDataHandler(EventStatsHandler):
             all_data.append(tags[key])
         
         return dict(data=all_data, tags=all_tags, ticks=ticks)
-        
     
+    
+@route('/stats/$')
+class GeneralStatisticsHandler(BaseHandler): # pragma: no cover
+    
+    def get(self):
+        options = self.get_base_options()
+        user = self.get_current_user()
+
+        first_event = self.db[Event.__collection__].find().sort('start', 1).limit(1)[0]
+        last_event = self.db[Event.__collection__].find().sort('start', -1).limit(1)[0]
+        
+        options['first_date'] = first_event['start']
+        options['last_date'] = last_event['start']
+        
+        self.render("stats/index.html", **options)
+
+@route('/stats/([\w-]+)\.json$')
+class StatisticsDataHandler(BaseHandler): # pragma: no cover
+    
+    def get(self, report_name):
+        
+        data = dict()
+        search = dict()
+        
+        start = parse_datetime(self.get_argument('start'))
+        start = datetime.datetime(start.year, start.month, start.day, 0,0,0)
+        #search['start'] = {'$gte': start}
+        end = parse_datetime(self.get_argument('end'))
+        end = datetime.datetime(end.year, end.month, end.day, 0,0,0)
+        #search['end'] = {'$lte': end}
+
+        interval = None
+        if self.get_argument('interval', None):
+            interval = self.get_argument('interval')
+
+        if not interval:
+            interval = '1 month'
+        if interval == '1 week':
+            interval = datetime.timedelta(days=7)
+        elif interval == '1 month':
+            from dateutil.relativedelta import relativedelta
+            interval = relativedelta(months=1)
+        else:
+            raise NotImplementedError(interval)
+            
+        if report_name =='users':#in ('cumm-users', 'new-users'):
+            
+            cumm_w_email = []
+            new_w_email = []
+            cumm_wo_email = []
+            new_wo_email = []
+            
+            date = start
+            cumm_w_email_count = cumm_wo_email_count = 0
+            while date < end:
+                this_search = dict(add_date={'$gte':date, '$lt':date + interval})
+                date_serialized = date.strftime('%Y-%m-%d')#mktime(date.timetuple())
+                this_count = self.db[User.__collection__]\
+                  .find(dict(this_search, email={'$ne':u''})).count()
+                
+                new_w_email.append((date_serialized, this_count))
+                cumm_w_email.append((date_serialized, this_count + cumm_w_email_count))
+                cumm_w_email_count += this_count
+
+                this_count = self.db[User.__collection__]\
+                  .find(dict(this_search, email=u'')).count()
+                  
+                new_wo_email.append((date_serialized, this_count))
+                cumm_wo_email.append((date_serialized, this_count + cumm_wo_email_count))
+                cumm_wo_email_count += this_count
+                
+                date += interval
+            data = dict(cumm_w_email=cumm_w_email,
+                        new_w_email=new_w_email,
+                        cumm_wo_email=cumm_wo_email,
+                        new_wo_email=new_wo_email,
+                        )
+        elif report_name == 'events':
+            
+            cumm = []
+            new = []
+            
+            date = start
+            cumm_count = 0
+            while date < end:
+                this_search = dict(add_date={'$gte':date, '$lt':date + interval})
+                date_serialized = date.strftime('%Y-%m-%d')#mktime(date.timetuple())
+                this_count = self.db[Event.__collection__]\
+                  .find(this_search).count()
+                
+                new.append((date_serialized, this_count))
+                cumm.append((date_serialized, this_count + cumm_count))
+                cumm_count += this_count
+
+                date += interval
+                
+            data = dict(cumm=cumm,
+                        new=new,
+                        )
+        else:
+            raise tornado.web.HTTPError(404, report_name)
+        
+        self.write_json(data)
+        
+        
 def main():
     tornado.options.parse_command_line()
     if options.showurls:

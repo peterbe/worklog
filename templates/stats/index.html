@@ -1,0 +1,43 @@
+{% extends "../base.html" %}
+
+{% block extra_head %}
+{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/smoothness/jquery-ui-1.8.6.slider.datepicker.css", "css/report.css") }}
+{% end %}
+
+{% block content_inner %}
+
+<h1>Stats</h1>
+
+<form action=".">
+
+<div id="slider" style="width:500px"></div>
+<p style="margin-top:10px">
+<strong>From:</strong>
+<input type="text" id="from_date" name="from_date" value="">
+<strong>To:</strong>
+<input type="text" id="to_date" name="to_date" value="">
+</p>
+</form>
+
+<div id="plot-events">
+</div>
+
+<div id="plot-users">
+</div>
+
+{% end %}	    
+{% block extrajs %}
+<script type="text/javascript">
+var minDate = new Date({{ first_date.year }}, {{ first_date.month }}-1, {{ first_date.day }});
+var maxDate = new Date({{ last_date.year }}, {{ last_date.month }}-1, {{ last_date.day }});
+$(function() {
+  var href = $('a.excel-export').unbind('click').click(function() {
+    var start = startDate.datepicker('getDate');
+    var end = endDate.datepicker('getDate');
+    window.open($(this).attr('href')+'?start=' + start.getTime() + '&end=' + end.getTime());
+    return false;
+  });
+});
+</script>
+{{ modules.Static("ext/jquery-ui-1.8.6.slider.datepicker.min.js", "ext/jquery.jqplot.js", "ext/jqplot.dateAxisRenderer.min.js", "ext/jqplot.highlighter.min.js","stats.js") }}
+{% end %}
