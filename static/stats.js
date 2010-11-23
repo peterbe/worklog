@@ -45,8 +45,23 @@ function daysDiff(d1, d2) {
     return  Math.floor((d2.getTime() - d1.getTime()) / 86400000);
 }
 
-function plot_users() {
+function get_automatic_interval_string() {
+   var d = daysDiff(minDate, maxDate);
+   if (d > 100) return '1 month';
+   if (d > 30) return '1 week';
+   return '1 day';
+}
+
+function get_automatic_date_format_string(interval) {
+   if (interval == '1 month') return '%b %Y';
+   if (interval == '1 week') return '%#d/%d %y';
+   return '%#d/%b';
+}
+
+function plot_users(interval, date_format_string) {
+   $('#plot-users').html('');
    $.getJSON('/stats/users.json', {
+      interval: interval,
       start: startDate.datepicker('getDate').getTime(),
 	end: endDate.datepicker('getDate').getTime()}, 
              function(response) {
@@ -73,21 +88,26 @@ function plot_users() {
                     min: 0
                  },
                  xaxis:{
-                    renderer:$.jqplot.DateAxisRenderer, 
-                      tickOptions:{formatString:'%b %#d %Y'},
+                    renderer:$.jqplot.DateAxisRenderer,
+                      tickOptions:{formatString:date_format_string},
                     min:startDate.datepicker('getDate'),
-                      tickInterval:'1 month'
+                      tickInterval:interval
                  }
               }
                 });
              });
+
+}
    
+function plot_events(interval, date_format_string) {
+   $('#plot-events').html('');
    $.getJSON('/stats/events.json', {
+      interval: interval,
       start: startDate.datepicker('getDate').getTime(),
 	end: endDate.datepicker('getDate').getTime()}, 
              function(response) {
                 $.jqplot('plot-events', [response.cumm,
-                                             response['new']], 
+                                         response['new']], 
                          {
                    title:'Events',
                      legend:{show:true},
@@ -106,9 +126,9 @@ function plot_users() {
                  },
                  xaxis:{
                     renderer:$.jqplot.DateAxisRenderer, 
-                      tickOptions:{formatString:'%b %#d %Y'},
+                      tickOptions:{formatString:date_format_string},
                     min:startDate.datepicker('getDate'),
-                      tickInterval:'1 month'
+                      tickInterval:interval
                  }
               }
                 });
@@ -117,7 +137,10 @@ function plot_users() {
 
 
 function refresh_date_range() {
-   plot_users();
+   var interval = get_automatic_interval_string();
+   var date_format_string = get_automatic_date_format_string(interval);
+   plot_users(interval, date_format_string);
+   plot_events(interval, date_format_string);
 }
 
 $(function() {

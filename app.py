@@ -1719,8 +1719,8 @@ class GeneralStatisticsHandler(BaseHandler): # pragma: no cover
         options = self.get_base_options()
         user = self.get_current_user()
 
-        first_event = self.db[Event.__collection__].find().sort('start', 1).limit(1)[0]
-        last_event = self.db[Event.__collection__].find().sort('start', -1).limit(1)[0]
+        first_event = self.db[Event.__collection__].find().sort('add_date', 1).limit(1)[0]
+        last_event = self.db[Event.__collection__].find().sort('add_date', -1).limit(1)[0]
         
         options['first_date'] = first_event['start']
         options['last_date'] = last_event['start']
@@ -1753,6 +1753,8 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
         elif interval == '1 month':
             from dateutil.relativedelta import relativedelta
             interval = relativedelta(months=1)
+        elif interval == '1 day':
+            interval = datetime.timedelta(days=1)
         else:
             raise NotImplementedError(interval)
             
