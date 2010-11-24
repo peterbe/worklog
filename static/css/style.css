@@ -980,3 +980,9 @@ form.standard label {
   text-align: right;
 }
 form.standard br { clear: left; }
+
+form.standard label.error {
+  display: inline;
+  width: 200px;
+  float: none;
+}

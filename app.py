@@ -1314,35 +1314,8 @@ class SignupHandler(BaseHandler):
 
 
 @route('/auth/login/')
-class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
+class AuthLoginHandler(BaseHandler):
     
-#    @tornado.web.asynchronous
-#    def get(self):
-#        if self.get_argument("openid.mode", None):
-#            self.get_authenticated_user(self.async_callback(self._on_auth))
-#            return
-#        self.authenticate_redirect()
-#    
-#    def _on_auth(self, user):
-#        if not user:
-#            raise tornado.web.HTTPError(500, "Google auth failed")
-#        author = self.db.get("SELECT * FROM authors WHERE email = %s",
-#                             user["email"])
-#        if not author:
-#            # Auto-create first author
-#            any_author = self.db.get("SELECT * FROM authors LIMIT 1")
-#            if not any_author:
-#                author_id = self.db.execute(
-#                    "INSERT INTO authors (email,name) VALUES (%s,%s)",
-#                    user["email"], user["name"])
-#            else:
-#                self.redirect("/")
-#                return
-#        else:
-#            author_id = author["id"]
-#        self.set_secure_cookie("user", str(author_id))
-#        self.redirect(self.get_argument("next", "/"))
-        
     def post(self):
         email = self.get_argument('email')
         password = self.get_argument('password')
@@ -1363,7 +1336,42 @@ class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
         
         self.redirect("/")
         
+
+@route('/auth/openid/google/')
+class GoogleAUthHandler(BaseHandler, tornado.auth.GoogleMixin):
+    @tornado.web.asynchronous
+    def get(self):
+        if self.get_argument("openid.mode", None):
+            self.get_authenticated_user(self.async_callback(self._on_auth))
+            return
+        self.authenticate_redirect()
         
+    def _on_auth(self, user):
+        if not user:
+            raise tornado.web.HTTPError(500, "Google auth failed")
+        if not user.get('email'):
+            raise tornado.web.HTTPError(500, "No email provided")
+        locale = user.get('locale') # not sure what to do with this yet
+        first_name = user.get('first_name')
+        last_name = user.get('last_name')
+        email = user['email']
+        
+        user = self.db.User.one(dict(email=email))
+        if user is None:
+            user = self.db.User.one(dict(email=re.compile(re.escape(email), re.I)))
+            
+        if not user:
+            # create a new account
+            user = self.db.User()
+            user.email = email
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            user.save()
+            
+        self.set_secure_cookie("user", str(user.guid), expires_days=100)
+        self.redirect("/")
         
 
 

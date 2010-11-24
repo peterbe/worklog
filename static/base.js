@@ -17,7 +17,7 @@ function decrement_total_no_events(new_no) {
 $(function() {
   $('a.account').fancybox({
          'autoDimensions': false,
-         'width'         : 500,
+         'width'         : 550,
          'height'        : 400,
          'transitionIn': 'none',
          'transitionOut': 'none',

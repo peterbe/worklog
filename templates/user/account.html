@@ -18,6 +18,10 @@ Already <strong>have an account</strong>
 {{ xsrf_form_html() }}
 </form>
 
+<p class="openid" style="float:right">
+Or just use... 
+<a style="padding-left:5px" href="/auth/openid/google/" title="Google"><img style="vertical-align:bottom" src="{{ static_url("images/google_openid.png") }}" alt="Google OpenID"></a>
+</p>
 
 <p><!--<strong>Maybe</strong>-->
 <a href="/user/forgotten/" class="forgotten">Forgotten your password?</a></p>
