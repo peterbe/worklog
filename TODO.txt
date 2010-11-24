@@ -1,3 +1,5 @@
+* (HIGH) New form CSS messed up the Bookmarklet
+
 * (HIGH) validation messes up CSS in forms
 
 * (MEDIUM) Upgrade to fullcalendar 1.4.9

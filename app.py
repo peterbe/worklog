@@ -1363,6 +1363,8 @@ class AuthLoginHandler(BaseHandler, tornado.auth.GoogleMixin):
         
         self.redirect("/")
         
+        
+        
 
 
 @route(r'/auth/logout/')

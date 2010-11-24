@@ -44,7 +44,7 @@ class BaseHTTPTestCase(AsyncHTTPTestCase, LogTrapTestCase, HTTPClientMixin):
         if not self._once:
             self._once = True
             self._emptyCollections()
-        
+            
         self._app.settings['email_backend'] = 'utils.send_mail.backends.locmem.EmailBackend'
         
     def _emptyCollections(self):

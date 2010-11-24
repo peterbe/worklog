@@ -1,4 +1,4 @@
-<form action="/auth/login/" method="post" class="login">
+<form action="/auth/login/" method="post" class="login standard">
 <!--<p><strong>Yes!</strong>
 I have a login.</p>-->
 <p>
@@ -18,10 +18,11 @@ Already <strong>have an account</strong>
 {{ xsrf_form_html() }}
 </form>
 
-<p><!--<strong>Maybe</strong>-->
-<a href="/user/forgotten/" class="forgotten">I just can't remember my password</a>.</p>
 
-<form action="/user/signup/" method="post" id="signup">
+<p><!--<strong>Maybe</strong>-->
+<a href="/user/forgotten/" class="forgotten">Forgotten your password?</a></p>
+
+<form action="/user/signup/" method="post" id="signup" class="standard">
 <p>
 <!--<strong>No</strong>
 But I would like one.-->

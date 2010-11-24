@@ -972,11 +972,11 @@ input {
 input:focus {
   color:#000;
 }	
-label {
+form.standard label {
   display: block;
   width: 150px;
   float: left;
   margin: 2px 2px 6px 4px;
   text-align: right;
 }
-form br { clear: left; }
+form.standard br { clear: left; }
