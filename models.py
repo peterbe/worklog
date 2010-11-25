@@ -133,8 +133,37 @@ class Share(BaseDocument):
             new_key = unicode(md5(unicode(uuid.uuid4())).hexdigest()[:min_length])
         return new_key
         
-        
-        
+class FeatureRequest(BaseDocument):        
+      __collection__ = 'feature_requests'
+      structure = {
+        'title': unicode,
+        'description': unicode,
+        'vote_weight': int,
+        'description_format': unicode,
+        'response': unicode,
+        'response_format': unicode,
+        'author': User
+      }
+      
+      default_values = {
+        'vote_weight': 0,
+        'description_format': u'plaintext',
+        'response_format': u'markdown',
+      }
+      
+      
+class FeatureRequestComment(BaseDocument):
+    __collection__ = 'feature_request_comments'
+    structure = {
+      'feature_request': FeatureRequest,
+      'user': User,
+      'comment': unicode,
+      'vote_weight': int,
+    }
+    
+    default_values = {
+      'vote_weight':1,
+    }
         
     
       

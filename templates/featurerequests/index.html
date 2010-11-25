@@ -1,0 +1,81 @@
+{% extends "../base.html" %}
+
+{% block extra_head %}
+<style type="text/css">
+.centered {
+  margin-left:auto;
+  margin-right:auto;
+  width:65%;
+}
+input.title { width:98%; font-size:1.3em; }
+input.placeholdervalue, textarea.placeholdervalue { color:#999; font-weight:normal; }
+
+div.votes {
+  clear:right;
+  float:right;
+  width:70px;
+  height:70px;
+  text-align:center;
+  background:#fff url('{{ static_url("images/blank_button.png") }}') no-repeat 50% 50%;
+}
+div.votes p {
+  padding-top:20px;
+  padding-left:
+  font-weight:bold;
+  font-size:1.3em;
+}
+.request {  border:1px solid #ccc; }
+#content_inner .request h3 { clear:none; margin:0 0 10px 0;}
+
+.request .response {
+  margin-left:30px;
+  background-color:#ccc;
+}
+</style>
+{% end %}
+
+{% block content_inner %}
+
+<h1>Feature requests</h1>
+
+<div id="requests" class="centered">
+{% for feature_request in feature_requests %}
+<div class="request">
+  <div class="votes"><p>{{ feature_request.vote_weight }}%</p></div>
+  <h3>{{ feature_request.title }}</h3>
+  
+  {% if feature_request.description %}
+  <div class="description">
+    {{ modules.RenderText(feature_request.description, feature_request.description_format) }}
+  </div>
+  {% end %}
+  
+  {% if feature_request.response %}
+  <div class="response">
+    {{ modules.RenderText(feature_request.response, feature_request.response_format) }}
+  </div>
+  {% end %}  
+</div>
+{% end %}
+</div>
+
+<form action="." method="post" class="centered">
+  <h3>Add your own new feature request</h3>
+  <div>
+  <input name="title" value="" class="title" title="Feature title" maxlength="250">
+  <br>
+  <!--<label>Longer description (optional):</label>-->
+  <textarea name="description" rows="4" cols="60" title="Longer description (optional)"></textarea>
+  <br>
+  
+  <input type="submit" value="Submit">
+  </div>
+
+  {{ xsrf_form_html() }}
+</form>
+
+{% end %}
+
+{% block extrajs %}
+{{ modules.Static("ext/jquery.validate.min.js", "featurerequests.js") }}
+{% end %}

@@ -23,7 +23,7 @@ import unicodedata
 
 from tornado.options import define, options
 
-from models import Event, User, UserSettings, Share
+from models import *
 from utils import parse_datetime, niceboolean, \
   DatetimeParseError, valid_email, datetime_to_date
 from utils.routes import route
@@ -96,7 +96,8 @@ class Application(tornado.web.Application):
         # Have one global connection to the blog DB across all handlers
         self.database_name = database_name and database_name or options.database_name
         self.con = Connection()
-        self.con.register([Event, User, UserSettings, Share])
+        self.con.register([Event, User, UserSettings, Share,
+                           FeatureRequest, FeatureRequestComment])
         
 def title_to_tags(title):
     return list(set([x[1:] for x in re.findall(r'\B@[\w\-\.]+', title, re.U)]))
@@ -1826,6 +1827,78 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
         else:
             raise tornado.web.HTTPError(404, report_name)
         
+        self.write_json(data)
+    
+@route('/feature-requests/$')
+class FeatureRequestsHandler(BaseHandler):
+    
+    def get(self):
+        options = self.get_base_options()
+        user = self.get_current_user()
+        
+        options['feature_requests'] = \
+          self.db.FeatureRequest.find().sort('vote_weight', -1).limit(20)
+          
+        return self.render("featurerequests/index.html", **options)
+    
+    def find_feature_requests(self, title):
+        return self.db.FeatureRequest.find({'title':re.compile(re.escape(title), re.I)})
+    
+    def get_user_voting_weight(self, user):
+        voting_weight = self.db[Event.__collection__].find({'user.$id': user._id}).count()
+        
+        if user.email:
+            voting_weight *= 2
+        
+        return voting_weight
+    
+    def post(self):
+        title = self.get_argument('title').strip()
+        description = self.get_argument('description', u'').strip()
+        if not title:
+            raise tornado.web.HTTPError(400, "Missing title")
+        
+        if list(self.find_feature_requests(title)):
+            raise tornado.web.HTTPError(400, "Duplicate title")
+        
+        user = self.get_current_user()
+        if not user:
+            raise tornado.web.HTTPError(403, "Not logged in")
+        
+        feature_request = self.db.FeatureRequest()
+        feature_request.author = user
+        feature_request.title = title
+        if description:
+            feature_request.description = description
+            feature_request.description_format = u'plaintext'
+        
+        # figure out what voting weight the logged in user has
+        voting_weight = self.get_user_voting_weight(user)
+        
+        # to start with the feature request gets as much voting weight
+        # as the first comment
+        feature_request.vote_weight = voting_weight
+        feature_request.save()
+        
+        feature_request_comment = self.db.FeatureRequestComment()
+        feature_request_comment.feature_request = feature_request
+        feature_request_comment.user = user
+        feature_request_comment.comment = u''
+        feature_request_comment.vote_weight = voting_weight
+        feature_request_comment.save()
+        
+        self.redirect('/feature-requests/#added-%s' % feature_request._id)
+        
+        
+@route('/feature-requests/find.json$')
+class FindFeatureRequestsHandler(FeatureRequestsHandler):
+    
+    def get(self):
+        title = self.get_argument('title').strip()
+        data = dict(feature_requests=list())
+        for feature_request in self.find_feature_requests(title):
+            data['feature_requests'].append(dict(title=feature_request.title,
+                                                 description=feature_request.description))
         self.write_json(data)
         
         
