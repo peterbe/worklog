@@ -1,7 +1,3 @@
-* (HIGH) New form CSS messed up the Bookmarklet
-
-* (HIGH) validation messes up CSS in forms
-
 * (MEDIUM) Upgrade to fullcalendar 1.4.9
 
 * (MEDIUM) Help page saying I don't care about Internet Explorer
@@ -26,8 +22,6 @@
 * (MEDIUM) App for voting on feature requests
 
 * (MEDIUM) Write sample Ruby package for using API
-
-* (MEDIUM) Google OpenID login
 
 * (LOW) Whoosh and Carrot
   http://github.com/ask/carrot
