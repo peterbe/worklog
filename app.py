@@ -1594,12 +1594,13 @@ class ExportHandler(ReportHandler):
     
     @tornado.web.asynchronous
     def get(self, format):
-        self.set_header("Content-Type", "application/vnd.ms-excel; charset=UTF-8")
         out = StringIO()
         if format == '.xls':
+            self.set_header("Content-Type", "application/vnd.ms-excel; charset=UTF-8")
             from export.excel_export import export_events
             export_events(self.get_events(), out, user=self.get_current_user())
         elif format == '.csv':
+            self.set_header("Content-Type", "application/msexcel-comma; charset=UTF-8")
             from export.csv_export import export_events
             export_events(self.get_events(), out, user=self.get_current_user())
         self.write(out.getvalue())
