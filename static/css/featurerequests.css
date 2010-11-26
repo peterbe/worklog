@@ -46,7 +46,7 @@ input.placeholdervalue, textarea.placeholdervalue { color:#999; font-weight:norm
   padding-top:5px;
 
 }
-.vote_weight {
+p.vote_weight {
   float:right;
   font-weight:bold;
 }
