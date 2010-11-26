@@ -1839,6 +1839,16 @@ class FeatureRequestsHandler(BaseHandler):
         options['feature_requests'] = \
           self.db.FeatureRequest.find().sort('vote_weight', -1).limit(20)
           
+        # Compile a list of the features this user already has voted on
+        options['have_voted_features'] = []
+        if user:
+            _search = {'user.$id': user._id}
+            for feature_request_comment in \
+              self.db[FeatureRequestComment.__collection__].find(_search):
+                options['have_voted_features'].append(
+                  'feature--%s' % feature_request_comment['feature_request'].id
+                )
+          
         return self.render("featurerequests/index.html", **options)
     
     def find_feature_requests(self, title):
@@ -1854,7 +1864,15 @@ class FeatureRequestsHandler(BaseHandler):
     
     def post(self):
         title = self.get_argument('title').strip()
+        if title == 'Add your own new feature request':
+            # placeholder text
+            title = None
+            
         description = self.get_argument('description', u'').strip()
+        if description == u'Longer description (optional)':
+            # placeholder text
+            description = u''
+            
         if not title:
             raise tornado.web.HTTPError(400, "Missing title")
         
@@ -1888,6 +1906,62 @@ class FeatureRequestsHandler(BaseHandler):
         feature_request_comment.save()
         
         self.redirect('/feature-requests/#added-%s' % feature_request._id)
+        
+@route('/feature-requests/vote/(up|down)/$')
+class VoteUpFeatureRequestHandler(FeatureRequestsHandler):
+    
+    def post(self, direction):
+        assert direction in ('up','down'), direction
+        _id = self.get_argument('id')
+        # because DOM IDs can't start with numbers I've prefixed them in HTML
+        _id = _id.replace('feature--','')
+        comment = self.get_argument('comment', u'').strip()
+        
+        try:
+            feature_request = self.db.FeatureRequest.one({'_id': ObjectId(_id)})
+        except InvalidId:
+            raise tornado.web.HTTPError(404, "Invalid ID")
+        if not feature_request:
+            raise tornado.web.HTTPError(404, "Not found ID")
+        
+        user = self.get_current_user()
+        if not user:
+            return self.write_json(dict(error="Error. Not logged in or user with saved events"))
+        voting_weight = self.get_user_voting_weight(user)
+        
+        # remove any previous comments
+        _search = {'feature_request.$id': feature_request._id,
+                   'user.$id': user._id}
+        if self.db.FeatureRequestComment.one(_search):
+            # this applies indepdent of direction
+            feature_request.vote_weight -= voting_weight
+            feature_request.save()
+            
+        for each in self.db.FeatureRequestComment.find(_search):
+            each.delete()
+        
+        if direction == 'up':
+            fr_comment = self.db.FeatureRequestComment()
+            fr_comment.comment = comment
+            fr_comment.user = user
+            fr_comment.feature_request = feature_request
+            fr_comment.vote_weight = voting_weight
+            fr_comment.save()
+            
+            feature_request.vote_weight += voting_weight
+            feature_request.save()
+            
+        # now return some stats about all feature request
+        data = self.get_all_feature_request_vote_weights()
+        self.write_json(dict(vote_weights=\
+          [{'id':'feature--%s' % k, 'weight':v} for (k,v) in data.items()]
+        ))
+    
+    def get_all_feature_request_vote_weights(self):
+        data = dict()
+        for feature_request in self.db[FeatureRequest.__collection__].find():
+            data[str(feature_request['_id'])] = feature_request['vote_weight']
+        return data
         
         
 @route('/feature-requests/find.json$')

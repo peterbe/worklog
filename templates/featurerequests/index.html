@@ -1,37 +1,7 @@
 {% extends "../base.html" %}
 
 {% block extra_head %}
-<style type="text/css">
-.centered {
-  margin-left:auto;
-  margin-right:auto;
-  width:65%;
-}
-input.title { width:98%; font-size:1.3em; }
-input.placeholdervalue, textarea.placeholdervalue { color:#999; font-weight:normal; }
-
-div.votes {
-  clear:right;
-  float:right;
-  width:70px;
-  height:70px;
-  text-align:center;
-  background:#fff url('{{ static_url("images/blank_button.png") }}') no-repeat 50% 50%;
-}
-div.votes p {
-  padding-top:20px;
-  padding-left:
-  font-weight:bold;
-  font-size:1.3em;
-}
-.request {  border:1px solid #ccc; }
-#content_inner .request h3 { clear:none; margin:0 0 10px 0;}
-
-.request .response {
-  margin-left:30px;
-  background-color:#ccc;
-}
-</style>
+{{ modules.Static("css/ext/jquery.qtip.css", "css/featurerequests.css") }}
 {% end %}
 
 {% block content_inner %}
@@ -40,29 +10,16 @@ div.votes p {
 
 <div id="requests" class="centered">
 {% for feature_request in feature_requests %}
-<div class="request">
-  <div class="votes"><p>{{ feature_request.vote_weight }}%</p></div>
-  <h3>{{ feature_request.title }}</h3>
-  
-  {% if feature_request.description %}
-  <div class="description">
-    {{ modules.RenderText(feature_request.description, feature_request.description_format) }}
-  </div>
-  {% end %}
-  
-  {% if feature_request.response %}
-  <div class="response">
-    {{ modules.RenderText(feature_request.response, feature_request.response_format) }}
-  </div>
-  {% end %}  
+<div class="request" id="feature--{{ feature_request._id }}">
+  {{ modules.ShowFeatureRequest(feature_request) }}
 </div>
 {% end %}
 </div>
 
 <form action="." method="post" class="centered">
-  <h3>Add your own new feature request</h3>
+  <!--<h3>Add your own new feature request</h3>-->
   <div>
-  <input name="title" value="" class="title" title="Feature title" maxlength="250">
+  <input name="title" value="" class="title" title="Add your own new feature request" maxlength="250">
   <br>
   <!--<label>Longer description (optional):</label>-->
   <textarea name="description" rows="4" cols="60" title="Longer description (optional)"></textarea>
@@ -74,8 +31,31 @@ div.votes p {
   {{ xsrf_form_html() }}
 </form>
 
+
+<div id="voteup-form-container" style="display:none">
+<form action="vote/up/" class="voteup" method="post">
+  <div>
+  <input type="hidden" name="id" value="">
+  <label for="comment">Optional comment:
+  <input name="comment" value="" size="40">
+  <input type="submit" value="Vote up">
+  </div>
+  {{ xsrf_form_html() }}
+</form>
+</div>
+
 {% end %}
 
 {% block extrajs %}
-{{ modules.Static("ext/jquery.validate.min.js", "featurerequests.js") }}
+{{ modules.Static("ext/jquery.validate.min.js", "ext/jquery.qtip.min.js", "featurerequests.js") }}
+{% if have_voted_features %}
+<script type="text/javascript">
+var HAVE_VOTED = {{ json_encode(have_voted_features) }};
+$(function() {
+  $.each(HAVE_VOTED, function(i, e) {
+   $('p.voteup a', '#' + e).fadeTo(0, 0.3).attr('title', "You have already voted on this one");
+  });
+});
+</script>
+{% end %}
 {% end %}

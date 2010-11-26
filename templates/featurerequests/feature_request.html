@@ -1,0 +1,42 @@
+  <div class="head">
+    <p class="voteup"><a href="#" title="Click to vote up if you think this is very important"
+    ><img src="{{ static_url("images/thumbup.png") }}" alt="Vote up"></a></p>
+    <p class="title">{{ feature_request.title }}</p>
+  </div>
+  
+  <div class="description">
+     {% if feature_request.description %}
+     {{ modules.RenderText(feature_request.description, feature_request.description_format) }}
+     {% end %}
+     <div class="metadata centered">
+        <p class="vote_weight">
+          Vote weight: <span class="vote_weight">{{ feature_request.vote_weight }}</span>
+        </p>
+        <p>Added {{ modules.TimeSince(feature_request.add_date) }} ago
+        {% if feature_request.author.first_name %}
+        by {{ feature_request.author.first_name }}
+        {% end %}
+        </p>
+     </div>
+  </div>
+  
+  {% if comments %}
+  <div class="comments">
+    <p><strong>Comments:</strong></p>
+    {% for comment in comments %}
+    <div class="comment">
+      {{ modules.RenderText(comment['comment']) }}
+      {% if comment['first_name'] %}
+      <p class="metadata">Added by {{ comment['first_name'] }}</p>
+      {% end %}
+    </div>
+    {% end %}
+  </div>
+  {% end %}
+  
+  {% if feature_request.response %}
+  <div class="response">
+    <p><strong>Response:</strong></p>
+    {{ modules.RenderText(feature_request.response, feature_request.response_format) }}
+  </div>
+  {% end %}  

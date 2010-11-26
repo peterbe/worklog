@@ -152,6 +152,7 @@ class FeatureRequest(BaseDocument):
       }
       
       
+      
 class FeatureRequestComment(BaseDocument):
     __collection__ = 'feature_request_comments'
     structure = {

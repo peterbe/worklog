@@ -47,6 +47,10 @@ class Settings(tornado.web.UIModule):
         return self.render_string("modules/settings.html",
            settings_json=tornado.escape.json_encode(settings),
          )
+         
+class TimeSince(tornado.web.UIModule):
+    def render(self, date, date2=None):
+        return smartertimesince(date, date2)
 
 class EventPreview(tornado.web.UIModule):
     def render(self, event):
@@ -355,4 +359,17 @@ class RenderText(tornado.web.UIModule):
             
         return html
     
-        
+class ShowFeatureRequest(tornado.web.UIModule):
+    def render(self, feature_request):
+        comments = []
+        _search = {'feature_request.$id': feature_request._id,
+                   'comment':{'$ne': u''}}
+        for feature_request_comment in feature_request\
+          .db.FeatureRequestComment.find(_search).sort('add_date', 1):
+            comment = dict(comment=feature_request_comment.comment,
+                           first_name=feature_request_comment.user.first_name)
+            comments.append(comment)
+            
+        return self.render_string('featurerequests/feature_request.html',
+            feature_request=feature_request,
+            comments=comments)
