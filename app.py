@@ -1389,6 +1389,14 @@ class AuthLogoutHandler(BaseHandler):
 @route(r'/help/(\w*)')
 class HelpHandler(BaseHandler):
     
+    SEE_ALSO = (
+      ['/', u"Help"],
+      u"About",
+      u"News",
+      ['/API', u"Developers' API"],
+      u"Bookmarklet",
+    )
+    
     def get(self, page):
         options = self.get_base_options()
         self.application.settings['template_path']
@@ -1404,8 +1412,18 @@ class HelpHandler(BaseHandler):
                 self._extend_bookmarklet_options(options)
                 
             return self.render(filename, **options)
+        
         raise tornado.web.HTTPError(404, "Unknown page")
-
+    
+    def get_see_also_links(self):
+        for each in self.SEE_ALSO:
+            if isinstance(each, basestring):
+                link = '/%s' % each
+                label = each
+            else:
+                link, label = each
+            yield dict(link=link, label=label)
+            
     def _extend_bookmarklet_options(self, options):
         url = '/static/bookmarklet.js'
         url = '%s://%s%s' % (self.request.protocol, 

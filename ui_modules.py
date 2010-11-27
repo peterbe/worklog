@@ -373,3 +373,29 @@ class ShowFeatureRequest(tornado.web.UIModule):
         return self.render_string('featurerequests/feature_request.html',
             feature_request=feature_request,
             comments=comments)
+        
+            
+class _Link(dict):
+    __slots__ = ('label','link','is_on')
+    def __init__(self, label, link, is_on):
+        self.label = label
+        self.link = link
+        self.is_on = is_on
+    
+class HelpSeeAlsoLinks(tornado.web.UIModule):
+    def render(self):
+        links = []
+        current_path = self.request.path
+        # add a is_on bool
+        for each in self.handler.get_see_also_links():
+            link = each['link']
+            if not link.startswith('/help'):
+                link = '/help' + link
+            is_on = link == current_path
+            links.append(dict(link=link,
+                              label=each['label'],
+                              is_on=is_on))
+                              
+        return self.render_string("help/see_also.html",
+          links=links
+        )
