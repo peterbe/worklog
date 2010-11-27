@@ -37,8 +37,10 @@
   <div>
   <input type="hidden" name="id" value="">
   <label for="comment">Optional comment:
-  <input id="comment" name="comment" value="" size="40"></label>
+  <input id="comment" name="comment" value="" size="30"></label>
   <input type="submit" value="Vote up">
+  <input type="button" class="cancel" value="Cancel">
+  
   </div>
   {{ xsrf_form_html() }}
 </form>
@@ -47,15 +49,10 @@
 {% end %}
 
 {% block extrajs %}
-{{ modules.Static("ext/jquery.validate.min.js", "ext/jquery.qtip.min.js", "featurerequests.js") }}
-{% if have_voted_features %}
 <script type="text/javascript">
 var HAVE_VOTED = {{ json_encode(have_voted_features) }};
-$(function() {
-  $.each(HAVE_VOTED, function(i, e) {
-   $('p.voteup a', '#' + e).fadeTo(0, 0.3).attr('title', "You have already voted on this one");
-  });
-});
 </script>
+{{ modules.Static("ext/jquery.validate.min.js", "ext/jquery.qtip.min.js", "featurerequests.js") }}
+{% if have_voted_features %}
 {% end %}
 {% end %}

@@ -1,3 +1,4 @@
+import datetime
 import re
 from base64 import encodestring
 import stat
@@ -364,15 +365,25 @@ class ShowFeatureRequest(tornado.web.UIModule):
         comments = []
         _search = {'feature_request.$id': feature_request._id,
                    'comment':{'$ne': u''}}
+        thanks_instead = False
+        user = self.handler.get_current_user()
         for feature_request_comment in feature_request\
           .db.FeatureRequestComment.find(_search).sort('add_date', 1):
             comment = dict(comment=feature_request_comment.comment,
                            first_name=feature_request_comment.user.first_name)
             comments.append(comment)
+            if user:
+                # if you recently submitted this comment, set thanks_instead=True
+                if user == feature_request_comment.user:
+                    # how long ago?
+                    diff = datetime.datetime.now() - feature_request_comment.modify_date
+                    if not diff.days and diff.seconds < 60:
+                        thanks_instead = True
             
         return self.render_string('featurerequests/feature_request.html',
             feature_request=feature_request,
-            comments=comments)
+            comments=comments,
+            thanks_instead=thanks_instead)
         
             
 class _Link(dict):

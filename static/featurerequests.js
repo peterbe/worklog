@@ -1,3 +1,27 @@
+var g_origKeyUp;
+function unbind_esc_key() {
+  document.onkeyup = g_origKeyUp;
+}
+
+function bind_esc_key() {
+   function handleOnkeyup(e){
+      var evtobj=window.event? event : e;
+      var unicode=evtobj.charCode? evtobj.charCode : evtobj.keyCode;
+      
+      // Close bookmarklet on Escape
+      if (unicode == 27){
+	 close_current_tooltip();
+	 unbind_esc_key();
+      }
+   }
+   
+   // Preserve original onkeyup handler
+   g_origKeyUp = document.onkeyup;
+   
+   // Substitute new onkeyup
+   document.onkeyup = handleOnkeyup;
+}
+
 
 
 function _setup_ajaxsubmit(element) {
@@ -18,6 +42,10 @@ function __inner_setup_ajaxsubmit(element) {
             var c = $('#' + e.id);
             $('span.vote_weight', c).text(e.weight);
          });
+         // have to use $.param() because if I use data parameters to
+         // .load() it will use action a POST.
+         $('#feature--' + response.id).load('/feature-requests/feature.html?'+
+                                            $.param({id:response.id}));
          close_current_tooltip();
       }
    });
@@ -71,10 +99,14 @@ function _setup_qtip(element) {
    };
    current_tooltip = $(element);
    current_tooltip.qtip(qtip_options);
-   //bind_esc_key();  
+   bind_esc_key();  
 }
 
 $(function() {
+   $.each(HAVE_VOTED, function(i, e) {
+      $('p.voteup a', '#' + e).fadeTo(0, 0.3).attr('title', "You have already voted on this one");
+   });
+   
    var form = $('form[method="post"]');
    form.validate({
       rules: {
@@ -136,9 +168,12 @@ $(function() {
    }
    
    $('.voteup a').click(function() {
-      
       _setup_qtip(this);
-      
       return false;
    });
+   
+   $('input.cancel').live('click', function() {
+      close_current_tooltip(this);
+   });
+   
 });

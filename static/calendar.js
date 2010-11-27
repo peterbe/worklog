@@ -14,6 +14,7 @@ var g_origKeyUp;
 function unbind_esc_key() {
   document.onkeyup = g_origKeyUp;
 }
+
 function bind_esc_key() {
    function handleOnkeyup(e){
       var evtobj=window.event? event : e;

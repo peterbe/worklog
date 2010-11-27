@@ -986,3 +986,5 @@ form.standard label.error {
   width: 200px;
   float: none;
 }
+
+input.cancel { font-size:0.8em;}

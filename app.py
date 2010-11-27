@@ -1924,9 +1924,33 @@ class FeatureRequestsHandler(BaseHandler):
         feature_request_comment.save()
         
         self.redirect('/feature-requests/#added-%s' % feature_request._id)
+
+@route('/feature-requests/feature\.(html|json)$')
+class FeatureRequestHandler(BaseHandler):
+    
+    
+    def get(self, format):
+        feature_request = self.get_feature(self.get_argument('id'))
+        if format == 'html':
+            from ui_modules import ShowFeatureRequest
+            m = ShowFeatureRequest(self)
+            self.write(m.render(feature_request))
+        else:
+            raise NotImplementedError
+        
+    
+    def get_feature(self, _id):
+        try:
+            return self.db.FeatureRequest.one({'_id': ObjectId(_id)})
+        except InvalidId:
+            raise tornado.web.HTTPError(404, "Invalid ID")
+        if not feature_request:
+            raise tornado.web.HTTPError(404, "Not found ID")
+        
+        
         
 @route('/feature-requests/vote/(up|down)/$')
-class VoteUpFeatureRequestHandler(FeatureRequestsHandler):
+class VoteUpFeatureRequestHandler(FeatureRequestsHandler, FeatureRequestHandler):
     
     def post(self, direction):
         assert direction in ('up','down'), direction
@@ -1935,12 +1959,7 @@ class VoteUpFeatureRequestHandler(FeatureRequestsHandler):
         _id = _id.replace('feature--','')
         comment = self.get_argument('comment', u'').strip()
         
-        try:
-            feature_request = self.db.FeatureRequest.one({'_id': ObjectId(_id)})
-        except InvalidId:
-            raise tornado.web.HTTPError(404, "Invalid ID")
-        if not feature_request:
-            raise tornado.web.HTTPError(404, "Not found ID")
+        feature_request = self.get_feature(_id)
         
         user = self.get_current_user()
         if not user:
@@ -1970,9 +1989,11 @@ class VoteUpFeatureRequestHandler(FeatureRequestsHandler):
             feature_request.save()
             
         # now return some stats about all feature request
-        data = self.get_all_feature_request_vote_weights()
-        self.write_json(dict(vote_weights=\
-          [{'id':'feature--%s' % k, 'weight':v} for (k,v) in data.items()]
+        vote_weights = self.get_all_feature_request_vote_weights()
+        
+        self.write_json(dict(id=str(feature_request._id),
+          vote_weights=\
+          [{'id':'feature--%s' % k, 'weight':v} for (k,v) in vote_weights.items()]
         ))
     
     def get_all_feature_request_vote_weights(self):

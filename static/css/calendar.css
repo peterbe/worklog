@@ -13,7 +13,6 @@
 	  font-size:10px; 
 	  float:right;
 	}
-        input.cancel { font-size:0.8em;}
 	.ui-tooltip, .qtip { max-width:540px; }
         .ui-tooltip-wrapper {
           background-color:#EEEEEE;
