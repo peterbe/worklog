@@ -1,0 +1,9 @@
+<ul>
+  {% for each in links %}
+    {% if each['is_on'] %}
+      <li>{{ each['label'] }}</li>
+    {% else %}
+      <li><a href="{{ each['link'] }}">{{ each['label'] }}</a></li>
+    {% end %}
+  {% end %}
+</ul>
