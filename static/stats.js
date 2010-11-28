@@ -54,30 +54,41 @@ function get_automatic_interval_string() {
 
 function get_automatic_date_format_string(interval) {
    if (interval == '1 month') return '%b %Y';
-   if (interval == '1 week') return '%#d/%d %y';
+   if (interval == '1 week') return '%#d/%b -%y';
    return '%#d/%b';
 }
 
-function plot_users(interval, date_format_string) {
+function plot_users(cumulative, interval, date_format_string) {
    $('#plot-users').html('');
+   var response_keys, series;
+   if (cumulative) {
+      response_keys = ['cum_w_email', 'cum_wo_email'];
+      series = [
+                {label:'Cumulative (with email)', lineWidth:4},
+                {label:'Cumulative (no email)', lineWidth:4},
+               ];
+   } else {
+      response_keys = ['new_w_email', 'new_wo_email'];
+      series = [
+                {label:'New (with email)', lineWidth:4},
+                {label:'New (no email)', lineWidth:4}
+               ];      
+   }
    $.getJSON('/stats/users.json', {
       interval: interval,
+      cumulative: cumulative,
       start: startDate.datepicker('getDate').getTime(),
 	end: endDate.datepicker('getDate').getTime()}, 
              function(response) {
-                $.jqplot('plot-users', [response.cumm_w_email,
-                                             response.new_w_email,
-                                             response.cumm_wo_email,
-                                             response.new_wo_email], 
+                var lines = new Array();
+                $.each(response_keys, function(i, e) {
+                   lines.push(response[e]);
+                });
+                $.jqplot('plot-users', lines,
                          {
                    title:'Users',
                      legend:{show:true},
-                     series:[
-                             {label:'Cummulative (with email)', lineWidth:4},
-                             {label:'New (with email)', lineWidth:4},
-                             {label:'Cummulative (no email)', lineWidth:4},
-                             {label:'New (no email)', lineWidth:4}
-                     ],
+                     series:series,
                      
                      //gridPadding:{right:35},
               axes:{
@@ -99,22 +110,36 @@ function plot_users(interval, date_format_string) {
 
 }
    
-function plot_events(interval, date_format_string) {
+function plot_events(cumulative, interval, date_format_string) {
    $('#plot-events').html('');
+   var response_keys, series;
+   if (cumulative) {
+      response_keys = ['cum'];
+      series = [
+                {label:'Cumulative', lineWidth:4},
+               ];
+   } else {
+      response_keys = ['new'];
+      series = [
+                {label:'New', lineWidth:4}
+               ];      
+   }
    $.getJSON('/stats/events.json', {
       interval: interval,
+      cumulative: cumulative,
       start: startDate.datepicker('getDate').getTime(),
 	end: endDate.datepicker('getDate').getTime()}, 
              function(response) {
-                $.jqplot('plot-events', [response.cumm,
-                                         response['new']], 
+                var lines = new Array();
+                $.each(response_keys, function(i, e) {
+                   lines.push(response[e]);
+                });
+                $.jqplot('plot-events', lines,
                          {
                    title:'Events',
                      legend:{show:true},
-                     series:[
-                             {label:'Cummulative', lineWidth:4},
-                             {label:'New', lineWidth:4}
-                     ],
+                     series:series,
+                     
                      
                      //gridPadding:{right:35},
               axes:{
@@ -135,12 +160,30 @@ function plot_events(interval, date_format_string) {
              });   
 }
 
+function update_numbers() {
+   $('#numbers td').remove();
+   $.getJSON('/stats/numbers.json', {
+      start: startDate.datepicker('getDate').getTime(),
+	end: endDate.datepicker('getDate').getTime()}, 
+             function(response) {
+                $.each(response.numbers, function(i, e) {
+                   $('<tr></tr>').appendTo('#numbers')
+                     .append($('<td></td>').text(e.label+':').addClass('label'))
+                       .append($('<td></td>').text(e.number).addClass('number'));
+                                                              
+                });
+             });
+   
+}
+
 
 function refresh_date_range() {
+   update_numbers();
    var interval = get_automatic_interval_string();
    var date_format_string = get_automatic_date_format_string(interval);
-   plot_users(interval, date_format_string);
-   plot_events(interval, date_format_string);
+   var cumulative = $('#cumulative:checked').size();
+   plot_users(cumulative, interval, date_format_string);
+   plot_events(cumulative, interval, date_format_string);
 }
 
 $(function() {
@@ -179,6 +222,9 @@ $(function() {
             }}).
         keyup(function() { resync(); });
    
+   $('input#cumulative, input#not_cumulative').change(function() {
+      refresh_date_range();
+   });
 
    resync();
    refresh_date_range();   

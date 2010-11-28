@@ -1152,8 +1152,136 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(db.Share.one(dict(tags=[u'tAG'])))
         
         
+    def test_feature_requests(self):
+        db = self.get_db()
         
+        user = db.User()
+        user.email = u'test@com.com'
+        user.save()
+        feature_request = db.FeatureRequest()
+        feature_request.author = user
+        feature_request.title = u"More cheese"
+        feature_request.save()
         
+        assert feature_request.vote_weight == 0
+        
+        comment = db.FeatureRequestComment()
+        comment.comment = u""
+        comment.user = user
+        comment.feature_request = feature_request
+        comment.save()
+        
+        feature_request.vote_weight += 1
+        feature_request.save()
+
+        url = '/features/'
+        
+        data = dict(title=u'')
+        response = self.post(url, data)
+        self.assertEqual(response.code, 404) # no title
+        
+        # the default placeholder text
+        data['title'] = u"Add your own new feature request"
+        response = self.post(url, data)
+        self.assertEqual(response.code, 400)
+        
+        # already taken
+        data['title'] = u"more cheese"
+        response = self.post(url, data)
+        self.assertEqual(response.code, 400)
+        
+        data['title'] = u"New title"
+        data['description'] = u"\nwww.google.com\ntest "
+        response = self.post(url, data)
+        self.assertEqual(response.code, 403) # not logged in
+        
+        # because we're not logged in we don't get the entry form at all
+        response = self.get(url)
+        self.assertTrue('<input name="title"' not in response.body)
+        
+        me = db.User()
+        me.email = u'peter@test.com'
+        me.set_password('secret')
+        me.first_name = u"Peter"
+        me.save()
+        
+        response = self.post('/auth/login/', 
+                             dict(email=me.email, password="secret"),
+                             follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        user_cookie = self._decode_cookie_value('user', response.headers['Set-Cookie'])
+        guid = base64.b64decode(user_cookie.split('|')[0])
+        self.assertEqual(me.guid, guid)
+        cookie = 'user=%s;' % user_cookie
+        
+        response = self.get(url, headers={'Cookie':cookie})
+        self.assertTrue('<input name="title"' in response.body)
+
+        response = self.post(url, data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(db.FeatureRequestComment.find().count(), 2)
+        
+        response = self.get(url, headers={'Cookie':cookie})
+        self.assertTrue('Thanks!' in response.body)
+        self.assertTrue('<a href="http://www.google.com">www.google.com</a>' \
+          in response.body) # linkifyied
+        
+        # now ajax submit one more comment to the first feature request
+        
+        data = {'id':'feature--%s' % feature_request._id,
+                'comment': u"\tSure thing "}
+        response = self.post(url + 'vote/up/', data)
+        struct = json.loads(response.body)
+        self.assertTrue(struct.get('error'))
+        
+        response = self.post(url + 'vote/up/', data, headers={'Cookie':cookie})
+        struct = json.loads(response.body)
+        self.assertTrue(struct.get('vote_weights'))
+        
+        response = self.get(url, headers={'Cookie':cookie})
+        self.assertTrue("\tSure thing" not in response.body) # stripped
+        self.assertTrue("Sure thing" in response.body)
+        
+        vote_weight_before = db.FeatureRequest\
+          .one({'_id': feature_request._id}).vote_weight
+        data['comment'] = "More sure thing!"
+        response = self.post(url + 'vote/up/', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        
+        vote_weight_after = db.FeatureRequest\
+          .one({'_id': feature_request._id}).vote_weight
+          
+        self.assertEqual(vote_weight_before, vote_weight_after)
+        
+        # or you can render just one single item
+        data = {'id': str(feature_request._id)}
+        response = self.get(url + 'feature.html', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertTrue("Added by Peter" in response.body)
+        self.assertTrue("More sure thing" in response.body)
+        self.assertTrue("More cheese" in response.body)
+        self.assertTrue("Thanks!" in response.body)
+        self.assertTrue("seconds ago" in response.body)
+        
+        # but don't fuck with the id
+        data['id'] = '_' * 100
+        response = self.get(url + 'feature.html', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 404)
+        data['id'] = ''
+        response = self.get(url + 'feature.html', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 404)
+        
+        data = dict(title="more cheese")
+        response = self.get(url + 'find.json', data)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertTrue(struct['feature_requests'])
+        
+        data = dict(title="Uh??")
+        response = self.get(url + 'find.json', data)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertTrue(not struct['feature_requests'])
         
         
         

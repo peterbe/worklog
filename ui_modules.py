@@ -363,15 +363,15 @@ class RenderText(tornado.web.UIModule):
 class ShowFeatureRequest(tornado.web.UIModule):
     def render(self, feature_request):
         comments = []
-        _search = {'feature_request.$id': feature_request._id,
-                   'comment':{'$ne': u''}}
+        _search = {'feature_request.$id': feature_request._id}
         thanks_instead = False
         user = self.handler.get_current_user()
         for feature_request_comment in feature_request\
           .db.FeatureRequestComment.find(_search).sort('add_date', 1):
-            comment = dict(comment=feature_request_comment.comment,
+            if feature_request_comment.comment:
+                comment = dict(comment=feature_request_comment.comment,
                            first_name=feature_request_comment.user.first_name)
-            comments.append(comment)
+                comments.append(comment)
             if user:
                 # if you recently submitted this comment, set thanks_instead=True
                 if user == feature_request_comment.user:
@@ -379,7 +379,6 @@ class ShowFeatureRequest(tornado.web.UIModule):
                     diff = datetime.datetime.now() - feature_request_comment.modify_date
                     if not diff.days and diff.seconds < 60:
                         thanks_instead = True
-            
         return self.render_string('featurerequests/feature_request.html',
             feature_request=feature_request,
             comments=comments,
@@ -410,3 +409,23 @@ class HelpSeeAlsoLinks(tornado.web.UIModule):
         return self.render_string("help/see_also.html",
           links=links
         )
+        
+class ShowUserName(tornado.web.UIModule):
+    def render(self, user, first_name_only=False, anonymize_email=False):
+        if first_name_only:
+            name = user.first_name
+        else:
+            name = u'%s %s' % (user.first_name, user.last_name)
+            name = name.strip()
+            
+        if not name:
+            name = user.email
+            if not email:
+                name = "*Someone anonymous*"
+            elif anonymize_email:
+                name = name[:3] + '...@...' + name.split('@')[1][3:]
+        return name
+                
+                
+        
+        

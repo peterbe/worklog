@@ -16,6 +16,7 @@
 {% end %}
 </div>
 
+{% if can_add %}
 <form action="." method="post" class="centered">
   <!--<h3>Add your own new feature request</h3>-->
   <div>
@@ -30,6 +31,11 @@
 
   {{ xsrf_form_html() }}
 </form>
+{% else %}
+  <div class="centered">
+  <p><em>You can add your own feature requests too!<br>...but first you have to create an account</em></p>
+  </div>
+{% end %}
 
 
 <div id="voteup-form-container" style="display:none">

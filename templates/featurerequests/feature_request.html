@@ -18,7 +18,7 @@
         </p>
         <p>Added {{ modules.TimeSince(feature_request.add_date) }} ago
         {% if feature_request.author.first_name %}
-        by {{ feature_request.author.first_name }}
+        by {{ modules.ShowUserName(feature_request.author, first_name_only=True, anonymize_email=True) }}
         {% end %}
         </p>
      </div>

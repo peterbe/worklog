@@ -1,0 +1,14 @@
+#sidebar h3 {
+    margin-top:60px;
+    font-size:19px;
+    margin-bottom: 20px;
+}
+
+td.label {
+  font-weight: bold;
+  padding-right:10px;
+}
+
+td.number {
+  font:16px Courier,monospace;
+}

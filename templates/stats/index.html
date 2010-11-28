@@ -1,7 +1,7 @@
 {% extends "../base.html" %}
 
 {% block extra_head %}
-{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/smoothness/jquery-ui-1.8.6.slider.datepicker.css", "css/report.css") }}
+{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/smoothness/jquery-ui-1.8.6.slider.datepicker.css", "css/stats.css") }}
 {% end %}
 
 {% block content_inner %}
@@ -17,6 +17,13 @@
 <strong>To:</strong>
 <input type="text" id="to_date" name="to_date" value="">
 </p>
+<p>
+<label for="cumulative">Cumulative
+<input type="radio" id="cumulative" name="cumulative" value="true" checked></label>
+or 
+<label for="not_cumulative">New
+<input type="radio" id="not_cumulative" name="cumulative" value=""></label>
+</p>
 </form>
 
 <div id="plot-events">
@@ -25,7 +32,19 @@
 <div id="plot-users">
 </div>
 
-{% end %}	    
+{% end %}
+
+{% block sidebar %}
+
+<h3>Raw numbers</h3>
+
+<table id="numbers">
+</table>
+
+
+{% end %}
+
+
 {% block extrajs %}
 <script type="text/javascript">
 var minDate = new Date({{ first_date.year }}, {{ first_date.month }}-1, {{ first_date.day }});

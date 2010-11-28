@@ -1775,6 +1775,10 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
         interval = None
         if self.get_argument('interval', None):
             interval = self.get_argument('interval')
+            
+        cumulative = None
+        if self.get_argument('cumulative', None):
+            cumulative = self.get_argument('cumulative')            
 
         if not interval:
             interval = '1 month'
@@ -1788,45 +1792,46 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
         else:
             raise NotImplementedError(interval)
             
-        if report_name =='users':#in ('cumm-users', 'new-users'):
+        if report_name =='users':#in ('cum-users', 'new-users'):
             
-            cumm_w_email = []
+            cum_w_email = []
             new_w_email = []
-            cumm_wo_email = []
+            cum_wo_email = []
             new_wo_email = []
             
             date = start
-            cumm_w_email_count = cumm_wo_email_count = 0
+            cum_w_email_count = cum_wo_email_count = 0
             while date < end:
                 this_search = dict(add_date={'$gte':date, '$lt':date + interval})
                 date_serialized = date.strftime('%Y-%m-%d')#mktime(date.timetuple())
                 this_count = self.db[User.__collection__]\
-                  .find(dict(this_search, email={'$ne':u''})).count()
+                  .find(dict(this_search, email=None)).count()
                 
                 new_w_email.append((date_serialized, this_count))
-                cumm_w_email.append((date_serialized, this_count + cumm_w_email_count))
-                cumm_w_email_count += this_count
+                cum_w_email.append((date_serialized, this_count + cum_w_email_count))
+                cum_w_email_count += this_count
 
                 this_count = self.db[User.__collection__]\
-                  .find(dict(this_search, email=u'')).count()
+                  .find(dict(this_search, email={'$ne':None})).count()
                   
                 new_wo_email.append((date_serialized, this_count))
-                cumm_wo_email.append((date_serialized, this_count + cumm_wo_email_count))
-                cumm_wo_email_count += this_count
+                cum_wo_email.append((date_serialized, this_count + cum_wo_email_count))
+                cum_wo_email_count += this_count
                 
                 date += interval
-            data = dict(cumm_w_email=cumm_w_email,
+                
+            data = dict(cum_w_email=cum_w_email,
                         new_w_email=new_w_email,
-                        cumm_wo_email=cumm_wo_email,
+                        cum_wo_email=cum_wo_email,
                         new_wo_email=new_wo_email,
                         )
         elif report_name == 'events':
             
-            cumm = []
+            cum = []
             new = []
             
             date = start
-            cumm_count = 0
+            cum_count = 0
             while date < end:
                 this_search = dict(add_date={'$gte':date, '$lt':date + interval})
                 date_serialized = date.strftime('%Y-%m-%d')#mktime(date.timetuple())
@@ -1834,25 +1839,72 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
                   .find(this_search).count()
                 
                 new.append((date_serialized, this_count))
-                cumm.append((date_serialized, this_count + cumm_count))
-                cumm_count += this_count
+                cum.append((date_serialized, this_count + cum_count))
+                cum_count += this_count
 
                 date += interval
                 
-            data = dict(cumm=cumm,
+            data = dict(cum=cum,
                         new=new,
                         )
+                    
+        elif report_name == 'numbers':
+            # misc numbers
+            numbers = self._get_numbers(start, end)
+            data['numbers'] = numbers
+                    
         else:
             raise tornado.web.HTTPError(404, report_name)
         
         self.write_json(data)
+        
+    def _get_numbers(self, start, end):
+        data = list()
+        
+        # No. users
+        _search = {'add_date': {'$gte':start, '$lt':end}}
+        c = self.db[User.__collection__].find(_search).count()
+        #data.append(dict(number=c,
+        #                 label=u"sers"))
+                         
+        # No. users without email address
+        wo_search = dict(_search, email=None)
+        c2 = self.db[User.__collection__].find(wo_search).count()
+        data.append(dict(number=c-c2,
+                         label=u"Users with email address"))
+        data.append(dict(number=c2,
+                         label=u"Users without email address"))
+                         
+        c = self.db[Event.__collection__].find(_search).count()
+        data.append(dict(number=c,
+                         label=u"Events"))
+        diff = end - start
+        days = diff.days
+        
+        data.append(dict(number='%.1f' % (c/float(days)),
+                         label=u"Events per day"))
+        if days > 28:
+            weeks = days / 7
+            data.append(dict(number='%.1f' % (c/float(weeks)),
+                             label=u"Events per week"))
+        if days > 90:
+            months = days/ 30
+            data.append(dict(number='%.1f' % (c/float(months)),
+                             label=u"Events per month"))
+        return data
+        
     
-@route('/feature-requests/$')
+@route('/features/$')
 class FeatureRequestsHandler(BaseHandler):
     
     def get(self):
         options = self.get_base_options()
         user = self.get_current_user()
+        
+        if self.get_secure_cookie('user'):
+            options['can_add'] = True
+        else:
+            options['can_add'] = False
         
         options['feature_requests'] = \
           self.db.FeatureRequest.find().sort('vote_weight', -1).limit(20)
@@ -1874,12 +1926,17 @@ class FeatureRequestsHandler(BaseHandler):
     
     def get_user_voting_weight(self, user):
         voting_weight = self.db[Event.__collection__].find({'user.$id': user._id}).count()
+        voting_weight = max(1, voting_weight)
         
-        if user.email:
-            voting_weight *= 2
+        if user.first_name and user.last_name:
+            # boost for nice friends
+            voting_weight *= 1.5
+            
+        # XXX could perhaps give another boost to people who have many events
+        # over a long period of time
         
-        return voting_weight
-    
+        return int(voting_weight)
+
     def post(self):
         title = self.get_argument('title').strip()
         if title == 'Add your own new feature request':
@@ -1923,9 +1980,9 @@ class FeatureRequestsHandler(BaseHandler):
         feature_request_comment.vote_weight = voting_weight
         feature_request_comment.save()
         
-        self.redirect('/feature-requests/#added-%s' % feature_request._id)
+        self.redirect('/features/#added-%s' % feature_request._id)
 
-@route('/feature-requests/feature\.(html|json)$')
+@route('/features/feature\.(html|json)$')
 class FeatureRequestHandler(BaseHandler):
     
     
@@ -1949,7 +2006,7 @@ class FeatureRequestHandler(BaseHandler):
         
         
         
-@route('/feature-requests/vote/(up|down)/$')
+@route('/features/vote/(up|down)/$')
 class VoteUpFeatureRequestHandler(FeatureRequestsHandler, FeatureRequestHandler):
     
     def post(self, direction):
@@ -2003,7 +2060,7 @@ class VoteUpFeatureRequestHandler(FeatureRequestsHandler, FeatureRequestHandler)
         return data
         
         
-@route('/feature-requests/find.json$')
+@route('/features/find.json$')
 class FindFeatureRequestsHandler(FeatureRequestsHandler):
     
     def get(self):
