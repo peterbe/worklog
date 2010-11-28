@@ -44,7 +44,7 @@ function __inner_setup_ajaxsubmit(element) {
          });
          // have to use $.param() because if I use data parameters to
          // .load() it will use action a POST.
-         $('#feature--' + response.id).load('/feature-requests/feature.html?'+
+         $('#feature--' + response.id).load('/features/feature.html?'+
                                             $.param({id:response.id}));
          close_current_tooltip();
       }
@@ -124,7 +124,7 @@ $(function() {
             var title = $('input[name="title"]').val();
             
             if (title.length && title != $('input[name="title"]').attr('title')) {
-               $.getJSON('/feature-requests/find.json', {title:title}, function(response) {
+               $.getJSON('/features/find.json', {title:title}, function(response) {
                   if (response.feature_requests && response.feature_requests.length) {
                      $('label[for="title"]').text("Feature request already submitted");
                   }
