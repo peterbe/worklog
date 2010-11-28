@@ -1284,8 +1284,63 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(not struct['feature_requests'])
         
         
+    def test_sorting_hours_spent_stats(self):
+        
+        db = self.get_db()
+        today = datetime.date.today()
+        data = {'title': "@Tag1 bla bl a",
+                'date': mktime(today.timetuple()),
+                'all_day': '0'}
+        response = self.post('/events/', data)
+        self.assertEqual(response.code, 200)
+        user = db.User.one()
+
+        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        cookie = 'guid=%s;' % guid_cookie
+        data = {'title': "@Tag2 yesterday",
+                'date': mktime(today.timetuple()) - 100,
+                'all_day': '0'}
+        response = self.post('/events/', data, headers={'Cookie': cookie})
+        self.assertEqual(response.code, 200)
+        
+        self.assertTrue(db.Event.find().count(), 2)
+        self.assertTrue(db.Event.find({'all_day': False}).count(), 2)
+        
+        response = self.get('/events/stats.json', headers={'Cookie': cookie})
+        struct = json.loads(response.body)
+        hours_spent = struct['hours_spent']
+        self.assertTrue(["Tag1", 1.0] in hours_spent)
+        self.assertTrue(["Tag2", 1.0] in hours_spent)
+        
+        event = db.Event.one(dict(tags=u"Tag2"))
+        event.end += datetime.timedelta(hours=1)
+        event.save()
+        
+        response = self.get('/events/stats.json', headers={'Cookie': cookie})
+        struct = json.loads(response.body)
+        hours_spent = struct['hours_spent']
+        # the one with the highest amount should appear first
+        self.assertEqual(hours_spent[0], ['Tag2', 2.0])
+        self.assertEqual(hours_spent[1], ['Tag1', 1.0])
+        
+        # add a third one without a tag
+        data = {'title': "No tag here",
+                'date': mktime(today.timetuple()) - 100,
+                'all_day': '0'}
+        response = self.post('/events/', data, headers={'Cookie': cookie})
+        self.assertEqual(response.code, 200)
         
         
+        event = db.Event.one(dict(tags=[]))
+        event.end += datetime.timedelta(hours=2)
+        event.save()
+        
+        response = self.get('/events/stats.json', headers={'Cookie': cookie})
+        struct = json.loads(response.body)
+        hours_spent = struct['hours_spent']
+        self.assertEqual(hours_spent[0], ['<em>Untagged</em>', 3.0])
+        self.assertEqual(hours_spent[1], ['Tag2', 2.0])
+        self.assertEqual(hours_spent[2], ['Tag1', 1.0])
 
     
         

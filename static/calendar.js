@@ -271,12 +271,20 @@ function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view
    });
 }
 
-function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc) {
+function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc, jsEvent, ui, view) {
    __update_described_colors();
+   var date_before = new Date(event.start.getTime() - dayDelta*24*3600*1000);
    $.post('/event/move/', {all_day: allDay, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
+      }
+      
+      if (date_before.getMonth() != event.start.getMonth()) {
+         // it can happen that the event is moved from one month 
+         // to another (e.g. 30th Nov to 1st Dec). If this happens re-render 
+         // the pie chart stats
+         display_sidebar_stats_wrapped(view.start, view.end);
       }
    });
 }
@@ -294,7 +302,7 @@ function __setup_tag_autocomplete(jelement) {
 	multiple: true,
 	multipleSeparator: ' ',
 	formatItem: function(row) {
-	   return row[0] + ' ';
+	   return row[0];
 	}
    });
 }
@@ -592,6 +600,7 @@ $(function() {
       aspectRatio: 1.65, // 1.35 is default
       firstDay: SETTINGS.monday_first ? 1 : 0,
       weekends: !SETTINGS.hide_weekend,
+      weekMode: 'variable',
       eventClick: _event_clicked,
       dayClick: _day_clicked,
       eventResize: _event_resized,

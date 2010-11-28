@@ -14,7 +14,13 @@
      {% end %}
      <div class="metadata centered">
         <p class="vote_weight">
-          Vote weight: <span class="vote_weight">{{ feature_request.vote_weight }}</span>
+          Vote weight: <span class="vote_weight">{{ feature_request.vote_weight }}
+          {% if votes_count %}
+          ({{ votes_count }} votes)
+          {% else %}
+          (no votes)
+          {% end %}
+          </span>
         </p>
         <p>Added {{ modules.TimeSince(feature_request.add_date) }} ago
         {% if feature_request.author.first_name %}

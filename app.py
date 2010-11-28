@@ -44,6 +44,11 @@ define("dont_combine", default=False, help="Don't combine static resources", typ
 
 MAX_TITLE_LENGTH = 500
 
+UNTAGGED_COLOR = "#4bb2c5"
+TAG_COLOR_SERIES = ("#EAA228", "#c5b47f", "#579575", "#839557", "#958c12", 
+                    "#953579", "#4b5de4", "#d8b83f", "#ff5800", "#0085cc", 
+                    "#c747a3", "#cddf54", "#FBD178", "#26B4E3", "#bd70c7")
+
 class Application(tornado.web.Application):
     def __init__(self, 
                  database_name=None, 
@@ -902,6 +907,8 @@ class EventStatsHandler(BaseHandler):
         days_spent = defaultdict(float)
         hours_spent = defaultdict(float)
         user = self.get_current_user()
+        with_colors = niceboolean(self.get_argument('with_colors', False))
+        
         if user:
             search = {'user.$id': user._id}
             
@@ -910,7 +917,7 @@ class EventStatsHandler(BaseHandler):
                 search['start'] = {'$gte': start}
             if self.get_argument('end', None):
                 end = parse_datetime(self.get_argument('end'))
-                search['end'] = {'$lte': end}
+                search['end'] = {'$lt': end}
                 
             for entry in self.db[Event.__collection__].find(search):
                 if entry['all_day']:
@@ -928,14 +935,18 @@ class EventStatsHandler(BaseHandler):
                             hours_spent[tag] += hours
                     else:
                         hours_spent[u''] += hours
-                     
+                        
+        _has_untagged_events = False
+        
         if '' in days_spent:
             days_spent['<em>Untagged</em>'] = days_spent.pop('')
+            _has_untagged_events = True
+            
         if '' in hours_spent:
             hours_spent['<em>Untagged</em>'] = hours_spent.pop('')
+            _has_untagged_events = True
         
         def cmp_tags(one, two):
-            
             if one.startswith('<em>Untagged'):
                 return -1
             elif two.startswith('<em>Untagged'):
@@ -943,13 +954,45 @@ class EventStatsHandler(BaseHandler):
             return cmp(one.lower(), two.lower())
         
         # flatten as a list
-        days_spent = sorted(days_spent.items(), lambda x,y: cmp_tags(x[0], y[0]))
-        hours_spent = sorted([(x,y) for (x, y) in hours_spent.items() if y],
-                             lambda x,y: cmp_tags(x[0], y[0]))
-        return dict(days_spent=days_spent,
-                    hours_spent=hours_spent)
-                     
         
+        days_spent = days_spent.items()
+        days_spent.sort(lambda x,y: cmp_tags(x[0], y[0]))
+        
+        hours_spent = [(x,y) for (x, y) in hours_spent.items() if y]
+        hours_spent.sort(lambda x,y: cmp_tags(x[0], y[0]))
+        
+        data = dict(days_spent=days_spent,
+                    hours_spent=hours_spent)
+                    
+        if with_colors:
+            # then define 'days_colors' and 'hours_colors'
+            
+            color_series = list()
+            if _has_untagged_events:
+                color_series.append(UNTAGGED_COLOR)
+            color_series.extend(list(TAG_COLOR_SERIES))
+            color_series.reverse()
+            
+            days_colors = []
+            _map = {}
+            for tag, __ in days_spent:
+                color = color_series.pop()
+                _map[tag] = color
+                days_colors.append(color)
+                
+            data['days_colors'] = days_colors
+            
+            hours_colors = []
+            for tag, __ in hours_spent:
+                color = _map.get(tag)
+                if color is None:
+                    color = color_series.pop()
+                hours_colors.append(color)
+                
+            data['hours_colors'] = hours_colors
+            
+        return data
+                     
             
 @route('/user/settings(\.js|/)$')
 class UserSettingsHandler(BaseHandler):

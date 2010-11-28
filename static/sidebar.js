@@ -1,23 +1,33 @@
 
 function display_sidebar_stats(start, end) {
    //var days_pie, hours_pie;
-   $.getJSON('/events/stats.json', {start: start.getTime(), end: end.getTime()}, function(response) {
+   var color_map = {};
+   var seriesColors;
+   var unused_colors;
+   $.getJSON('/events/stats.json', {start: start.getTime(), end: end.getTime(), with_colors:true},
+             function(response) {
       if (response.days_spent && response.days_spent.length) {
-         $('#days-plot:hidden').show();
-         $.jqplot('days-plot', [response.days_spent], {
+         //$('#days-plot:hidden').show();
+         $('#days-plot').html('');
+         var days_plot = 
+           $.jqplot('days-plot', [response.days_spent], {
+              seriesColors: response.days_colors,
              title: 'Days spent',
              grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
              highlighter: {sizeAdjust: 7.5},
              seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:3, padding:7, border:false}},
            legend:{show:true}
-        });
+           });
+         //L("LEFT", seriesColors.slice(highest_i+1, seriesColors.length));
       } else {
-         $('#days-plot:visible').hide();
+         //$('#days-plot:visible').hide();
       }
-
+      
       if (response.hours_spent && response.hours_spent.length) {
          $('#hours-plot:hidden').show();
-         $.jqplot('hours-plot', [response.hours_spent], {
+         var hours_plot = 
+           $.jqplot('hours-plot', [response.hours_spent], {
+              seriesColors: response.hours_colors,
              title: 'Hours spent',
              grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
              seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:3, padding:7, border:false}},

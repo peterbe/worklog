@@ -366,6 +366,7 @@ class ShowFeatureRequest(tornado.web.UIModule):
         _search = {'feature_request.$id': feature_request._id}
         thanks_instead = False
         user = self.handler.get_current_user()
+        votes_count = feature_request.db.FeatureRequestComment.find(_search).count()
         for feature_request_comment in feature_request\
           .db.FeatureRequestComment.find(_search).sort('add_date', 1):
             if feature_request_comment.comment:
@@ -382,6 +383,7 @@ class ShowFeatureRequest(tornado.web.UIModule):
         return self.render_string('featurerequests/feature_request.html',
             feature_request=feature_request,
             comments=comments,
+            votes_count=votes_count,
             thanks_instead=thanks_instead)
         
             
