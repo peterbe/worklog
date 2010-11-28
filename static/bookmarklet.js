@@ -4,7 +4,7 @@
     
     var gc_base_url = "http://donecal.com/";
    //var gc_base_url = "http://worklog/";
-    
+   
     // Get first 3 characters of path
     var conversationPath = location.pathname.substring(0,3);
     
@@ -18,18 +18,6 @@
     var resultBaseMatch = gc_base_url.match(matchUrl);
     var resultLocMatch = thisHost.match(matchUrl);
    
-   /*
-    // Should always have non null results here
-    if( (resultBaseMatch != null) && (resultLocMatch != null) ){
-        // Compare base domain with location domain.
-        // Compare first 3 characters of path to  "/c/" (conversation URL)
-        if( (resultBaseMatch[3] == resultLocMatch[3]) && (conversationPath == "/c/") ) {
-            // We have a conversation URL.  Call retweet routine and return.
-            retweet();
-            return;
-        }
-    }
-    */
 
     // Geometry.js came from:
     // http://www.davidflanagan.com/javascript5/
@@ -417,107 +405,7 @@
     }
     
     
-    /*
-    function minWin(){
-        gCanvasWidth = gCanvasWidthMin;
-        gCanvasHeight = gCanvasHeightMin;
-        
-        var iframe = byId('bigt__iframe');
-        iframe.style.visibility = "hidden";
-        
-        var container = byId('bigt__container');
-        container.style.width = gCanvasWidth + kShadowSize + "px";
-        container.style.height = gCanvasHeight + kShadowSize + "px";
-        
-        var canvas = byId('bigt__canvas');
-        canvas.style.width = gCanvasWidth + "px"; 
-        canvas.style.height = gCanvasHeight + "px";
-        
-        var img_logo = byId('bigt__logo');
-        var minWinDiv = byId('bigt__minWinDiv');
-        var minWinImg = byId('bigt__minWinImg');
-        var halfWinDiv = byId('bigt__halfWinDiv');
-        var halfWinImg = byId('bigt__halfWinImg');
-        var fullWinDiv = byId('bigt__fullWinDiv');
-        var fullWinImg = byId('bigt__fullWinImg');
-        
-        // Logo visible
-        img_logo.style.visibility = "visible";
-        
-        // Min Window is now active
-        minWinDiv.onclick = windowActive;
-        minWinImg.src = gc_base_url + "static/images/bookmarklet/min_win_selected.png";
-        
-        // Half Window is no longer active
-        halfWinDiv.onclick = halfWin;
-        halfWinImg.src = gc_base_url + "static/images/bookmarklet/half_win.png";
-        
-        // Full Window is no longer active
-        fullWinDiv.onclick = fullWin;
-        fullWinImg.src = gc_base_url + "static/images/bookmarklet/full_win.png";
-        
-        // Reposition window to upper right corner
-        container.style.top = scrollPos().y + "px";
-        container.style.right = "0px";
-        
-        // Keep container in same relative position at top 
-        // of visible window as user scrolls vertically.
-        window.onscroll = function() {
-            container.style.top = scrollPos().y + "px";
-        };
-    }
-   */
-    
    /*
-    function halfWin(){
-        gCanvasWidth = gCanvasWidthFull;
-        gCanvasHeight = gCanvasHeightHalf;
-        
-        var iframe = byId('bigt__iframe');
-        iframe.style.visibility = "visible";
-        
-        var container = byId('bigt__container');
-        container.style.width = gCanvasWidth + kShadowSize + "px";
-        container.style.height = gCanvasHeight + kShadowSize + "px";
-        
-        var canvas = byId('bigt__canvas');
-        canvas.style.width = gCanvasWidth + "px";
-        canvas.style.height = gCanvasHeight + "px";
-        
-        var img_logo = byId('bigt__logo');
-        var minWinDiv = byId('bigt__minWinDiv');
-        var minWinImg = byId('bigt__minWinImg');
-        var halfWinDiv = byId('bigt__halfWinDiv');
-        var halfWinImg = byId('bigt__halfWinImg');
-        var fullWinDiv = byId('bigt__fullWinDiv');
-        var fullWinImg = byId('bigt__fullWinImg');
-        
-        // Logo not visible
-        img_logo.style.visibility = "hidden";
-        
-        // Min Window is no longer active
-        minWinDiv.onclick = minWin;
-        minWinImg.src = gc_base_url + "static/images/bookmarklet/min_win.png";
-        
-        // Half Window is now active
-        halfWinDiv.onclick = windowActive;
-        halfWinImg.src = gc_base_url + "static/images/bookmarklet/half_win_selected.png";
-        
-        // Full Window is no longer active
-        fullWinDiv.onclick = fullWin;
-        fullWinImg.src = gc_base_url + "static/images/bookmarklet/full_win.png";
-        
-         // Reposition window to center
-        container.style.top = scrollPos().y + (Geometry.getViewportHeight() - gCanvasHeightFull)/2  + "px";
-        container.style.right = (Geometry.getViewportWidth() - gCanvasWidth)/2 + "px";
-        
-        // Keep container in same relative position at top 
-        // of visible window as user scrolls vertically.
-        window.onscroll = function() {
-            container.style.top = scrollPos().y + (Geometry.getViewportHeight() - gCanvasHeightFull)/2  + "px";
-        };
-    }*/
-    
     function fullWin(){
         gCanvasWidth = gCanvasWidthFull;
         gCanvasHeight = gCanvasHeightFull;
@@ -567,6 +455,7 @@
             container.style.top = scrollPos().y + (Geometry.getViewportHeight() - gCanvasHeightFull)/2  + "px";
         };
     }
+    */
 
     // Do nothing for active window.
     function windowActive(){
