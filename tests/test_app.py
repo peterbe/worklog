@@ -1319,9 +1319,9 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/events/stats.json', headers={'Cookie': cookie})
         struct = json.loads(response.body)
         hours_spent = struct['hours_spent']
-        # the one with the highest amount should appear first
-        self.assertEqual(hours_spent[0], ['Tag2', 2.0])
-        self.assertEqual(hours_spent[1], ['Tag1', 1.0])
+        # they should be ordered by the tag
+        self.assertEqual(hours_spent[0], ['Tag1', 1.0])
+        self.assertEqual(hours_spent[1], ['Tag2', 2.0])
         
         # add a third one without a tag
         data = {'title': "No tag here",
@@ -1339,8 +1339,8 @@ class ApplicationTestCase(BaseHTTPTestCase):
         struct = json.loads(response.body)
         hours_spent = struct['hours_spent']
         self.assertEqual(hours_spent[0], ['<em>Untagged</em>', 3.0])
-        self.assertEqual(hours_spent[1], ['Tag2', 2.0])
-        self.assertEqual(hours_spent[2], ['Tag1', 1.0])
+        self.assertEqual(hours_spent[1], ['Tag1', 1.0])
+        self.assertEqual(hours_spent[2], ['Tag2', 2.0])
 
     
         
