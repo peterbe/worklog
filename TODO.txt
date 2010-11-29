@@ -30,9 +30,4 @@
   
 * (LOW) Experiment with running mongodb in RAM for faster unit tests
   http://www.phpmoadmin.com/mongodb-in-memory-database
-  
-
-
---- DOMAIN NAME ---
-
  
