@@ -17,8 +17,6 @@
 
 * (LOW) tests for previewing and editing events in API
 
-* (MEDIUM) App for voting on feature requests
-
 * (MEDIUM) Write sample Ruby package for using API
 
 * (LOW) Whoosh and Carrot
