@@ -97,7 +97,6 @@ class Application(tornado.web.Application):
         )
         tornado.web.Application.__init__(self, handlers, **settings)
         
-        #print database_name and database_name or options.database_name
         # Have one global connection to the blog DB across all handlers
         self.database_name = database_name and database_name or options.database_name
         self.con = Connection()
