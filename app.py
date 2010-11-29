@@ -25,7 +25,7 @@ from tornado.options import define, options
 
 from models import *
 from utils import parse_datetime, niceboolean, \
-  DatetimeParseError, valid_email, datetime_to_date
+  DatetimeParseError, valid_email, datetime_to_date, random_string
 from utils.routes import route
 from utils.git import get_git_revision
 from utils.decorators import login_required
@@ -1382,7 +1382,7 @@ class AuthLoginHandler(BaseHandler):
         
 
 @route('/auth/openid/google/')
-class GoogleAUthHandler(BaseHandler, tornado.auth.GoogleMixin):
+class GoogleAuthHandler(BaseHandler, tornado.auth.GoogleMixin):
     @tornado.web.asynchronous
     def get(self):
         if self.get_argument("openid.mode", None):
@@ -1412,6 +1412,7 @@ class GoogleAUthHandler(BaseHandler, tornado.auth.GoogleMixin):
                 user.first_name = first_name
             if last_name:
                 user.last_name = last_name
+            user.set_password(random_string(20))
             user.save()
             
         self.set_secure_cookie("user", str(user.guid), expires_days=100)

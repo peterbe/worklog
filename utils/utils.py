@@ -60,3 +60,8 @@ def mkdir(newdir):
             _mkdir(head)
         if tail:
             os.mkdir(newdir)
+            
+from random import choice
+from string import letters
+def random_string(length):
+    return ''.join(choice(letters) for i in xrange(length))

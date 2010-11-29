@@ -74,4 +74,14 @@ class UtilsTestCase(unittest.TestCase):
         chicken = {'legs': 2, 'color':'white', 'eggs':2}
         animals = [pig, chicken]
         
+    def test_random_string(self):
+        from utils import random_string
+        
+        x = random_string(10)
+        self.assertEqual(len(x), 10)
+        y = random_string(10)
+        self.assertEqual(len(y), 10)
+        self.assertNotEqual(x, y)
+        
+        
         
