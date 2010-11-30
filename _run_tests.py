@@ -2,10 +2,10 @@
 import unittest
 
 TEST_MODULES = [
-    'tests.test_app',
-    'tests.test_api',
-    'tests.test_models',
-    'tests.test_utils',
+    'apps.main.tests.test_app',
+    'apps.main.tests.test_api',
+    'apps.main.tests.test_models',
+    'apps.main.tests.test_utils',
 ]
 
 def all():

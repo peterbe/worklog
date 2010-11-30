@@ -278,8 +278,9 @@ class APITestCase(base.BaseHTTPTestCase):
         peter = self.get_db().users.User()
         assert peter.guid
         peter.save()
-
-        data = dict(guid=peter.guid, title="x" * (base.app.MAX_TITLE_LENGTH + 1))
+        from apps.main.config import MAX_TITLE_LENGTH
+        
+        data = dict(guid=peter.guid, title="x" * (MAX_TITLE_LENGTH + 1))
         response = self.post('/api/events.json', data)
         self.assertEqual(response.code, 400)
         
