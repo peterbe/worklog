@@ -40,7 +40,6 @@ class APITestCase(base.BaseHTTPTestCase):
             last = datetime.datetime(today.year + 1, 1, 1)
         else:
             last = datetime.datetime(today.year, today.month + 1, 1)
-        last -= datetime.timedelta(days=1)
         
         data['end'] = int(mktime(last.timetuple()))
         response = self.get('/api/events.json', data)
@@ -187,6 +186,51 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertTrue('<allDay>true</allDay>' in response.body)
         self.assertTrue('<title>&lt;script&gt;' in response.body)
         self.assertTrue('<tag>@tagged</tag>' in response.body)
+        
+    def test_posting_with_description(self):
+        from models import User
+        peter = self.get_db().users.User()
+        assert peter.guid
+        peter.save()
+        
+        assert self.get_db().users.User.find().count()
+        data = dict(guid=peter.guid,
+                    title="Sample Title",
+                    description="\tSample Description  ")
+        
+        today = datetime.date.today()
+        data['date'] = mktime(today.timetuple())
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 201)
+        struct = json.loads(response.body)
+        event = self.get_db().Event.one()
+        self.assertEqual(event.description, data['description'].strip())
+        self.assertEqual(struct['event']['description'], data['description'].strip())
+        
+    def test_posting_with_external_url(self):
+        from models import User
+        peter = self.get_db().users.User()
+        assert peter.guid
+        peter.save()
+        
+        assert self.get_db().users.User.find().count()
+        today = datetime.date.today()
+        data = dict(guid=peter.guid,
+                    title="Sample Title",
+                    external_url=" not a valid URL",
+                    date=mktime(today.timetuple()),
+                    )
+        
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 400)
+        data['external_url'] = 'http://www.peterbe.com     '
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 201)
+        struct = json.loads(response.body)
+        event = self.get_db().Event.one()
+        self.assertEqual(event.external_url, data['external_url'].strip())
+        self.assertEqual(struct['event']['external_url'], data['external_url'].strip())        
+        
         
     def test_posting_without_date(self):
         

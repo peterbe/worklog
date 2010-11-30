@@ -218,7 +218,6 @@ class BaseHandler(tornado.web.RequestHandler):
             data['external_url'] = item['external_url']
         if item.get('description'):
             data['description'] = item['description']
-            
         if serialize:
             self.serialize_dict(data)
             #for key, value in data.items():
@@ -462,7 +461,7 @@ class EventsHandler(BaseHandler):
         end = parse_datetime(self.get_argument('end'))
         search = {}
         search['start'] = {'$gte': start}
-        search['end'] = {'$lte': end}
+        search['end'] = {'$lt': end}
 
         if user:
             search['user.$id'] = user['_id']
@@ -616,10 +615,10 @@ class EventsHandler(BaseHandler):
         event.end = end
         if description is not None:
             assert isinstance(description, unicode), type(description)
-            event.description = description
+            event.description = description.strip()
         if external_url is not None:
             assert isinstance(external_url, unicode), type(external_url)
-            event.external_url = external_url
+            event.external_url = external_url.strip()
         event.save()
         
         return event, True
@@ -706,7 +705,22 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
         guid = self.get_argument('guid')
         user = self.db.User.one({'guid': guid})
         
-        event, created = self.create_event(user)
+        description = self.get_argument("description", None)
+        external_url = self.get_argument("external_url", None)
+        if external_url:
+            # check that it's a valid URL
+            parsed = urlparse(external_url.strip())
+            if not (parsed.scheme and parsed.netloc):
+                #raise tornado.web.HTTPError(400, "Invalid URL (%s)" % external_url)
+                self.set_status(400)
+                return self.write("Invalid URL")
+
+        event, created = self.create_event(
+          user,
+          description=description,
+          external_url=external_url,
+        )
+        
         self.write_event(event, format)
         self.set_status(created and 201 or 200) # Created
             

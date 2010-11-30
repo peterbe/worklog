@@ -38,15 +38,17 @@ def test():
     #                                    use_https=False, port=None ):
     
     connection = cf.get_connection()
-    print "DIR IDENTITY/ORIGIN"
-    print [x for x in dir(connection) if x.lower().count('identity') or x.lower().count('origin')]
-    print "DIR CONNECTION CONFIG"
-    print [x for x in dir(connection) if x.lower().count('config')]
+    #print "DIR IDENTITY/ORIGIN"
+    #print [x for x in dir(connection) if x.lower().count('identity') or x.lower().count('origin')]
+    #print "DIR CONNECTION CONFIG"
+    #print [x for x in dir(connection) if x.lower().count('config')]
 
     
     #print connection.set_origin_access_identity_info()
     
     dist = connection.create_custom_distribution('donecal.com', True)
+    print dist.domain_name
+    return
     dist.update()
     #bar = connection.create_origin_access_identity()
     #oai = connection.get_origin_access_identity_info(bar)
