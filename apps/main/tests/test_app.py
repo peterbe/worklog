@@ -11,7 +11,7 @@ from tornado.web import RequestHandler, _O
 #import app
 from base import BaseHTTPTestCase
 from utils import encrypt_password
-from models import Event, User, Share
+from apps.main.models import Event, User, Share
 import utils.send_mail as mail
         
 class ApplicationTestCase(BaseHTTPTestCase):

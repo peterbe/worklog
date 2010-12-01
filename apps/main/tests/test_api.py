@@ -3,7 +3,7 @@ import datetime
 import simplejson as json
 from time import mktime
 import base
-
+from apps.main.models import User
 
 class APITestCase(base.BaseHTTPTestCase):
     
@@ -17,7 +17,6 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertEqual(response.code, 403)
         self.assertTrue('guid not recognized' in response.body)
         
-        from models import User
         peter = self.get_db().users.User()
         assert peter.guid
         peter.save()
@@ -144,7 +143,6 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertEqual(response.code, 403)
         self.assertTrue('guid not recognized' in response.body)
         
-        from models import User
         peter = self.get_db().users.User()
         assert peter.guid
         peter.save()
@@ -188,7 +186,6 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertTrue('<tag>@tagged</tag>' in response.body)
         
     def test_posting_with_description(self):
-        from models import User
         peter = self.get_db().users.User()
         assert peter.guid
         peter.save()
@@ -208,7 +205,6 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertEqual(struct['event']['description'], data['description'].strip())
         
     def test_posting_with_external_url(self):
-        from models import User
         peter = self.get_db().users.User()
         assert peter.guid
         peter.save()
@@ -234,7 +230,6 @@ class APITestCase(base.BaseHTTPTestCase):
         
     def test_posting_without_date(self):
         
-        from models import User
         peter = self.get_db().users.User()
         assert peter.guid
         peter.save()
@@ -274,7 +269,6 @@ class APITestCase(base.BaseHTTPTestCase):
                          
     def test_posting_invalid_data(self):
         
-        from models import User
         peter = self.get_db().users.User()
         assert peter.guid
         peter.save()
@@ -300,7 +294,6 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertEqual(response.code, 400)
         
     def test_posting_not_all_day_without_date(self):
-        from models import User
         peter = self.get_db().users.User()
         assert peter.guid
         peter.save()

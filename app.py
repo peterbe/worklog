@@ -5,7 +5,7 @@
 # python
 import re
 import os.path
-from mongokit import Connection
+from mongokit import Connection, Document as mongokit_Document
 
 # tornado
 import tornado.httpserver
@@ -15,6 +15,7 @@ import tornado.web
 from tornado.options import define, options
 
 # app
+import settings
 from utils.routes import route
 from utils.git import get_git_revision
 
@@ -36,9 +37,14 @@ class Application(tornado.web.Application):
                  xsrf_cookies=True, 
                  optimize_static_content=None):
         ui_modules_map = {}
-        for app_name in ('apps.main',):
-            _ui_modules = __import__(app_name, globals(), locals(), ['ui_modules'], -1)
-            ui_modules = _ui_modules.ui_modules
+        for app_name in settings.APPS:
+            _ui_modules = __import__('apps.%s' % app_name, globals(), locals(), 
+                                     ['ui_modules'], -1)
+            try:
+                ui_modules = _ui_modules.ui_modules
+            except AttributeError:
+                # this app simply doesn't have a ui_modules.py file
+                continue 
     
             for name in [x for x in dir(ui_modules) if re.findall('[A-Z]\w+', x)]:
                 thing = getattr(ui_modules, name)
@@ -59,36 +65,49 @@ class Application(tornado.web.Application):
             optimize_static_content = not options.debug
             
         handlers = route.get_routes()
-        settings = dict(
-            title=u"DoneCal",
+        app_settings = dict(
+            title=settings.TITLE,
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "static"),
             ui_modules=ui_modules_map,
             xsrf_cookies=xsrf_cookies,
-            cookie_secret="11oETzKsXQAGaYdkL5gmGeJJFuYh7EQnp2XdTP1o/Vo=",
-            login_url="/auth/login",
+            cookie_secret=settings.COOKIE_SECRET,
+            login_url=settings.LOGIN_URL,
             debug=options.debug,
             optimize_static_content=optimize_static_content,
             git_revision=get_git_revision(),
             email_backend=options.debug and \
                  'utils.send_mail.backends.console.EmailBackend' \
               or 'utils.send_mail.backends.smtp.EmailBackend',
-            webmaster='noreply@donecal.com',
+            webmaster=settings.WEBMASTER,
             CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__), 
                                       "static", "compiler.jar"),
             YUI_LOCATION=os.path.join(os.path.dirname(__file__),
                                       "static", "yuicompressor-2.4.2.jar"),
             UNDOER_GUID=u'UNDOER', # must be a unicode string
         )
-        tornado.web.Application.__init__(self, handlers, **settings)
-        
+        tornado.web.Application.__init__(self, handlers, **app_settings)
+
         # Have one global connection to the blog DB across all handlers
         self.database_name = database_name and database_name or options.database_name
         self.con = Connection()
-        self.con.register([Event, User, UserSettings, Share,
-                           FeatureRequest, FeatureRequestComment])
+        
+        model_classes = []
+        for app_name in settings.APPS:
+            _models = __import__('apps.%s' % app_name, globals(), locals(),
+                                     ['models'], -1)
+            try:
+                models = _models.models
+            except AttributeError:
+                # this app simply doesn't have a models.py file
+                continue
+            for name in [x for x in dir(models) if re.findall('[A-Z]\w+', x)]:
+                thing = getattr(models, name)
+                if issubclass(thing, mongokit_Document):
+                    model_classes.append(thing)
 
-from apps.main.models import *
+        self.con.register(model_classes)
+        
 from apps.main import handlers
 from apps.smartphone import handlers
         

@@ -2,7 +2,7 @@ from bson import DBRef
 import datetime
 #import sys; sys.path.insert(0, '..')
 import unittest
-from models import User, Event, UserSettings, Share
+from apps.main.models import User, Event, UserSettings, Share
 
 class ModelsTestCase(unittest.TestCase):
     _once = False
