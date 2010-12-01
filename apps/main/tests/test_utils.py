@@ -1,4 +1,3 @@
-import datetime
 import unittest
 
 class UtilsTestCase(unittest.TestCase):
@@ -73,6 +72,10 @@ class UtilsTestCase(unittest.TestCase):
         pig = {'legs': 4, 'color': 'pink', 'eggs': None}
         chicken = {'legs': 2, 'color':'white', 'eggs':2}
         animals = [pig, chicken]
+        xml = dict_to_xml(dict(animals=animals), "Animals")
+        self.assertTrue('</Animals>' in xml)
+        self.assertTrue('<animals>' in xml)
+        self.assertEqual(xml.count('<animal>'), 2)
         
     def test_random_string(self):
         from utils import random_string

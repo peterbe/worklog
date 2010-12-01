@@ -1,17 +1,13 @@
 import base64
-import unittest
 from pprint import pprint
-from time import mktime, time
+from time import mktime
 import re
 import datetime
-from mongokit import Connection
 import simplejson as json
-from tornado.web import RequestHandler, _O
 
-#import app
 from base import BaseHTTPTestCase
 from utils import encrypt_password
-from apps.main.models import Event, User, Share
+#from apps.main.models import Event, User, Share
 import utils.send_mail as mail
         
 class ApplicationTestCase(BaseHTTPTestCase):
@@ -423,7 +419,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user3.email = u"else@test.com"
         user3.save()
         
-        user = db.User.one({'guid':guid})
+        self.assertTrue(db.User.one({'guid':guid}))
         
         share = db.Share()
         share.user = user2
@@ -458,7 +454,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
-        event_id = struct['event']['id']
+        #event_id = struct['event']['id']
         
         guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
@@ -921,7 +917,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
         self.assertEqual(db.User.find({'guid':guid}).count(), 1)
-        user = db.User.one({'guid':guid})
+        self.assertTrue(db.User.one({'guid':guid}))
         
         response = self.get('/bookmarklet/', headers={'Cookie':cookie})
         self.assertTrue('external_url' not in response.body)
@@ -967,7 +963,6 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue('API' in response.body)
         
         # start using the app and the API page will be different
-        db = self.get_db()
         today = datetime.date.today()
         data = {'title': "Foo", 
                 'date': mktime(today.timetuple()),

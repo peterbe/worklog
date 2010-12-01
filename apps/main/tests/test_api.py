@@ -1,9 +1,8 @@
-from pymongo.objectid import InvalidId, ObjectId
+from pymongo.objectid import ObjectId
 import datetime
 import simplejson as json
 from time import mktime
 import base
-from apps.main.models import User
 
 class APITestCase(base.BaseHTTPTestCase):
     

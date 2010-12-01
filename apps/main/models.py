@@ -145,6 +145,10 @@ class FeatureRequest(BaseDocument):
         'author': User
       }
       
+      required_fields = [
+        'author',
+      ]
+      
       default_values = {
         'vote_weight': 0,
         'description_format': u'plaintext',
@@ -162,8 +166,11 @@ class FeatureRequestComment(BaseDocument):
       'vote_weight': int,
     }
     
+    required_fields = [
+      'vote_weight',
+    ]
     default_values = {
-      'vote_weight':1,
+      'vote_weight': 1,
     }
         
     

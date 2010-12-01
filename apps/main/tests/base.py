@@ -1,5 +1,3 @@
-import time
-import base64
 from urllib import urlencode
 
 from tornado.httpclient import HTTPRequest

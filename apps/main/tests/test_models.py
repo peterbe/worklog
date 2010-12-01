@@ -1,8 +1,9 @@
-from bson import DBRef
+from mongokit import RequireFieldError
 import datetime
 #import sys; sys.path.insert(0, '..')
 import unittest
-from apps.main.models import User, Event, UserSettings, Share
+from apps.main.models import User, Event, UserSettings, Share, \
+  FeatureRequest, FeatureRequestComment
 
 class ModelsTestCase(unittest.TestCase):
     _once = False
@@ -11,7 +12,8 @@ class ModelsTestCase(unittest.TestCase):
             self._once = True
             from mongokit import Connection
             con = Connection()
-            con.register([User, Event, UserSettings, Share])
+            con.register([User, Event, UserSettings, Share, 
+                          FeatureRequest, FeatureRequestComment])
             self.db = con.test
             self._emptyCollections()
             
@@ -43,7 +45,7 @@ class ModelsTestCase(unittest.TestCase):
         user = self.db.users.User()
         user.save()
         event = self.db.events.Event()
-        event.user = user#DBRef('users', user['_id'])
+        event.user = user
         event.title = u"Test"
         event.all_day = True
         event.start = datetime.datetime.today()
@@ -60,7 +62,7 @@ class ModelsTestCase(unittest.TestCase):
     def test_user_settings(self):
         user = self.db.User()
         settings = self.db.UserSettings()
-        from mongokit import RequireFieldError
+        
         self.assertRaises(RequireFieldError, settings.save)
         settings.user = user
         settings.save()
@@ -85,6 +87,22 @@ class ModelsTestCase(unittest.TestCase):
         share.save()
         
         self.assertTrue(self.db.Share.one(dict(key=new_key)))
+        
+    def test_create_feature_request(self):
+        user = self.db.User()
+        user.email = u'test@dot.com'
+        user.save()
+        
+        feature_request = self.db.FeatureRequest()
+        feature_request.author = user
+        self.assertRaises(RequireFieldError, feature_request.save)
+        feature_request.description = u"Bla bla"
+        feature_request.save()
+        
+        frc = self.db.FeatureRequestComment()
+        frc.feature_request = feature_request
+        frc.save()
+        self.assertEqual(frc.vote_weight, 1)
         
         
         
