@@ -1337,7 +1337,8 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(hours_spent[1], ['Tag1', 1.0])
         self.assertEqual(hours_spent[2], ['Tag2', 2.0])
 
-    
+            
+        
         
         
         

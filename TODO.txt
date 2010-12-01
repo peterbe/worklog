@@ -1,5 +1,3 @@
-* (MEDIIUM) Continue running ./run_pyflakes.py
-
 * (MEDIUM) Make user settings handling more generic so that the
   handlers don't have to hard code the name of every setting.
   

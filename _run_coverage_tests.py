@@ -6,7 +6,10 @@ from _run_tests import TEST_MODULES
 
 COVERAGE_MODULES = [
     'app',
-    'models',
+    'apps.main.models',
+    'apps.main.handlers',
+    'apps.main.ui_modules',
+    'apps.smartphone.handlers',
     'utils',
 ]
 

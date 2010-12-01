@@ -277,6 +277,7 @@ class BaseHandler(tornado.web.RequestHandler):
             undoer.guid = guid
             undoer.save()
         return undoer
+
     
             
 
@@ -1295,10 +1296,21 @@ class SignupHandler(BaseHandler):
 #        self.render("feed.xml", entries=entries)
 
 
+class BaseAuthHandler(BaseHandler):
+
+    def get_next_url(self, default='/'):
+        next = default
+        if self.get_argument('next', None):
+            next = self.get_argument('next')
+        elif self.get_cookie('next', None):
+            next = self.get_cookie('next')
+            self.clear_cookie('next')
+        return next
+        
 
 
 @route('/auth/login/')
-class AuthLoginHandler(BaseHandler):
+class AuthLoginHandler(BaseAuthHandler):
     
     def post(self):
         email = self.get_argument('email')
@@ -1318,16 +1330,22 @@ class AuthLoginHandler(BaseHandler):
         #self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
         
-        self.redirect("/")
+        if self.request.headers.get("X-Requested-With") != "XMLHttpRequest":
+            self.redirect(self.get_next_url())
+            
         
 
 @route('/auth/openid/google/')
-class GoogleAuthHandler(BaseHandler, tornado.auth.GoogleMixin):
+class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
     @tornado.web.asynchronous
     def get(self):
         if self.get_argument("openid.mode", None):
             self.get_authenticated_user(self.async_callback(self._on_auth))
             return
+        if self.get_argument('next', None):
+            # because this is going to get lost when we get back from Google
+            # stick it in a cookie
+            self.set_cookie('next', self.get_argument('next'))
         self.authenticate_redirect()
         
     def _on_auth(self, user):
@@ -1356,18 +1374,20 @@ class GoogleAuthHandler(BaseHandler, tornado.auth.GoogleMixin):
             user.save()
             
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
-        self.redirect("/")
+        
+        self.redirect(self.get_next_url())
         
 
 
 @route(r'/auth/logout/')
-class AuthLogoutHandler(BaseHandler):
+class AuthLogoutHandler(BaseAuthHandler):
     def get(self):
-        self.clear_cookie("user")
-        self.clear_cookie("shares")
-        self.clear_cookie("guid")
-        self.clear_cookie("hidden_shares")
-        self.redirect(self.get_argument("next", "/"))
+        self.clear_all_cookies()
+        #self.clear_cookie("user")
+        #self.clear_cookie("shares")
+        #self.clear_cookie("guid")
+        #self.clear_cookie("hidden_shares")
+        self.redirect(self.get_next_url())
 
 
 @route(r'/help/(\w*)')
