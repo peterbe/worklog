@@ -67,7 +67,7 @@ class Application(tornado.web.Application):
         handlers = route.get_routes()
         app_settings = dict(
             title=settings.TITLE,
-            template_path=os.path.join(os.path.dirname(__file__), "templates"),
+            template_path=os.path.join(os.path.dirname(__file__), "apps", "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "static"),
             ui_modules=ui_modules_map,
             xsrf_cookies=xsrf_cookies,
