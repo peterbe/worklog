@@ -49,8 +49,6 @@ class User(BaseDocument):
         """
         if '$bcrypt$' in self.password:
             import bcrypt
-            salt = self.password
-
             hashed = self.password.split('$bcrypt$')[-1].encode('utf8')
             #print "Hashed", hashed
             return hashed == bcrypt.hashpw(raw_password, hashed)

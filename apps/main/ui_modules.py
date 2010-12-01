@@ -8,7 +8,6 @@ import os
 from tempfile import gettempdir
 import tornado.web
 import tornado.escape
-from cStringIO import StringIO
 from utils.timesince import smartertimesince
 from subprocess import Popen, PIPE
 from utils import mkdir
@@ -422,7 +421,7 @@ class ShowUserName(tornado.web.UIModule):
             
         if not name:
             name = user.email
-            if not email:
+            if not name:
                 name = "*Someone anonymous*"
             elif anonymize_email:
                 name = name[:3] + '...@...' + name.split('@')[1][3:]

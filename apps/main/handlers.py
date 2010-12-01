@@ -1,15 +1,13 @@
 # python
 import traceback
 import httplib
-import unicodedata
 from hashlib import md5
 from cStringIO import StringIO
 from urlparse import urlparse
 from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import InvalidId, ObjectId
-from time import mktime, sleep, time
-from types import ClassType
+from time import mktime, sleep
 import datetime
 import os.path
 import re
@@ -25,7 +23,7 @@ from utils.datatoxml import dict_to_xml
 from utils.send_mail import send_email
 from utils.decorators import login_required
 from utils import parse_datetime, niceboolean, \
-  DatetimeParseError, valid_email, datetime_to_date, random_string
+  DatetimeParseError, valid_email, random_string
 
 from ui_modules import EventPreview
 from config import *
@@ -1762,9 +1760,9 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
         if self.get_argument('interval', None):
             interval = self.get_argument('interval')
             
-        cumulative = None
-        if self.get_argument('cumulative', None):
-            cumulative = self.get_argument('cumulative')            
+        #cumulative = None
+        #if self.get_argument('cumulative', None):
+        #    cumulative = self.get_argument('cumulative')            
 
         if not interval:
             interval = '1 month'

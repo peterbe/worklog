@@ -95,8 +95,8 @@ class ModelsTestCase(unittest.TestCase):
         
         feature_request = self.db.FeatureRequest()
         feature_request.author = user
-        self.assertRaises(RequireFieldError, feature_request.save)
-        feature_request.description = u"Bla bla"
+        #self.assertRaises(RequireFieldError, feature_request.save)
+        #feature_request.description = u"Bla bla"
         feature_request.save()
         
         frc = self.db.FeatureRequestComment()
