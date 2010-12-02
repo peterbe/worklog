@@ -26,7 +26,8 @@ class HTTPClientMixin(object):
                            follow_redirects=follow_redirects)
     
     def _fetch(self, url, method, data=None, headers=None, follow_redirects=True):
-        request = HTTPRequest(self.get_url(url), follow_redirects=follow_redirects,
+        full_url = self.get_url(url)
+        request = HTTPRequest(full_url, follow_redirects=follow_redirects,
                               headers=headers, method=method, body=data)
         self.http_client.fetch(request, self.stop)
         return self.wait()

@@ -1,4 +1,35 @@
 {% extends "base.html" %}
-{% block container %}
-Hi!
+
+
+{% block pages %}
+<div data-role="page" id="login">
+
+	<div data-role="header">
+		<h1>Login</h1>
+	</div><!-- /header -->
+	
+        
+	<div data-role="content">
+	<form action="/auth/login/" method="post">
+	<fieldset>
+                <input type="hidden" name="next" value="{{ request.path }}">
+		<div data-role="fieldcontain">
+		<label for="email">Email:</label>
+		<input type="email" name="email" id="email" value="">
+		</div>
+		
+		<div data-role="fieldcontain">
+		<label for="password">Password:</label>
+		<input type="password" name="password" id="password" value="">
+		</div>
+		
+		<button type="submit" data-theme="a">Log in</button>
+	</fieldset>			  
+        {{ xsrf_form_html() }}
+        </form>
+        <p>Or use your <a href="/auth/openid/google/?next={{ request.path }}" rel="external">Google account</a></p>
+	</div><!-- /content -->
+
+</div><!-- /page -->
 {% end %}
+

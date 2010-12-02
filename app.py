@@ -111,7 +111,7 @@ class Application(tornado.web.Application):
 from apps.main import handlers
 from apps.smartphone import handlers
         
-def main():
+def main(): # pragma: no cover
     tornado.options.parse_command_line()
     if options.showurls:
         for path, class_ in route.get_routes():

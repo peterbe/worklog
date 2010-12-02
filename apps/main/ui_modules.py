@@ -237,7 +237,7 @@ class Static(StaticURL):
         return template % dict(url=url)
     
     
-def run_closure_compiler(code, jar_location, verbose=False):
+def run_closure_compiler(code, jar_location, verbose=False): # pragma: no cover
     if verbose:
         t0 = time()
     r = _run_closure_compiler(code, jar_location)
@@ -249,7 +249,7 @@ def run_closure_compiler(code, jar_location, verbose=False):
         print "seconds to compress %d bytes into %d (%s%%)" % (a, b, c)
     return r
 
-def _run_closure_compiler(jscode, jar_location, advanced_optmization=False):
+def _run_closure_compiler(jscode, jar_location, advanced_optmization=False): # pragma: no cover
     cmd = "java -jar %s " % jar_location
     if advanced_optmization:
         cmd += " --compilation_level ADVANCED_OPTIMIZATIONS "
@@ -265,7 +265,7 @@ def _run_closure_compiler(jscode, jar_location, advanced_optmization=False):
    
     return stdoutdata
 
-def run_yui_compressor(code, type_, jar_location, verbose=False):
+def run_yui_compressor(code, type_, jar_location, verbose=False): # pragma: no cover
     if verbose:
         t0 = time()
     r = _run_yui_compressor(code, type_, jar_location)
