@@ -281,7 +281,7 @@ class BaseHandler(tornado.web.RequestHandler):
             
 
 class APIHandlerMixin(object):
-    
+ 
     def check_guid(self):
         guid = self.get_argument('guid', None)
         if guid:
@@ -500,12 +500,23 @@ class EventsHandler(BaseHandler):
                     all_day = False
             if not all_day:
                 # default is to make it one hour 
-                end += datetime.timedelta(hours=1)
+                end += datetime.timedelta(seconds=MINIMUM_DAY_SECONDS)
         elif self.get_argument('start', None) and self.get_argument('end', None):
             start = parse_datetime(self.get_argument('start'))
             end = parse_datetime(self.get_argument('end'))
             if end <= start:
                 raise tornado.web.HTTPError(400, "'end' must be greater than 'start'")
+            if not all_day:
+                # then the end must be >= (start + MINIMUM_DAY_SECONDS)
+                if end < (start + datetime.timedelta(seconds=MINIMUM_DAY_SECONDS)):
+                    raise tornado.web.HTTPError(400, 
+                     "End must be at least %s minutes more than the start" % \
+                     (MINIMUM_DAY_SECONDS / 60))
+        elif self.get_argument('start', None) and \
+          not self.get_argument('end', None) and not all_day:
+            start = parse_datetime(self.get_argument('start'))
+            end = start + datetime.timedelta(seconds=MINIMUM_DAY_SECONDS)
+            
         elif self.get_argument('start', None) or self.get_argument('end', None):
             raise tornado.web.HTTPError(400, "Need both 'start' and 'end'")
         else:
@@ -565,6 +576,20 @@ class EventsHandler(BaseHandler):
             self.write(tornado.escape.json_encode(result))
 
         
+@route('/api/version(\.json|\.xml|\.txt|/)?')
+class APIVersionHandler(APIHandlerMixin, BaseHandler):
+    def get(self, format=None):
+        version = "1.1"
+            
+        data = dict(version=version)
+        if format == '.json':
+            self.write_json(data)
+        elif format == '.xml':
+            self.write_xml(data)
+        else:
+            self.write_txt(unicode(data['version']))
+        
+            
 @route(r'/api/events(\.json|\.js|\.xml|\.txt|/)?')
 class APIEventsHandler(APIHandlerMixin, EventsHandler):
     
@@ -1459,6 +1484,8 @@ class HelpHandler(BaseHandler):
         """
         code = '\n'.join(x.lstrip() for x in code.splitlines())
         options['code_pythondonecal_1'] = code.strip()
+        
+        options['minimum_day_minutes'] = MINIMUM_DAY_SECONDS / 60
 
 @route(r'/bookmarklet/')
 class Bookmarklet(EventsHandler):

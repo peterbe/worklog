@@ -1,7 +1,7 @@
 from hashlib import md5
 import uuid
 import datetime
-from mongokit import Document
+from mongokit import Document, ValidationError
 from utils import encrypt_password
 
 class BaseDocument(Document):
@@ -99,6 +99,13 @@ class Event(BaseDocument):
     indexes = [
       {'fields': ['user.$id', 'start', 'end'], 'check':False},
     ]
+    
+    
+    def validate(self, *args, **kwargs):
+        if self['end'] < self['start']:
+            raise ValidationError("end must be greater than start")
+        super(Event, self).validate(*args, **kwargs)
+                    
     
     def chown(self, user, save=False):
         self.user = user

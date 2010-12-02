@@ -3,6 +3,7 @@ import datetime
 import simplejson as json
 from time import mktime
 import base
+from apps.main.config import MINIMUM_DAY_SECONDS
 
 class APITestCase(base.BaseHTTPTestCase):
     
@@ -263,7 +264,9 @@ class APITestCase(base.BaseHTTPTestCase):
         # this should have made the end date to be 1 hour from now
         self.assertEqual(today.strftime('%Y%m%d%H%M'),
                          event.start.strftime('%Y%m%d%H%M'))
-        self.assertEqual((today + datetime.timedelta(hours=1)).strftime('%Y%m%d%H%M'),
+        from apps.main.config import MINIMUM_DAY_SECONDS
+        self.assertEqual((today + datetime.timedelta(seconds=MINIMUM_DAY_SECONDS
+          )).strftime('%Y%m%d%H%M'),
                          event.end.strftime('%Y%m%d%H%M'))
                          
     def test_posting_invalid_data(self):
@@ -283,9 +286,9 @@ class APITestCase(base.BaseHTTPTestCase):
         self.assertEqual(response.code, 400)
 
         data.pop('date')
-        data['start'] = mktime((2011, 1, 29,0,0,0,0,0,0))
-        response = self.post('/api/events.json', data)
-        self.assertEqual(response.code, 400)
+        #data['start'] = mktime((2011, 1, 29,0,0,0,0,0,0))
+        #response = self.post('/api/events.json', data)
+        #self.assertEqual(response.code, 400)
         
         data['start'] = mktime((2011, 1, 29,0,0,0,0,0,0))
         data['end'] = data['start']
@@ -308,4 +311,83 @@ class APITestCase(base.BaseHTTPTestCase):
         end = datetime.datetime.fromtimestamp(struct['event']['end'])
         self.assertEqual((end - start).seconds, 60*60)
         self.assertTrue(not (start.hour==0 and start.minute==0 and start.second==0))
+        
+    def test_getting_version(self):
+        from apps.main.config import API_VERSION
+        url = '/api/version/'
+        response = self.get(url)
+        self.assertEqual(response.code, 200)
+        self.assertTrue(API_VERSION in response.body)
+        
+        url = '/api/version.json'
+        response = self.get(url)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['version'], API_VERSION)
+
+        url = '/api/version.xml'
+        response = self.get(url)
+        self.assertEqual(response.code, 200)
+        self.assertTrue('<version>%s</version>' % API_VERSION in response.body)
+        
+    def test_failing_to_add_event_with_wrong_dates(self):
+        peter = self.get_db().users.User()
+        assert peter.guid
+        peter.save()
+        
+        def dt(x):
+            return mktime(x.timetuple())
+        
+        data = dict(guid=peter.guid, title="x", all_day=True,
+                    start=dt(datetime.date.today()),
+                    end=dt(datetime.date.today() - datetime.timedelta(days=1)))
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 400)
+
+        data = dict(guid=peter.guid, title="x", all_day=False,
+                    start=dt(datetime.datetime.today()),
+                    end=dt(datetime.datetime.now() - datetime.timedelta(seconds=1)))
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 400)
+        
+        # there's a lower limit how short the the not-all_day events can be
+        from apps.main.config import MINIMUM_DAY_SECONDS
+        data = dict(guid=peter.guid, title="x", all_day=False,
+                    start=dt(datetime.datetime.today()),
+                    end=dt(datetime.datetime.now() + \
+                      datetime.timedelta(seconds=MINIMUM_DAY_SECONDS -1)))
+        response = self.post('/api/events.json', data)
+        self.assertEqual(response.code, 400)
+        
+    def test_automatic_end_for_not_all_day_events(self):
+        # since there's a minimum for the non-all_day events, it makes 
+        # it possible to automatically set this
+        peter = self.get_db().users.User()
+        assert peter.guid
+        peter.save()
+        
+        def dt(x):
+            return mktime(x.timetuple())
+        
+        data = dict(guid=peter.guid, title="Xxx", all_day=False,
+                    start=dt(datetime.date.today()))
+        response = self.post('/api/events/', data)
+        self.assertEqual(response.code, 201)
+        struct = json.loads(response.body)
+        start = struct['event']['start']
+        end = struct['event']['end']
+        
+        self.assertEqual(int(end-start), MINIMUM_DAY_SECONDS)
+        
+        # the same works if you don't use 'start' but 'date'
+        data = dict(guid=peter.guid, title="Yyy", all_day=False,
+                    date=dt(datetime.date.today()))
+        response = self.post('/api/events/', data)
+        self.assertEqual(response.code, 201)
+        struct = json.loads(response.body)
+        start = struct['event']['start']
+        end = struct['event']['end']
+        self.assertEqual(int(end-start), MINIMUM_DAY_SECONDS)        
+        
+        
         

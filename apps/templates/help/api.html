@@ -74,7 +74,16 @@ The format (<code>.json</code>, <code>.xml</code> or <code>.txt</code>) is optio
 <p><strong>Note:</strong>
 The format (<code>.json</code>, <code>.xml</code> or <code>.txt</code>) is optional and defaults to <code>.json</code> if omitted.</p>
 
-<p>Read more: <a href="#Python">Python</a></p>
+<div id="rules-for-posting" style="display:none">
+<h2>About dates when posting</h2>
+<p>You can either just send the single parameter <code>date</code> or you send can send <code>start</code> and 
+<code>end</code>. If you use <code>start</code> <strong>and</strong> <code>end</code> the <code>end</code> 
+date has to greater or equal to the <code>start</code> date if it's <code>all_day=true</code> and if it's
+<code>all_day=false</code> the <code>end</code> date must be at least {{ minimum_day_minutes }} minutes apart.
+</p>
+</div>
+
+<p class="readmores">Read more: <a href="#Python">About using Python</a>, <a href="#rules-for-posting">About rules for posting</a></p>
 
 <div id="Python" style="display:none">
 <h2>Using Python</h2>
@@ -98,12 +107,23 @@ github.com</a>) or use your favorite package manager to install (e.g.
 {% block extrajs %}
 <script type="text/javascript">
 $(function() {
-  if (location.hash == '#Python') {
-    $('#Python').show();
-  }
-  $('a[href="#Python"]').click(function() {
-    $('#Python:hidden').show();
+
+  $('.readmores a').click(function() {
+    if ($($(this).attr('href') + ':hidden').size()) {
+      $($(this).attr('href') + ':hidden').show();
+    } else {
+      $($(this).attr('href') + ':visible').hide();
+    }
   });
+  
+  if (location.hash) {
+    $('.readmores a').each(function(i, e) {
+      if ($(e).attr('href') == location.hash) {
+        $(e).click();
+      }
+    });
+  }
+
 });
 </script>
 {% end %}

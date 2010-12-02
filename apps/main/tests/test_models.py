@@ -1,4 +1,4 @@
-from mongokit import RequireFieldError
+from mongokit import RequireFieldError, ValidationError
 import datetime
 #import sys; sys.path.insert(0, '..')
 import unittest
@@ -57,7 +57,24 @@ class ModelsTestCase(unittest.TestCase):
         event = self.db.events.Event.one()
         
         assert self.db.events.Event.find({"user.$id":event.user._id}).count() == 1
+    
+    def test_create_event_wrongly(self):
+        user = self.db.users.User()
+        user.save()
+        event = self.db.events.Event()
+        event.user = user
+        event.title = u"Test"
+        event.all_day = True
+        event.start = datetime.datetime.today() + datetime.timedelta(seconds=1)
+        event.end = datetime.datetime.today()
+        self.assertRaises(ValidationError, event.validate)
+        self.assertRaises(ValidationError, event.save)
         
+        # but it can be equal
+        event.start = datetime.datetime.today()
+        event.end = datetime.datetime.today()
+        event.validate()
+        event.save()
         
     def test_user_settings(self):
         user = self.db.User()

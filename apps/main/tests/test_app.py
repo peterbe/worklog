@@ -9,7 +9,8 @@ from base import BaseHTTPTestCase
 from utils import encrypt_password
 #from apps.main.models import Event, User, Share
 import utils.send_mail as mail
-        
+from apps.main.config import MINIMUM_DAY_SECONDS
+
 class ApplicationTestCase(BaseHTTPTestCase):
     
     def _decode_cookie_value(self, key, cookie_value):
@@ -298,7 +299,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/events/stats.json', headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
-        self.assertEqual(struct.get('hours_spent'), [['tagged', 1.0]])
+        self.assertEqual(struct.get('hours_spent'), [['tagged', MINIMUM_DAY_SECONDS/float(60*60)]])
         
         data = {'title': "Foo3 @tagged",
                 'date': mktime(today.timetuple()),
@@ -320,10 +321,10 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/events/stats.txt', headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         self.assertTrue('*Untagged*' in response.body)
-        self.assertEqual(response.body.count('1.0'), 2)
+        self.assertEqual(response.body.count('1.0'), 1)
         self.assertEqual(response.body.count('3.0'), 1)
                 
-        
+
     def test_previewing_posted_events(self):
         db = self.get_db()
         today = datetime.date.today()
@@ -1304,8 +1305,10 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/events/stats.json', headers={'Cookie': cookie})
         struct = json.loads(response.body)
         hours_spent = struct['hours_spent']
-        self.assertTrue(["Tag1", 1.0] in hours_spent)
-        self.assertTrue(["Tag2", 1.0] in hours_spent)
+        min_hours = MINIMUM_DAY_SECONDS / float(60 * 60)
+        
+        self.assertTrue(["Tag1", min_hours] in hours_spent)
+        self.assertTrue(["Tag2", min_hours] in hours_spent)
         
         event = db.Event.one(dict(tags=u"Tag2"))
         event.end += datetime.timedelta(hours=1)
@@ -1315,8 +1318,8 @@ class ApplicationTestCase(BaseHTTPTestCase):
         struct = json.loads(response.body)
         hours_spent = struct['hours_spent']
         # they should be ordered by the tag
-        self.assertEqual(hours_spent[0], ['Tag1', 1.0])
-        self.assertEqual(hours_spent[1], ['Tag2', 2.0])
+        self.assertEqual(hours_spent[0], ['Tag1', min_hours])
+        self.assertEqual(hours_spent[1], ['Tag2', min_hours + 1.0])
         
         # add a third one without a tag
         data = {'title': "No tag here",
@@ -1333,11 +1336,10 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/events/stats.json', headers={'Cookie': cookie})
         struct = json.loads(response.body)
         hours_spent = struct['hours_spent']
-        self.assertEqual(hours_spent[0], ['<em>Untagged</em>', 3.0])
-        self.assertEqual(hours_spent[1], ['Tag1', 1.0])
-        self.assertEqual(hours_spent[2], ['Tag2', 2.0])
+        self.assertEqual(hours_spent[0], ['<em>Untagged</em>', min_hours + 2])
+        self.assertEqual(hours_spent[1], ['Tag1', min_hours])
+        self.assertEqual(hours_spent[2], ['Tag2', min_hours + 1.0])
 
-    
         
         
         
