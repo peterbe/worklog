@@ -5,9 +5,13 @@ from apps.main.handlers import BaseHandler
 class SmartphoneHandler(BaseHandler):
     def get(self, device_name):
         options = self.get_base_options()
+        
+        template = 'smartphone/index.html'
         if options.get('user'):
             options['available_tags'] = self.get_all_available_tags(options['user'])
-        self.render('smartphone/index.html', **options)
+            template = 'smartphone/logged_in.html'
+
+        self.render(template, **options)
         
         
 #@route('/smartphone/auth/login/')

@@ -1,80 +1,7 @@
-<!doctype html>
-<html> 
-	<head> 
-	<title>DoneCal</title>
-	<meta charset="utf-8">
-		
-        <!-- Mobile viewport optimized: http://bit.ly/9AKHaZ -->
-        <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0">
-	
-        <!-- Web app will display in full screen mode when launched from the Web Clip icon -->
-        <meta name="apple-mobile-web-app-capable" content="yes">
-	
-        <!-- High Res 114 x 114 iPhone, Android -->
-        <link rel="apple-touch-icon-precomposed" media="screen and (min-resolution: 220dpi)" href="{{ static_url("images/smartphone/icon_114x114.png") }}">
+{% extends "base.html" %}
 
-        <!-- Low Res 57 x 57 iPhone, Android icon -->
-        <link rel="apple-touch-icon-precomposed" media="screen and (max-resolution: 219dpi)" href="{{ static_url("images/smartphone/icon_57x57.png") }}">
 
-        <!-- Nokia icon -->
-        <link rel="shortcut icon" href="{{ static_url("images/smartphone/icon_57x57.png") }}">
-	
-        <!-- BlackBerry and some others use a meta tag for defining mobile-friendly documents -->
-        <meta name="HandheldFriendly" content="True">
-
-        <!-- Windows-proprietary meta tag -->
-        <meta name="MobileOptimized" content="320"/>
-
-        <!-- Mobile Internet Explorer allows us to activate ClearType technology for smoothing fonts for easy reading -->
-        <meta http-equiv="cleartype" content="on">
-	
-
-	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.css" />
-	<script src="http://code.jquery.com/jquery-1.4.4.min.js"></script>
-        {{ modules.Static("smartphone.js") }}
-	<script src="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.js"></script>
-	
-</head> 
-<body> 
-
-<div data-role="page" id="start">
-
-	<div data-role="header">
-		<h1>DoneCal</h1>
-	</div><!-- /header -->
-
-	<div data-role="content">	
-                {% if user %}
-		<p><a href="#clock">Clock</a></p>
-		<p><a href="/auth/logout/?next={{ request.path }}">Log out</a></p>
-                {% else %}
-		<p><a href="#login">Log in</a></p>
-                {% end %}
-                
-	</div><!-- /content -->
-
-</div><!-- /page -->
-
-{% if user %}
-
-<div data-role="page" id="clock">
-
-	<div data-role="header">
-		<h1>Clock</h1>
-	</div><!-- /header -->
-        
-	<div data-role="content">
-        <p>Your tags:</p>
-        <ul>
-          {% for tag in available_tags %}
-          <li>{{ tag }}</li>
-          {% end %}
-        </ul>
-        </div>
-
-</div>
-
-{% else %}
+{% block pages %}
 <div data-role="page" id="login">
 
 	<div data-role="header">
@@ -105,7 +32,4 @@
 
 </div><!-- /page -->
 {% end %}
-	
 
-</body>
-</html>

@@ -1,102 +1,65 @@
 <!doctype html>
-<html lang="en" class="no-js" manifest="default.manifest">
-<head>
-  <meta charset="utf-8">
+<html> 
+	<head> 
+	<title>DoneCal</title>
+	<meta charset="utf-8">
+		
+        <!-- Mobile viewport optimized: http://bit.ly/9AKHaZ -->
+        <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0">
+	
+        <!-- Web app will display in full screen mode when launched from the Web Clip icon -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+	
+        <!-- High Res 114 x 114 iPhone, Android -->
+        <link rel="apple-touch-icon-precomposed" media="screen and (min-resolution: 220dpi)" href="{{ static_url("images/smartphone/icon_114x114.png") }}">
 
-  <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame
-       Remove this if you use the .htaccess -->
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <!-- Low Res 57 x 57 iPhone, Android icon -->
+        <link rel="apple-touch-icon-precomposed" media="screen and (max-resolution: 219dpi)" href="{{ static_url("images/smartphone/icon_57x57.png") }}">
 
-  <title>{% block title %}Smartphone{% end %}</title>
-  <meta name="description" content="">
-  <meta name="author" content="">
+        <!-- Nokia icon -->
+        <link rel="shortcut icon" href="{{ static_url("images/smartphone/icon_57x57.png") }}">
+	
+        <!-- BlackBerry and some others use a meta tag for defining mobile-friendly documents -->
+        <meta name="HandheldFriendly" content="True">
 
-  <!-- Mobile viewport optimized: http://bit.ly/9AKHaZ -->
-  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0">
+        <!-- Windows-proprietary meta tag -->
+        <meta name="MobileOptimized" content="320"/>
 
-  <!-- Web app will display in full screen mode when launched from the Web Clip icon -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
+        <!-- Mobile Internet Explorer allows us to activate ClearType technology for smoothing fonts for easy reading -->
+        <meta http-equiv="cleartype" content="on">
+	
 
-  <!-- Makes status bar partially transparent and additionally removes it from the document flow -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.css" />
+	<script src="http://code.jquery.com/jquery-1.4.4.min.js"></script>
+        {{ modules.Static("smartphone.js") }}
+	<script src="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.js"></script>
+	
+</head> 
+<body> 
+{% block body %}
 
-  <!-- full screen startup -->
-  <link rel="apple-touch-startup-image" media="screen and (resolution: 163dpi)" href="images/myCustomStartupGraphic.png">
-  <link rel="apple-touch-startup-image" media="screen and (resolution: 326dpi)" href="images/myCustomStartupGraphic4.png">
+{% block start %}
+<div data-role="page" id="start">
 
-  <!-- Replace apple-touch-icon.png in the root of your domain and delete these references -->
+	<div data-role="header">
+		<h1>DoneCal</h1>
+	</div><!-- /header -->
 
-  <!-- High Res 114 x 114 iPhone, Android -->
-  <link rel="apple-touch-icon-precomposed" media="screen and (min-resolution: 220dpi)" href="/iphone4-touch-icon.png">
+	<div data-role="content">	
+                {% if user %}
+		<p><a href="#clock">Clock</a></p>
+		<p><a href="/auth/logout/?next={{ request.path }}">Log out</a></p>
+                {% else %}
+		<p><a href="#login">Log in</a></p>
+                {% end %}
+                
+	</div><!-- /content -->
 
-  <!-- Low Res 57 x 57 iPhone, Android icon -->
-  <link rel="apple-touch-icon-precomposed" media="screen and (max-resolution: 219dpi)" href="/apple-touch-icon.png">
+</div><!-- /page -->
+{% end %}
 
-  <!-- Nokia icon -->
-  <link rel="shortcut icon" href="/apple-touch-icon.png">
+{% block pages %}
+{% end %}
 
-  <!-- BlackBerry and some others use a meta tag for defining mobile-friendly documents -->
-  <meta name="HandheldFriendly" content="True">
-
-  <!-- Windows-proprietary meta tag -->
-  <meta name="MobileOptimized" content="320"/>
-
-  <!-- Mobile Internet Explorer allows us to activate ClearType technology for smoothing fonts for easy reading -->
-  <meta http-equiv="cleartype" content="on">
-
-  <!-- Specifically targeting mobile browsers -->
-  <!--<link rel="stylesheet" href="css/style.css?v=1">-->
-  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.css" />
-  
-  <!-- For SEO: avoid duplicated content -->
-  <link rel="alternate" media="handheld" href="" />
-
-  <!-- All JavaScript at the bottom, except for Modernizr which enables HTML5 elements & feature detects -->
-  <!--<script src="js/modernizr-1.5.min.js"></script>-->
-
-</head>
-
-<body>
-  <div id="container">
-  {% block container %}
-    <header>
-
-    </header>
-
-    <div id="main">
-    {% block main %}
-    {% end %}
-    </div>
-
-    <footer>
-
-    </footer>
-  </div> <!--! end of #container -->
-  {% end %}
-
-
-  <!-- Javascript at the bottom for fast page loading -->
-
-  <!-- Grab Google CDN's jQuery. fall back to local if necessary -->
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
-  <script>!window.jQuery && document.write(unescape('%3Cscript src="{{ modules.StaticURL("ext/jquery-1.4.4.min.js") }}"%3E%3C/script%3E'))</script>
-  
-  <script src="//code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.js"></script>
-  <script>!window.jQuery && document.write(unescape('%3Cscript src="{{ modules.StaticURL("ext/jquery.mobile-1.0a2.min.js") }}"%3E%3C/script%3E'))</script>
-  
-  <script src=""></script>
-  <!--
-  <script src="js/mobile.js?v=1"></script>
-  <script src="js/plugins.js?v=1"></script>
-  <script src="js/script.js?v=1"></script>
-  -->
-
-
-  <!-- yui profiler and profileviewer - remove for production -->
-  <!--<script src="js/profiling/yahoo-profiling.min.js"></script>-->
-  <!--<script src="js/profiling/config.js?v=1"></script>-->
-  <!-- end profiling code -->
-
-  <noscript>Your browser does not support JavaScript!</noscript>
 </body>
 </html>

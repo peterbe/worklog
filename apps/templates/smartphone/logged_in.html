@@ -1,0 +1,16 @@
+<div data-role="page" id="clock">
+
+	<div data-role="header">
+		<h1>Clock</h1>
+	</div><!-- /header -->
+        
+	<div data-role="content">
+        <p>Your tags:</p>
+        <ul>
+          {% for tag in available_tags %}
+          <li>{{ tag }}</li>
+          {% end %}
+        </ul>
+        </div>
+
+</div>
