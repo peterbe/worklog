@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content_inner %}
+<h1>Email reminders</h1>
+
+<form action="." method="post">
+
+  {{ xsrf_form_html() }}
+
+</form>
+
+{% end %}

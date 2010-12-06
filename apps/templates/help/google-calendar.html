@@ -1,0 +1,58 @@
+{% extends "help_base.html" %}
+
+{% block extra_head %}
+<style type="text/css">
+#google-features, #donecal-features {
+  width:49%;
+}
+#google-features {
+  float:left;
+}
+#donecal-features {
+  float:right;
+}
+</style>
+{% end %}
+
+{% block content_inner %}
+
+<h1>DoneCal vs. Google Calendar</h1>
+
+
+<p>Personally, I use DoneCal to track what I <strong>have done</strong> (e.g. hours spent on a support job)
+and Google Calendar to track what I <strong>will do</strong> (e.g. meeting at Cafe 10.30am next Tuesday).</p>
+
+<p>When you realise that DoneCal is a database of event entries with a calendar as the user interface it
+becomes more clear what the distinction is.</p>
+
+
+<div id="google-features">
+<h2>Google Calendar</h2>
+
+<ul>
+  <li>A calendar with lots of powerful features</li>
+  <li>Ability to see shared calendars</li>
+  <li>Ability to import calendars from other web services (i.e. CalDAV)</li>
+  <li>Great reminders (email, SMS, popups) for when events are about to happen</li>
+  <li>Interfaces and syncs with various mobile devices</li>
+  <li>A powerful but complex API</li>
+</ul>
+</div>
+
+<div id="donecal-features">
+<h2>DoneCal</h2>
+
+<ul>
+  <li>Ability to tag entered events easily</li>
+  <li>A simple and powerful calendar interface for entering and editing events</li>
+  <li>Reporting capabilites per month, per week or per day</li>
+  <li>Excel and CSV export functions</li>
+  <li>A super simple API for programmatically entering events</li>
+  <li>A <a href="/help/Bookmarklet">bookmarklet</a> for quickly entering events in the browser</li>
+</ul>
+</div>
+
+
+<br style="clear:both">
+
+{% end %}
