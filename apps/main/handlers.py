@@ -898,9 +898,10 @@ class EventStatsHandler(BaseHandler):
                     hours = (entry['end'] - entry['start']).seconds / 60.0 / 60
                     if entry['tags']:
                         for tag in entry['tags']:
-                            hours_spent[tag] += hours
+                            hours_spent[tag] += round(hours, 1)
                     else:
-                        hours_spent[u''] += hours
+                        hours_spent[u''] += round(hours, 1)
+                        
                         
         _has_untagged_events = False
         
@@ -927,9 +928,9 @@ class EventStatsHandler(BaseHandler):
         hours_spent = [(x,y) for (x, y) in hours_spent.items() if y]
         hours_spent.sort(lambda x,y: cmp_tags(x[0], y[0]))
         
+        
         data = dict(days_spent=days_spent,
                     hours_spent=hours_spent)
-                    
         if with_colors:
             # then define 'days_colors' and 'hours_colors'
             
@@ -964,36 +965,30 @@ class EventStatsHandler(BaseHandler):
 class UserSettingsHandler(BaseHandler):
     def get(self, format=None):
         # default initials
-        hide_weekend = False
-        monday_first = False
-        disable_sound = False
-        offline_mode = False
+        default = dict()
+        setting_keys = list()
+        for key, value in UserSettings.structure.items():
+            if value == bool:
+                default[key] = False
+                setting_keys.append(key)
         
         user = self.get_current_user()
         if user:
             user_settings = self.get_current_user_settings(user)
             if user_settings:
-                hide_weekend = user_settings.hide_weekend
-                monday_first = user_settings.monday_first
-                disable_sound = user_settings.disable_sound
-                offline_mode = getattr(user_settings, 'offline_mode', False)
+                for key in setting_keys:
+                    default[key] = getattr(user_settings, key, False)
             else:
                 user_settings = self.db.UserSettings()
                 user_settings.user = user
                 user_settings.save()
 
         if format == '.js':
-            data = dict(hide_weekend=hide_weekend,
-                        monday_first=monday_first,
-                        disable_sound=disable_sound,
-                        offline_mode=offline_mode)
             self.set_header("Content-Type", "text/javascript; charset=UTF-8")
             self.set_header("Cache-Control", "public,max-age=0")
-            self.write('var SETTINGS=%s;' % tornado.escape.json_encode(data))
+            self.write('var SETTINGS=%s;' % tornado.escape.json_encode(default))
         else:
-            _locals = locals()
-            _locals.pop('self')
-            self.render("user/settings.html", **_locals)
+            self.render("user/settings.html", **default)
         
     def post(self, format=None):
         user = self.get_current_user()
@@ -1358,7 +1353,6 @@ class AuthLoginHandler(BaseAuthHandler):
         if self.request.headers.get("X-Requested-With") != "XMLHttpRequest":
             self.redirect(self.get_next_url())
             
-        
 
 @route('/auth/openid/google/')
 class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
@@ -1415,7 +1409,7 @@ class AuthLogoutHandler(BaseAuthHandler):
         self.redirect(self.get_next_url())
 
 
-@route(r'/help/(\w*)')
+@route(r'/help/([\w-]*)')
 class HelpHandler(BaseHandler):
     
     SEE_ALSO = (
@@ -1424,6 +1418,8 @@ class HelpHandler(BaseHandler):
       u"News",
       ['/API', u"Developers' API"],
       u"Bookmarklet",
+      ['/Google-calendar', u"Google Calendar"],
+      u"Feature requests",
     )
     
     def get(self, page):
@@ -1447,7 +1443,7 @@ class HelpHandler(BaseHandler):
     def get_see_also_links(self):
         for each in self.SEE_ALSO:
             if isinstance(each, basestring):
-                link = '/%s' % each
+                link = '/%s' % each.replace(' ','-')
                 label = each
             else:
                 link, label = each

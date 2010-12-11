@@ -24,7 +24,8 @@ function display_sidebar_stats(start, end) {
       }
       
       if (response.hours_spent && response.hours_spent.length) {
-         $('#hours-plot:hidden').show();
+         //$('#hours-plot:hidden').show();
+         $('#hours-plot').html('');
          var hours_plot = 
            $.jqplot('hours-plot', [response.hours_spent], {
               seriesColors: response.hours_colors,
@@ -34,7 +35,7 @@ function display_sidebar_stats(start, end) {
            legend:{show:true}
         });
       } else {
-         $('#hours-plot:visible').hide();
+         //$('#hours-plot:visible').hide();
       }
       
    });

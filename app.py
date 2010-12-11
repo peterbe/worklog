@@ -107,9 +107,10 @@ class Application(tornado.web.Application):
                     model_classes.append(thing)
 
         self.con.register(model_classes)
-        
-from apps.main import handlers
-from apps.smartphone import handlers
+ 
+for app_name in settings.APPS:
+    __import__('apps.%s' % app_name, globals(), locals(), ['handlers'], -1)
+    
         
 def main(): # pragma: no cover
     tornado.options.parse_command_line()

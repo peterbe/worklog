@@ -1,0 +1,4 @@
+{% for reminder in reminders %}
+  <div class="reminder{{ reminder._id }} reminder {% if reminder.disabled %}disabled{% end %}"
+   ><a href="?edit={{ reminder._id }}" title="Click to edit">{{ reminder.time[0] }}:{% if reminder.time[1] %}{{ reminder.time[1] }}{% else %}00{% end %}</a></div>
+{% end %}

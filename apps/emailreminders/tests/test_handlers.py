@@ -33,11 +33,21 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.code, 302)
         
-        
         email_reminder = db.EmailReminder.one()
         self.assertEqual(email_reminder.user._id, peter._id)
         self.assertEqual(email_reminder.weekdays, [EmailReminder.MONDAY, 
                                                    EmailReminder.WEDNESDAY])
         self.assertEqual(email_reminder.time, [13,0])
         self.assertEqual(email_reminder.tz_offset, -3)
+        
+        edit_url = "?edit=%s" % email_reminder._id
+        
+        # reload the page again and expect to see something about this reminder
+        # in there
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        self.assertTrue(edit_url in response.body)
+        
+        
+        
         

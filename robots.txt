@@ -2,3 +2,6 @@ User-Agent: *
 Allow: /
 Disallow: /report/
 Disallow: /stats/
+Disallow: /share/
+Disallow: /user/account/
+Disallow: /user/logout/

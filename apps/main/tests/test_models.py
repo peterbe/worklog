@@ -1,30 +1,10 @@
 from mongokit import RequireFieldError, ValidationError
 import datetime
 #import sys; sys.path.insert(0, '..')
-import unittest
-from apps.main.models import User, Event, UserSettings, Share, \
-  FeatureRequest, FeatureRequestComment
+from base import BaseModelsTestCase
 
-class ModelsTestCase(unittest.TestCase):
-    _once = False
-    def setUp(self):
-        if not self._once:
-            self._once = True
-            from mongokit import Connection
-            con = Connection()
-            con.register([User, Event, UserSettings, Share, 
-                          FeatureRequest, FeatureRequestComment])
-            self.db = con.test
-            self._emptyCollections()
-            
-    def _emptyCollections(self):
-        [self.db.drop_collection(x) for x 
-         in self.db.collection_names() 
-         if x not in ('system.indexes',)]
-        
-    def tearDown(self):
-        self._emptyCollections()
-        
+class ModelsTestCase(BaseModelsTestCase):
+    
     def test_create_user(self):
         user = self.db.User()
         assert user.guid

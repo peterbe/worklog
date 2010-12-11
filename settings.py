@@ -2,6 +2,7 @@ TITLE = u"DoneCal"
 APPS = (
   'main',
   'smartphone',
+  'emailreminders',
 )
 
 LOGIN_URL = "/auth/login"

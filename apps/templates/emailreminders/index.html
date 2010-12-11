@@ -1,12 +1,152 @@
 {% extends "base.html" %}
 
+{% block extra_head %}
+<style type="text/css">
+table#weekdays {
+  width: 100%;
+  border: 1px solid #ccc;
+}
+table#weekdays td {
+  width:14%;
+  padding:4px;
+}
+
+table#weekdays th {
+  font-weight:bold;
+  border-bottom:1px solid #ccc;
+}
+table#weekdays td {
+  border-right:1px solid #ccc;
+}
+
+form div { margin-bottom:10px; }
+#as_ampm { padding-left:15px; color:#666; }
+
+{% for id, color in all_reminder_classnames %}
+.reminder{{ id }} { background-color:{{ color }};}
+{% end %}
+
+.reminder {
+  padding-left:5px;
+  margin:2px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  margin-bottom:5px;
+}
+.reminder a {
+  color:white;
+}
+.reminder a:hover {
+  background-color:transparent;
+}
+.disabled {
+  text-through:strike;
+}
+</style>
+{% end %}
+
 {% block content_inner %}
 <h1>Email reminders</h1>
 
-<form action="." method="post">
+{% if not count_reminders %}
+<p>Email reminders are emails that are sent to you at a particular time of the day
+<strong>asking you want you've been up to</strong>. 
+By simply replying you can quickly enter events into your 
+calendar. If you prefer you can have the reminder sent at the end of the working day or
+at the begining of the next day. 
+</p>
+<p>Once set up instructions will be included in the email sent to you. </p>
+{% end %}
 
-  {{ xsrf_form_html() }}
+
+<table id="weekdays">
+<thead>
+  <tr>
+  {% for weekday in weekdays %}
+    <th>{{ weekday }}</th>
+  {% end %}
+  </tr>
+</thead>
+<tbody>
+  <tr>
+  {% for weekday in weekdays %}
+    <td>{{ modules.ShowWeekdayReminders(weekday, weekday_reminders) }}</td>
+  {% end %}
+  </tr>
+</tbody>
+</table>
 
 </form>
 
+<form action="." method="post" id="reminders">
+  {% if edit_reminder %}
+  <h3>Edit email reminder</h3>
+  {% else %}
+  <h3>Set up a new email reminder</h3>
+  {% end %}
+  
+  <div>
+  <strong>Every:</strong>
+  {% for weekday in weekdays %}
+  <label for="id_{{ weekday }}"><input type="checkbox" name="weekdays" value="{{ weekday }}" id="id_{{ weekday }}"
+   {% if edit_reminder %}
+   {% if weekday in edit_reminder.weekdays %}checked{% end %}
+   {% else %}
+   {% if weekday not in ('Saturday','Sunday') %}checked{% end %}
+   {% end %}
+  > {{ weekday }}</label>
+  {% end %}
+  </div>
+  
+  <div>
+  <strong>Time:</strong>
+  <select name="time_hour" id="id_time_hour">
+    {% for i in range(24) %}
+    <option value="{{ i }}"
+     {% if edit_reminder %}
+     {% if i==edit_reminder.time[0] %}selected{% end %}
+     {% else %}
+     {% if i==17 %}selected{% end %}
+     {% end %}
+    >{{ i }}</option>
+    {% end %}
+  </select>:<select name="time_minute">
+    {% for i in range(0, 60, 15) %}
+    <option value="{{ i }}"
+    {% if edit_reminder %}
+     {% if i==edit_reminder.time[1] %}selected{% end %}
+     {% else %}
+     {% if i==0 %}selected{% end %}
+     {% end %}
+    >{% if i %}{{ i }}{% else %}00{% end %}</option>
+    {% end %}
+  </select>
+  <span id="as_ampm"></span>
+  </div>
+  
+  <div>
+  {% if edit_reminder %}
+  <input type="hidden" name="edit" value="{{ edit_reminder._id }}">
+  <input type="submit" value="Save">
+  <input type="submit" name="delete" value="Delete">
+  <input type="button" name="cancel" value="Cancel">
+  {% else %}
+  <p>If the time is before noon (12:00 on the 24 hour clock) the email reminder will 
+  ask you <em>"What did you do yesterday?"</em>.
+  If it's after noon the email reminder will ask you 
+  <em>"What did you do today?"</em>.</p>
+  <input type="submit" value="Set up email reminder">
+  {% end %}
+  <input type="hidden" id="id_tz_offset" name="tz_offset" value="">
+  <noscript>
+  Javascript is needed to submit this form
+  </noscript>
+  {{ xsrf_form_html() }}
+  </div>
+</form>
+
+{% end %}
+
+{% block extrajs %}
+{{ modules.Static("emailreminders.js") }}
 {% end %}

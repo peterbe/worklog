@@ -13,12 +13,6 @@ from apps.main.config import MINIMUM_DAY_SECONDS
 
 class ApplicationTestCase(BaseHTTPTestCase):
     
-    def _decode_cookie_value(self, key, cookie_value):
-        try:
-            return re.findall('%s=([\w=\|]+);' % key, cookie_value)[0]
-        except IndexError:
-            raise ValueError("couldn't find %r in %r" % (key, cookie_value))
-    
     def test_homepage(self):
         response = self.get('/')
         self.assertTrue('id="calendar"' in response.body)
@@ -60,7 +54,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(db.User.find().count(), 1)
         
         
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
         self.assertEqual(db.User.find({'guid':guid}).count(), 1)
@@ -126,7 +120,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         event_user = event_obj.user
         self.assertTrue(event_obj.all_day)
         
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
         self.assertEqual(db.User.find({'guid':guid}).count(), 1)
@@ -236,7 +230,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         event_obj = db.Event.one(dict(title="Foo"))
         self.assertTrue(event_obj.all_day)
         
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
         self.assertEqual(db.User.find({'guid':guid}).count(), 1)
@@ -278,7 +272,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.post('/events/', data)
         self.assertEqual(response.code, 200)
         
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         
         response = self.get('/events/stats.json', headers={'Cookie':cookie})
@@ -338,7 +332,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         struct = json.loads(response.body)
         event_id = struct['event']['id']
         
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
         self.assertEqual(db.User.find({'guid':guid}).count(), 1)
@@ -392,7 +386,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         struct = json.loads(response.body)
         event_id = struct['event']['id']
         
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
         
@@ -430,7 +424,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/?share=%s' % share.key, headers={'Cookie':cookie},
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
-        shares_cookie = self._decode_cookie_value('shares', response.headers['Set-Cookie'])
+        shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
         
         cookie += ';shares=%s' % shares_cookie
         response = self.get('/event/?id=%s' % event_id, headers={'Cookie':cookie})
@@ -457,7 +451,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         struct = json.loads(response.body)
         #event_id = struct['event']['id']
         
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
 
@@ -476,7 +470,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
         self.assertTrue('Set-Cookie' not in response.headers) # because no cookie is set
-        #shares_cookie = self._decode_cookie_value('shares', response.headers['Set-Cookie'])
+        #shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
         
         user2 = db.User()
         user2.email = u'one@two.com'
@@ -491,7 +485,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
         #self.assertTrue('Set-Cookie' not in response.headers) # because no cookie is set
-        shares_cookie = self._decode_cookie_value('shares', response.headers['Set-Cookie'])
+        shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
         cookie += 'shares=%s;' % shares_cookie
         shares = base64.b64decode(shares_cookie.split('|')[0])
         self.assertEqual(shares, 'foo2')
@@ -508,7 +502,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/?share=%s' % share3.key, headers={'Cookie':cookie},
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
-        shares_cookie = self._decode_cookie_value('shares', response.headers['Set-Cookie'])
+        shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
         shares = base64.b64decode(shares_cookie.split('|')[0])
         self.assertEqual(shares, 'foo2,foo3')
         
@@ -571,7 +565,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         url = '/?share=%s' % share.key
         response = self.get(url, follow_redirects=False)
         self.assertEqual(response.code, 302)
-        shares_cookie = self._decode_cookie_value('shares', response.headers['Set-Cookie'])
+        shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
         cookie = 'shares=%s;' % shares_cookie
         data = dict(start=mktime(datetime.datetime(2010,10,1).timetuple()),
                     end=mktime(datetime.datetime(2010,10,30).timetuple()))
@@ -628,7 +622,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'disable_sound':True}
         response = self.post('/user/settings/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         guid = base64.b64decode(guid_cookie.split('|')[0])
        
         db = self.get_db()
@@ -655,7 +649,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.post('/events/', data)
         self.assertEqual(response.code, 200)
         
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
 
@@ -686,7 +680,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         # so a new user can start using this
         response = self.get('/', dict(share=key), follow_redirects=False)
         self.assertEqual(response.code, 302)
-        shares_cookie = self._decode_cookie_value('shares', response.headers['Set-Cookie'])
+        shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
         cookie = 'shares=%s;' % shares_cookie
         
         # I can now toggle this share to be hidden
@@ -698,7 +692,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         
         response = self.post('/share/', dict(key=key), headers={'Cookie': cookie})
         self.assertEqual(response.code, 200)
-        hidden_shares_cookie = self._decode_cookie_value('hidden_shares', response.headers['Set-Cookie'])
+        hidden_shares_cookie = self.decode_cookie_value('hidden_shares', response.headers['Set-Cookie'])
         hidden_shares = base64.b64decode(hidden_shares_cookie.split('|')[0])
         
         self.assertEqual(hidden_shares, key)
@@ -746,7 +740,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(user)
         
         # a secure cookie would have been set containing the user id
-        user_cookie = self._decode_cookie_value('user', response.headers['Set-Cookie'])
+        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
         guid = base64.b64decode(user_cookie.split('|')[0])
         self.assertEqual(user.guid, guid)
 
@@ -766,7 +760,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = dict(email=user.email, password="secret")
         response = self.post('/auth/login/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
-        user_cookie = self._decode_cookie_value('user', response.headers['Set-Cookie'])
+        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
         guid = base64.b64decode(user_cookie.split('|')[0])
         self.assertEqual(user.guid, guid)
         cookie = 'user=%s;' % user_cookie
@@ -804,9 +798,12 @@ class ApplicationTestCase(BaseHTTPTestCase):
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
         self.assertTrue('user=;' in response.headers['Set-Cookie'])
-        self.assertTrue('guid=;' in response.headers['Set-Cookie'])
-        self.assertTrue('shares=;' in response.headers['Set-Cookie'])
-        self.assertTrue('hidden_shares=;' in response.headers['Set-Cookie'])
+        
+        # commented out because I used to manually clear all cookies even if 
+        # their keys hadn't been used.
+        #self.assertTrue('guid=;' in response.headers['Set-Cookie'])
+        #self.assertTrue('shares=;' in response.headers['Set-Cookie'])
+        #self.assertTrue('hidden_shares=;' in response.headers['Set-Cookie'])
 
     def test_bookmarklet_with_cookie(self):
         db = self.get_db()
@@ -817,7 +814,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': 'yes'}
         response = self.post('/events/', data)
         self.assertEqual(response.code, 200) 
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
         self.assertEqual(db.User.find({'guid':guid}).count(), 1)
@@ -914,7 +911,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': 'yes'}
         response = self.post('/events/', data)
         self.assertEqual(response.code, 200) 
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
         self.assertEqual(db.User.find({'guid':guid}).count(), 1)
@@ -970,7 +967,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': 'yes'}
         response = self.post('/events/', data)
         self.assertEqual(response.code, 200) 
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
         
@@ -1027,7 +1024,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.post(url, data, follow_redirects=False)
         self.assertEqual(response.code, 302)
         
-        user_cookie = self._decode_cookie_value('user', response.headers['Set-Cookie'])
+        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
         guid = base64.b64decode(user_cookie.split('|')[0])
         self.assertEqual(user.guid, guid)
         cookie = 'user=%s;' % user_cookie
@@ -1051,7 +1048,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         struct = json.loads(response.body)
         event_id = struct['event']['id']
         
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         
         guid = base64.b64decode(guid_cookie.split('|')[0])
@@ -1096,7 +1093,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 302)
         self.assertTrue(response.headers['Location'].endswith(data['anchor']))
 
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
         
@@ -1135,7 +1132,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(db.Share.one(dict(tags=[u'Tag'])))
         
         # Post another one
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         data = {'title': "@tAG New one",
                 'date': mktime(today.timetuple()),
@@ -1205,7 +1202,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                              dict(email=me.email, password="secret"),
                              follow_redirects=False)
         self.assertEqual(response.code, 302)
-        user_cookie = self._decode_cookie_value('user', response.headers['Set-Cookie'])
+        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
         guid = base64.b64decode(user_cookie.split('|')[0])
         self.assertEqual(me.guid, guid)
         cookie = 'user=%s;' % user_cookie
@@ -1291,7 +1288,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         user = db.User.one()
 
-        guid_cookie = self._decode_cookie_value('guid', response.headers['Set-Cookie'])
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         data = {'title': "@Tag2 yesterday",
                 'date': mktime(today.timetuple()) - 100,
