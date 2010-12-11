@@ -78,6 +78,7 @@ class ModelsTestCase(BaseModelsTestCase):
         
         self.assertEqual(share.tags, [])
         
+        from apps.main.models import Share
         new_key = Share.generate_new_key(self.db[Share.__collection__], min_length=4)
         self.assertTrue(len(new_key) == 4)
         share.key = new_key
