@@ -55,7 +55,7 @@ By simply replying you can quickly enter events into your
 calendar. If you prefer you can have the reminder sent at the end of the working day or
 at the begining of the next day. 
 </p>
-<p>Once set up instructions will be included in the email sent to you. </p>
+<p>Once set up instructions will be included in the email reminder sent to you. </p>
 {% end %}
 
 
@@ -144,6 +144,10 @@ at the begining of the next day.
   {{ xsrf_form_html() }}
   </div>
 </form>
+
+{% if edit_reminder %}
+<p>Next send date: {{ edit_reminder._next_send_date }}</p>
+{% end %}
 
 {% end %}
 

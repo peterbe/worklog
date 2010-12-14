@@ -104,5 +104,10 @@ class EmailReminderLog(BaseDocument):
     __collection__ = 'email_reminders_log'
     structure = {
       'email_reminder': EmailReminder,
+      'replies': int,
     }
     # remember, every BaseDocument has add_date and modify_date
+    
+    default_values = {
+      'replies': 0,
+    }

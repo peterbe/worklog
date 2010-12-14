@@ -1,11 +1,15 @@
+import datetime
 from pymongo.objectid import InvalidId, ObjectId
 import tornado.web
 
 from mongokit import ValidationError
 from utils.decorators import login_required
+from utils import parse_datetime, niceboolean
 from utils.routes import route
 from apps.main.handlers import BaseHandler
 from models import EmailReminder
+from utils.send_mail import send_email
+from settings import EMAIL_REMINDER_SENDER, EMAIL_REMINDER_REPLY_TO
 
 @route('/emailreminders/$')
 class EmailRemindersHandler(BaseHandler):
@@ -78,6 +82,9 @@ class EmailRemindersHandler(BaseHandler):
             if edit_reminder.user._id != user._id:
                 raise tornado.web.HTTPError(404, "Not yours")
             
+        from time import mktime
+        print mktime(edit_reminder._next_send_date.timetuple())
+            
         return edit_reminder
         
         
@@ -122,19 +129,57 @@ class SendEmailRemindersHandler(BaseHandler):
     safeguard against possible duplicate sendings.
     """
     
-    #def get_sendable_email_reminders(self):
-    #    # Assume that right now is 'Thu, 1 Dec 2001, 00:15:00 GMT' in London.
-    #    # That means it's simultaneously 'Wed, 30 Nov 2001, 19:15:00 EST' in
-    #    # New York. If a user has set up to reminder to go Wednesdays at 7.15pm
-    #    # then it means we can't
-    
     def get(self):
         # this should perhaps use a message queue instead
-        utc_now = datetime.datetime.now()
-        search = dict(_next_send_date={'$lte':utc_now})
-        for email_reminder in self.db.EmailReminder.find(search):
-            print "TO %s" % email_reminder.user.email
+        now_utc = datetime.datetime.utcnow()
+        dry_run = niceboolean(self.get_argument('dry_run', False))
+        if self.get_argument('now_utc', None):
+            now_utc = parse_datetime(self.get_argument('now_utc'))
             
-        self.write("Done")
+        search = dict(_next_send_date={'$lte':now_utc})
+        for email_reminder in self.db.EmailReminder.find(search):
+            self.write("TO: %s\n" % email_reminder.user.email)
+            self._send_reminder(email_reminder, dry_run=dry_run)
+            
+            if not dry_run:
+                email_reminder.set_next_send_date(now_utc)
+                email_reminder.save()
+                
+                email_reminder_log = self.db.EmailReminderLog()
+                email_reminder_log.email_reminder = email_reminder
+                email_reminder_log.save()
+            
+        self.write("Done\n")
+        
+    def _send_reminder(self, email_reminder, dry_run=False):
+        print "TO %s" % email_reminder.user.email
+        
+        subject = u"[DoneCal]"
+        if email_reminder.time[0] > 12:
+            about_today = True
+            subject += " What did you do today?"
+        else:
+            about_today = False
+            subject += u" What did you do yesterday?"
+            
+        first_name = email_reminder.user.first_name
+        
+        email_reminder_edit_url = 'http://%s/emailreminders/' % self.request.host
+        email_reminder_edit_url += '?edit=%s' % email_reminder._id
+        body = self.render_string("emailreminders/send_reminder.txt",
+                                  email_reminder=email_reminder,
+                                  first_name=first_name,
+                                  about_today=about_today,
+                                  email_reminder_edit_url=\
+                                  email_reminder_edit_url)
+                                   
+        reply_to = EMAIL_REMINDER_REPLY_TO % {'id': str(email_reminder._id)}
+        send_email(self.application.settings['email_backend'],
+                   subject, 
+                   body,
+                   EMAIL_REMINDER_SENDER,
+                   [email_reminder.user.email],
+                   headers={'Reply-To': reply_to},
+                   )
         
         
