@@ -6,9 +6,9 @@ function display_sidebar_stats(start, end) {
    var unused_colors;
    $.getJSON('/events/stats.json', {start: start.getTime(), end: end.getTime(), with_colors:true},
              function(response) {
+      $('#days-plot').html('');
       if (response.days_spent && response.days_spent.length) {
-         //$('#days-plot:hidden').show();
-         $('#days-plot').html('');
+         $('#days-plot:hidden').show();
          var days_plot = 
            $.jqplot('days-plot', [response.days_spent], {
               seriesColors: response.days_colors,
@@ -18,14 +18,14 @@ function display_sidebar_stats(start, end) {
              seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:3, padding:7, border:false}},
            legend:{show:true}
            });
-         //L("LEFT", seriesColors.slice(highest_i+1, seriesColors.length));
       } else {
-         //$('#days-plot:visible').hide();
+         $('#days-plot:visible').hide();
       }
       
+     $('#hours-plot').html('');
       if (response.hours_spent && response.hours_spent.length) {
-         //$('#hours-plot:hidden').show();
-         $('#hours-plot').html('');
+         $('#hours-plot:hidden').show();
+         
          var hours_plot = 
            $.jqplot('hours-plot', [response.hours_spent], {
               seriesColors: response.hours_colors,
@@ -35,7 +35,7 @@ function display_sidebar_stats(start, end) {
            legend:{show:true}
         });
       } else {
-         //$('#hours-plot:visible').hide();
+         $('#hours-plot:visible').hide();
       }
       
    });
