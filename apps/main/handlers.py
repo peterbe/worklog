@@ -1420,6 +1420,7 @@ class HelpHandler(BaseHandler):
       u"Bookmarklet",
       ['/Google-calendar', u"Google Calendar"],
       u"Feature requests",
+      ['/Secure-passwords', u"Secure passwords"],
     )
     
     def get(self, page):
