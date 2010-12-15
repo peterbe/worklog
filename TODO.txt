@@ -1,3 +1,6 @@
+* (MEDIUM) Replace with Tipped
+  http://projects.nickstakenburg.com/tipped/
+  
 * (MEDIUM) Help page saying I don't care about Internet Explorer
 
 * (MEDIUM) render the shared classes in calendar.html on page load (and

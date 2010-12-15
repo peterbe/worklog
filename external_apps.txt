@@ -7,3 +7,4 @@ simplejson
 xlwt
 lxml
 python-dateutil
+formatflowed

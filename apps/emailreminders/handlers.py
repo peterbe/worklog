@@ -1,10 +1,12 @@
+import re
+from cStringIO import StringIO
 import datetime
 from pymongo.objectid import InvalidId, ObjectId
 import tornado.web
 
 from mongokit import ValidationError
 from utils.decorators import login_required
-from utils import parse_datetime, niceboolean
+from utils import parse_datetime, niceboolean, valid_email
 from utils.routes import route
 from apps.main.handlers import BaseHandler
 from models import EmailReminder
@@ -82,9 +84,6 @@ class EmailRemindersHandler(BaseHandler):
             if edit_reminder.user._id != user._id:
                 raise tornado.web.HTTPError(404, "Not yours")
             
-        from time import mktime
-        print mktime(edit_reminder._next_send_date.timetuple())
-            
         return edit_reminder
         
         
@@ -152,7 +151,6 @@ class SendEmailRemindersHandler(BaseHandler):
         self.write("Done\n")
         
     def _send_reminder(self, email_reminder, dry_run=False):
-        print "TO %s" % email_reminder.user.email
         
         subject = u"[DoneCal]"
         if email_reminder.time[0] > 12:
@@ -181,5 +179,144 @@ class SendEmailRemindersHandler(BaseHandler):
                    [email_reminder.user.email],
                    headers={'Reply-To': reply_to},
                    )
+
+@route('/emailreminders/receive/$')
+class ReceiveEmailReminder(BaseHandler):
+
+    def post(self):
+        message = self.request.body
+        from email import Parser
+        parser = Parser.Parser()
+        msg = parser.parsestr(message)
         
+        ## Check that it was sent from someone we know
+        from_user = None
+        for from_email in self._parseEmailLine(msg['From']):
+            from_user = self.find_user(from_email)
+            
+        if not from_user:
+            # only bother to reply if the email appears to be sent from
+            # us originally
+            if 'INSTRUCTIONS' in msg.get_payload(decode=True) and 'DoneCal' in msg['Subject']:
+                self.error_reply("Not a registered account: %s" % msg['From'], msg)
+            
+            self.write("Not recognized from user (%r)" % msg['From'])
+            return
         
+        if not self.db.EmailReminder.find({'user.$id': from_user._id}).count():
+            if 'INSTRUCTIONS' in msg.get_payload(decode=True) and 'DoneCal' in msg['Subject']:
+                err_msg = u"You don't have any email reminders set up.\n"\
+                          u"To set some up, go to http://%s/emailreminders/" % \
+                           self.request.host
+                self.error_reply(err_msg , msg)
+                
+            self.write("No email reminders set up")
+            return
+            
+        
+        ## Check that it's sent to the right address
+        email_tos = self._parseEmailLine(msg['To'])
+        
+        email_reminder = None
+        
+        if EMAIL_REMINDER_SENDER.lower() in [x.lower() for x in email_tos]:
+            # easy pass!
+            pass
+        else:
+            # need to turn then reply to address into a regex
+            reply_to_parts = EMAIL_REMINDER_REPLY_TO % dict(id='XXX')
+            reply_to_parts = reply_to_parts.split('@')
+            assert len(reply_to_parts) == 2
+            regex = re.compile(re.escape(reply_to_parts[0]) + '(\w+)' \
+              + re.escape(reply_to_parts[1]), re.I)
+            for email_to in email_tos:
+                if regex.findall(email_to):
+                    raise NotImplementedError(regex.findall(email_to))
+                
+        #for key, value in msg.items():
+        #    print key
+        body = msg.get_payload(decode=True)
+        from formatflowed import decode
+        character_set = msg.get_charset()
+        CRLF = '\r\n'
+        body = body.replace('\n', CRLF)
+        try:
+            if character_set:
+                textflow = decode(body, character_set=character_set)
+            else:
+                textflow = decode(body)
+        except LookupError:
+            if not character_set:
+                raise
+            # _character_set is quite likly 'iso-8859-1;format=flowed'
+            _character_set = _character_set.split(';')[0].strip()
+            textflow = decode(body, character_set=character_set)
+            
+        new_text = StringIO()
+        for segment in textflow:
+            if not segment[0]['quotedepth']:
+                # level zero
+                new_text.write(segment[1])
+        
+        new_text = new_text.getvalue()
+        if email_reminder:
+            if email_reminder.time[0] > 12:
+                about_today = True
+            else:
+                about_today = False
+        else:
+            if 'today' in msg['Subject']:
+                about_today = True
+            else:
+                about_today = False
+                
+        for event in self.parse_and_create_events(new_text, about_today):
+            self.write("Created %r\n" % event.title)
+            
+        self.write("\n")
+
+
+    def _parseEmailLine(self, es):
+        """ find all email addresses in the string 'es'.
+        For example, if the input is 'Peter <mail@peterbe.com>'
+        then return ['mail@peterbe.com']
+        In other words, strip out all junk that isn't valid email addresses.
+        """
+                
+        real_emails = []
+        sep = ','
+        local_domain_email_regex = re.compile(r'\b\w+@\w+\b')
+
+        for chunk in [x.strip() for x in es.replace(';',',').split(',') if x.strip()]:
+
+            # if the chunk is something like this:
+            # 'SnapExpense info@snapexpense.com <add@snapexpense.com>'
+            # then we want to favor the part in <...>
+            found = re.findall('<([^@]+@[^@]+)>', chunk)
+            if found:
+                chunk = found[0].strip()
+
+            if valid_email(chunk) or local_domain_email_regex.findall(chunk):
+                if chunk.lower() not in [x.lower() for x in real_emails]:
+                    real_emails.append(chunk)
+
+        return real_emails
+    
+    def error_reply(self, error_message, msg):
+        """send an email reply"""
+        body = msg.get_payload(decode=True)
+        body = body.replace('\r\n', '\n')
+        body = '\n'.join(['> %s' % line for line in body.splitlines()])
+        body = u'Error in receiving email.\n   %s\n\nPlease try again.\n\n' \
+          % error_message + body
+        subject = "Re: %s" % msg['Subject']
+        
+        send_email(self.application.settings['email_backend'],
+                   subject, 
+                   body,
+                   EMAIL_REMINDER_SENDER,
+                   [msg['From']],
+                   )
+        
+        #self.error_reply("Not a registered account: %s" % msg['From'], msg)
+
