@@ -11,6 +11,10 @@ COVERAGE_MODULES = [
     'apps.main.ui_modules',
     'apps.smartphone.handlers',
     'utils',
+    'apps.emailreminders.models',
+    'apps.emailreminders.handlers',
+    'apps.emailreminders.reminder_utils',
+    'apps.emailreminders.ui_modules',
 ]
 
 def all():

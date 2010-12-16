@@ -98,7 +98,19 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         
         # Try again, now it should work
         response = self.post(url, '\r\n'.join(body))
-        print response.body
-        assert 0
+        self.assertTrue('Created' in response.body)
+        self.assertEqual(db.Event.find().count(), 1)
+        event = db.Event.one()
+        self.assertEqual(event.title, u'This is a test on @tagg')
+        self.assertEqual(event.tags, [u'tagg'])
+        self.assertEqual(event.user.first_name, u"Bob")
+        self.assertTrue(event.all_day)
+        self.assertTrue(event.start.strftime('%Y%m%d %H%M'),
+                        today.strftime('%Y%m%d %H%M'))
+        self.assertTrue(event.end.strftime('%Y%m%d %H%M'),
+                        today.strftime('%Y%m%d %H%M'))
+        self.assertEqual(event.description, u'')
+        self.assertEqual(event.external_url, None)
+        
         
         

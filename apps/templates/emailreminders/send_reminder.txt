@@ -10,12 +10,13 @@ sets the description of the event.
 
 If you want it to be an hourly even write a number followed by the letter 'h'. Like this for example:
 
- 2.5h Working on #projectX like Sam said
+ 14:45 Working on #projectX like Sam said
 
 If you want to specify exactly when it happened enter it like a 24 hour clock or with AM/PM. Like this for example:
 
  10.30am 1h Helped Santa with gift wrapping
- 
+
+If you don't start the line with a time, the event becomes and all-day event ignoring any duration you've also entered.
  
 SETTINGS:
 

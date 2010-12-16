@@ -1,3 +1,6 @@
+* (HIGH) Write more tests for sending emails in. Especially errors in
+  parsing.
+
 * (MEDIUM) Replace with Tipped
   http://projects.nickstakenburg.com/tipped/
   

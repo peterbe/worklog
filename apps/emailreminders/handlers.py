@@ -6,12 +6,17 @@ import tornado.web
 
 from mongokit import ValidationError
 from utils.decorators import login_required
-from utils import parse_datetime, niceboolean, valid_email
+from utils import parse_datetime, niceboolean
 from utils.routes import route
-from apps.main.handlers import BaseHandler
+from apps.main.handlers import BaseHandler, EventsHandler
 from models import EmailReminder
 from utils.send_mail import send_email
+from reminder_utils import ParseEventError, parse_time, \
+  parse_duration, parse_email_line
 from settings import EMAIL_REMINDER_SENDER, EMAIL_REMINDER_REPLY_TO
+
+class ParseEventError(Exception):
+    pass
 
 @route('/emailreminders/$')
 class EmailRemindersHandler(BaseHandler):
@@ -181,7 +186,7 @@ class SendEmailRemindersHandler(BaseHandler):
                    )
 
 @route('/emailreminders/receive/$')
-class ReceiveEmailReminder(BaseHandler):
+class ReceiveEmailReminder(EventsHandler):
 
     def post(self):
         message = self.request.body
@@ -191,7 +196,7 @@ class ReceiveEmailReminder(BaseHandler):
         
         ## Check that it was sent from someone we know
         from_user = None
-        for from_email in self._parseEmailLine(msg['From']):
+        for from_email in parse_email_line(msg['From']):
             from_user = self.find_user(from_email)
             
         if not from_user:
@@ -215,7 +220,7 @@ class ReceiveEmailReminder(BaseHandler):
             
         
         ## Check that it's sent to the right address
-        email_tos = self._parseEmailLine(msg['To'])
+        email_tos = parse_email_line(msg['To'])
         
         email_reminder = None
         
@@ -270,37 +275,88 @@ class ReceiveEmailReminder(BaseHandler):
             else:
                 about_today = False
                 
-        for event in self.parse_and_create_events(new_text, about_today):
-            self.write("Created %r\n" % event.title)
+        count_new_events = 0
+        for text in new_text.strip().split('\n\n'):
+            try:
+                event = self.parse_and_create_event(from_user, text, about_today)
+                if event:
+                    self.write("Created %r\n" % event.title)
+                    count_new_events += 1
+            except ParseEventError, exception_message:
+                if 'INSTRUCTIONS' in msg.get_payload(decode=True) and \
+                 'DoneCal' in msg['Subject']:
+                    err_msg = "Failed to create an event from this line:\n\t%s\n" \
+                      % text
+                    err_msg += "(Error message: %s)\n" % exception_message
+                    self.error_reply(err_msg, msg)
             
         self.write("\n")
-
-
-    def _parseEmailLine(self, es):
-        """ find all email addresses in the string 'es'.
-        For example, if the input is 'Peter <mail@peterbe.com>'
-        then return ['mail@peterbe.com']
-        In other words, strip out all junk that isn't valid email addresses.
+        
+    def parse_and_create_event(self, user, text, about_today):
+        """parse the text (which can be more than one line) and return either a
+        newly created event object or nothing.
         """
-                
-        real_emails = []
-        sep = ','
-        local_domain_email_regex = re.compile(r'\b\w+@\w+\b')
-
-        for chunk in [x.strip() for x in es.replace(';',',').split(',') if x.strip()]:
-
-            # if the chunk is something like this:
-            # 'SnapExpense info@snapexpense.com <add@snapexpense.com>'
-            # then we want to favor the part in <...>
-            found = re.findall('<([^@]+@[^@]+)>', chunk)
-            if found:
-                chunk = found[0].strip()
-
-            if valid_email(chunk) or local_domain_email_regex.findall(chunk):
-                if chunk.lower() not in [x.lower() for x in real_emails]:
-                    real_emails.append(chunk)
-
-        return real_emails
+        print repr(text)
+        text, time_ = parse_time(text)
+            
+        if time_:
+            # if the time part was the first word, then maybe the duration is
+            # the next first word
+            text, duration = parse_duration(text)
+            # remember, duration is always in minutes!
+        else:
+            duration = None
+        
+        if len(text.splitlines()) > 1:
+            title = text.splitlines()[0]
+            description = '\n'.join(text.splitlines()[1:])
+        else:
+            title = text
+            description = u''
+        
+        if time_:
+            all_day = False
+        else:
+            all_day = True
+            
+        if about_today:
+            start_base = datetime.datetime.today()
+        else:
+            start_base = datetime.datetime.today() - datetime.timedelta(days=1)
+            
+        if all_day:
+            start = end = start_base
+        else:
+            start = start_base
+            start = datetime.datetime(start.year, start.month, start.day, 
+                                      time_[0], time[1])
+            if not duration:
+                duration = MINIMUM_DAY_SECONDS / 60
+            end = start + datetime.timedelta(minutes=duration)
+            
+        if isinstance(title, str):
+            try:
+                title = title.decode("utf-8")
+            except UnicodeDecodeError:
+                raise ParseEventError("Title not a valid UTF-8 string")
+            
+        if isinstance(description, str):
+            try:
+                description = description.decode("utf-8")
+            except UnicodeDecodeError:
+                raise ParseEventError("Description not a valid UTF-8 string")
+            
+        event, not_duplicate = self.create_event(
+          user, 
+          title=title, 
+          description=description,
+          all_day=all_day, 
+          start=start, 
+          end=end,
+        )
+        
+        return event
+        
     
     def error_reply(self, error_message, msg):
         """send an email reply"""
