@@ -64,7 +64,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         # because there is no user called bob@builder.com it would send an 
         # error reply
         import utils.send_mail as mail
-        sent_email = mail.outbox[0]
+        sent_email = mail.outbox[-1]
         self.assertTrue(sent_email.to, ['bob@builder.com'])
         self.assertEqual(sent_email.subject, body[2].replace('Subject:', 'Re:'))
         from settings import EMAIL_REMINDER_SENDER
@@ -82,10 +82,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         # try again, but this time it will fail because this user doesn't have any 
         # email reminders set up
         response = self.post(url, '\r\n'.join(body))
-        self.assertTrue('No email reminders set up' in response.body)
-        
-        sent_email = mail.outbox[1]
-        self.assertTrue("You don't have any email reminders set up" in sent_email.body)
+        self.assertTrue('Not a reply to an email reminder' in response.body)
         
         # set one up!
         email_reminder = db.EmailReminder()
@@ -96,6 +93,14 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         email_reminder.tz_offset = 0.0
         email_reminder.save()
         
+        body[1] = 'To: reminder+%s@donecal.com' % email_reminder._id
+        #print '\r\n'.join(body)
+        
+        sent_email = mail.outbox[-1]
+        self.assertTrue(
+          "This is not a reply to an email reminder from your account" \
+          in sent_email.body)
+
         # Try again, now it should work
         response = self.post(url, '\r\n'.join(body))
         self.assertTrue('Created' in response.body)
@@ -112,5 +117,112 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertEqual(event.description, u'')
         self.assertEqual(event.external_url, None)
         
+    def test_posting_email_in_invalid_entry(self):
+        url = '/emailreminders/receive/'
+        body = ['From: bob@builder.com']
+        body += ['To: reminder@donecal.com']
+        body += ['Subject: [DoneCal] what did you do today?']
+        body += ['']
+        body += ['13:30pm This wont work']
+        body += ['> INSTRUCTIONS:']
+        body += ['> BLa bla bla']
         
+        db = self.get_db()
+        bob = db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.first_name = u"Bob"
+        bob.save()
+        
+        email_reminder = db.EmailReminder()
+        email_reminder.user = bob
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (11,30)
+        email_reminder.tz_offset = 0.0
+        email_reminder.save()
+        
+        body[1] = 'To: reminder+%s@donecal.com' % email_reminder._id
+
+        response = self.post(url, '\r\n'.join(body))
+        self.assertTrue("Parse event error" in response.body)
+        import utils.send_mail as mail
+        sent_email = mail.outbox[-1]
+        self.assertTrue(sent_email.to, ['bob@builder.com'])
+        self.assertEqual(sent_email.subject, body[2].replace('Subject:', 'Re:'))
+        self.assertTrue('Error message' in sent_email.body)
+        
+        
+    def test_posting_email_in_one_valid_one_invalid_entry(self):
+        url = '/emailreminders/receive/'
+        body = ['From: bob@builder.com']
+        body += ['To: reminder@donecal.com']
+        body += ['Subject: [DoneCal] what did you do today?']
+        body += ['']
+        body += ['13:30pm This wont work']
+        body += ['']
+        body += ['3:30pm 60min This will work']
+        body += ['']
+        body += ['> INSTRUCTIONS:']
+        body += ['> BLa bla bla']
+        
+        db = self.get_db()
+        bob = db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.first_name = u"Bob"
+        bob.save()
+        
+        email_reminder = db.EmailReminder()
+        email_reminder.user = bob
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (11,30)
+        email_reminder.tz_offset = 0.0
+        email_reminder.save()
+        
+        body[1] = 'To: reminder+%s@donecal.com' % email_reminder._id
+
+        response = self.post(url, '\r\n'.join(body))
+        self.assertTrue('Created' in response.body)
+        self.assertTrue('Parse event error' in response.body)
+        self.assertEqual(db.Event.find().count(), 1)
+        event = db.Event.one()
+        self.assertEqual(event.title, 'This will work')
+        self.assertTrue(not event.all_day)
+        length = event.end - event.start
+        
+        self.assertEqual(length.seconds/60, 60)
+        
+    def test_posting_email_in_with_description(self):
+        url = '/emailreminders/receive/'
+        body = ['From: bob@builder.com']
+        body += ['To: reminder@donecal.com']
+        body += ['Subject: [DoneCal] what did you do today?']
+        body += ['']
+        body += ['This is the title']
+        body += ['This is the description']
+        body += ['']
+        body += ['> INSTRUCTIONS:']
+        body += ['> BLa bla bla']
+        
+        db = self.get_db()
+        bob = db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.first_name = u"Bob"
+        bob.save()
+        
+        email_reminder = db.EmailReminder()
+        email_reminder.user = bob
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (11,30)
+        email_reminder.tz_offset = 0.0
+        email_reminder.save()
+        
+        body[1] = 'To: reminder+%s@donecal.com' % email_reminder._id
+
+        response = self.post(url, '\r\n'.join(body))
+        self.assertEqual(db.Event.find().count(), 1)
+        event = db.Event.one()
+        self.assertEqual(event.title, 'This is the title')
+        self.assertEqual(event.description, 'This is the description')
         

@@ -44,9 +44,27 @@ def parse_time(text):
 
 
 def parse_duration(text):
+    """return the new text and and the duration in minutes as a tuple"""
     duration = None
-    duration_regex = re.compile('^(\d{1,2})(\.\d{1,2})*\s*(d |h |m |hour|minute|day)', re.I)
-    
+    duration_regex = re.compile(
+      '^(\d{1,2})(\.\d{1,2})*\s*(d |h |m |min |hours|hour|minutes|minute|days|day)',
+      re.I)
+    if duration_regex.findall(text):
+        n1, n2, d = duration_regex.findall(text)[0]
+        n1 = int(n1)
+        if n2:
+            n2 = float(n2)
+        else:
+            n2 = 0.0
+        if d in ('d ', 'day', 'days'):
+            duration = 24 * 60 * (n1 + n2)
+        elif d in ('m ','min ','minute', 'minutes'):
+            duration = n1 + n2
+        elif d in ('h ','hour', 'hours'):
+            duration = (n1 + n2) * 60
+        else:
+            raise NotImplementedError(d)
+        text = duration_regex.sub('', text).strip()
     return text, duration
 
 

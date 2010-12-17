@@ -9,14 +9,13 @@ from utils.decorators import login_required
 from utils import parse_datetime, niceboolean
 from utils.routes import route
 from apps.main.handlers import BaseHandler, EventsHandler
+from apps.main.config import MINIMUM_DAY_SECONDS
 from models import EmailReminder
 from utils.send_mail import send_email
 from reminder_utils import ParseEventError, parse_time, \
   parse_duration, parse_email_line
-from settings import EMAIL_REMINDER_SENDER, EMAIL_REMINDER_REPLY_TO
+from settings import EMAIL_REMINDER_SENDER
 
-class ParseEventError(Exception):
-    pass
 
 @route('/emailreminders/$')
 class EmailRemindersHandler(BaseHandler):
@@ -176,13 +175,12 @@ class SendEmailRemindersHandler(BaseHandler):
                                   email_reminder_edit_url=\
                                   email_reminder_edit_url)
                                    
-        reply_to = EMAIL_REMINDER_REPLY_TO % {'id': str(email_reminder._id)}
+        from_ = EMAIL_REMINDER_SENDER % {'id': str(email_reminder._id)}
         send_email(self.application.settings['email_backend'],
                    subject, 
                    body,
-                   EMAIL_REMINDER_SENDER,
+                   from_,
                    [email_reminder.user.email],
-                   headers={'Reply-To': reply_to},
                    )
 
 @route('/emailreminders/receive/$')
@@ -194,6 +192,26 @@ class ReceiveEmailReminder(EventsHandler):
         parser = Parser.Parser()
         msg = parser.parsestr(message)
         
+        ## Check that it's sent to the right address
+        email_tos = parse_email_line(msg['To'])
+        
+        email_reminder = None
+        
+        # need to turn then reply to address into a regex
+        reply_to_parts = EMAIL_REMINDER_SENDER % dict(id='XXX')
+        reply_to_parts = reply_to_parts.split('XXX')
+        assert len(reply_to_parts) == 2
+        regex = re.compile(re.escape(reply_to_parts[0]) + '(\w+)' \
+          + re.escape(reply_to_parts[1]), re.I)
+        for email_to in email_tos:
+            if regex.findall(email_to):
+                _id = regex.findall(email_to)[0]
+                try:
+                    email_reminder = self.db.EmailReminder\
+                      .one({'_id': ObjectId(_id)})
+                except InvalidId:
+                    pass
+            
         ## Check that it was sent from someone we know
         from_user = None
         for from_email in parse_email_line(msg['From']):
@@ -208,43 +226,43 @@ class ReceiveEmailReminder(EventsHandler):
             self.write("Not recognized from user (%r)" % msg['From'])
             return
         
-        if not self.db.EmailReminder.find({'user.$id': from_user._id}).count():
-            if 'INSTRUCTIONS' in msg.get_payload(decode=True) and 'DoneCal' in msg['Subject']:
-                err_msg = u"You don't have any email reminders set up.\n"\
-                          u"To set some up, go to http://%s/emailreminders/" % \
-                           self.request.host
-                self.error_reply(err_msg , msg)
+        assert from_user
+        
+
+        if not email_reminder:
+            # At this point, we know it was not a proper reply,
+            # but it was sent from one of our users because otherwise it would have been
+            # dealt with just above this
+            err_msg = u"This is not a reply to an email reminder from your account.\n"\
+                      u"To set some up, go to http://%s/emailreminders/" % \
+                      self.request.host
+            self.error_reply(err_msg, msg)
+                
+            self.write("Not a reply to an email reminder")
+            return
+        
+        assert email_reminder
+        
+        
+        
+        if email_reminder.user._id != from_user._id:
+            if 'INSTRUCTIONS' in msg.get_payload(decode=True) \
+              and 'DoneCal' in msg['Subject']:
+                owner_email = email_reminder.user.email
+                p = owner_email.find('@')
+                owner_email_brief = owner_email[:p-2] + '...' + owner_email[p+2:]
+                err_msg = u"This is a reply to someone else's email reminder "\
+                          u"that belonged to: %s" % owner_email_brief
+                self.error_reply(err_msg, msg)
                 
             self.write("No email reminders set up")
             return
             
-        
-        ## Check that it's sent to the right address
-        email_tos = parse_email_line(msg['To'])
-        
-        email_reminder = None
-        
-        if EMAIL_REMINDER_SENDER.lower() in [x.lower() for x in email_tos]:
-            # easy pass!
-            pass
-        else:
-            # need to turn then reply to address into a regex
-            reply_to_parts = EMAIL_REMINDER_REPLY_TO % dict(id='XXX')
-            reply_to_parts = reply_to_parts.split('@')
-            assert len(reply_to_parts) == 2
-            regex = re.compile(re.escape(reply_to_parts[0]) + '(\w+)' \
-              + re.escape(reply_to_parts[1]), re.I)
-            for email_to in email_tos:
-                if regex.findall(email_to):
-                    raise NotImplementedError(regex.findall(email_to))
-                
-        #for key, value in msg.items():
-        #    print key
         body = msg.get_payload(decode=True)
         from formatflowed import decode
         character_set = msg.get_charset()
-        CRLF = '\r\n'
-        body = body.replace('\n', CRLF)
+        #CRLF = '\r\n'
+        #body = body.replace('\n', CRLF)
         try:
             if character_set:
                 textflow = decode(body, character_set=character_set)
@@ -261,8 +279,8 @@ class ReceiveEmailReminder(EventsHandler):
         for segment in textflow:
             if not segment[0]['quotedepth']:
                 # level zero
-                new_text.write(segment[1])
-        
+                new_text.write("%s\n" % segment[1])
+
         new_text = new_text.getvalue()
         if email_reminder:
             if email_reminder.time[0] > 12:
@@ -277,18 +295,24 @@ class ReceiveEmailReminder(EventsHandler):
                 
         count_new_events = 0
         for text in new_text.strip().split('\n\n'):
+            #print "TEXT"
+            #print repr(text)
+            #print
             try:
                 event = self.parse_and_create_event(from_user, text, about_today)
                 if event:
                     self.write("Created %r\n" % event.title)
                     count_new_events += 1
             except ParseEventError, exception_message:
+                self.write("Parse event error (%s)\n" % exception_message)
                 if 'INSTRUCTIONS' in msg.get_payload(decode=True) and \
                  'DoneCal' in msg['Subject']:
                     err_msg = "Failed to create an event from this line:\n\t%s\n" \
                       % text
                     err_msg += "(Error message: %s)\n" % exception_message
                     self.error_reply(err_msg, msg)
+                else:
+                    logging.error("Parse event error on email not replied to", exc_info=True)
             
         self.write("\n")
         
@@ -296,7 +320,6 @@ class ReceiveEmailReminder(EventsHandler):
         """parse the text (which can be more than one line) and return either a
         newly created event object or nothing.
         """
-        print repr(text)
         text, time_ = parse_time(text)
             
         if time_:
@@ -329,7 +352,7 @@ class ReceiveEmailReminder(EventsHandler):
         else:
             start = start_base
             start = datetime.datetime(start.year, start.month, start.day, 
-                                      time_[0], time[1])
+                                      time_[0], time_[1])
             if not duration:
                 duration = MINIMUM_DAY_SECONDS / 60
             end = start + datetime.timedelta(minutes=duration)

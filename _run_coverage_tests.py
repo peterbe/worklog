@@ -9,7 +9,7 @@ COVERAGE_MODULES = [
     'apps.main.models',
     'apps.main.handlers',
     'apps.main.ui_modules',
-    'apps.smartphone.handlers',
+    #'apps.smartphone.handlers',
     'utils',
     'apps.emailreminders.models',
     'apps.emailreminders.handlers',

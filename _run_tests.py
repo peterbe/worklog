@@ -7,6 +7,8 @@ TEST_MODULES = [
     'apps.main.tests.test_models',
     'apps.main.tests.test_utils',
     'apps.emailreminders.tests.test_models',
+    'apps.emailreminders.tests.test_handlers',
+    'apps.emailreminders.tests.test_utils',
 ]
 
 def all():

@@ -61,7 +61,31 @@ class UtilsTestCase(unittest.TestCase):
                           utils.parse_time, '10:70pm something')
 
         
+    def test_duration(self):
+        text = "60min something"
+        text, duration = utils.parse_duration(text)
+        self.assertEqual(duration, 60)
+        self.assertEqual(text, "something")
+
+        text = "1 day something"
+        text, duration = utils.parse_duration(text)
+        self.assertEqual(duration, 60 * 24)
+        self.assertEqual(text, "something")
         
+        text = "1.5 days something"
+        text, duration = utils.parse_duration(text)
+        self.assertEqual(duration, 60 * 24 + 60 * 12)
+        self.assertEqual(text, "something")
+        
+        text = "2.5 minutes something"
+        text, duration = utils.parse_duration(text)
+        self.assertEqual(duration, 2.5)
+        self.assertEqual(text, "something")
+        
+        text = "2.5h something"
+        text, duration = utils.parse_duration(text)
+        self.assertEqual(duration, 2.5 * 60)
+        self.assertEqual(text, "something")
         
         
         
