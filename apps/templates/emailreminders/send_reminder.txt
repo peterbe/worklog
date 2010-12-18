@@ -1,6 +1,7 @@
 {% if first_name %}Hi {{ first_name }},{% else %}Hi,{% end %}
 What did you do {% if about_today %}*today*{% else %}*yesterday*{% end %}?
 
+
 INSTRUCTIONS:
 
 Just hit reply and type at the start of the email as you would enter
@@ -16,7 +17,8 @@ If you want to specify exactly when it happened enter it like a 24 hour clock or
 
  10.30am 1h Helped Santa with gift wrapping
 
-If you don't start the line with a time, the event becomes and all-day event ignoring any duration you've also entered.
+If you don't start the line with a time, but do start the line with a duration it will assume it's noon your local time.
+
  
 SETTINGS:
 

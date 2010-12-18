@@ -54,49 +54,34 @@ class EmailReminder(BaseDocument):
         if utcnow is None:
             utcnow = datetime.datetime.utcnow()
         _next_send_date = utcnow
-
-        # because the tz_offset can be something 1.5, the hour can become a 
-        # non-whole number. Eg. (h,m)==(7.5,30)
-        # If that's the case turn it into a 
-        tz_offset_minutes = self.tz_offset * 60
-        tz_offset_h = int(tz_offset_minutes) / 60
-        tz_offset_m = int(tz_offset_minutes) % 60
-        h, m = self.time[0] - tz_offset_h, self.time[1] - tz_offset_m
-        day_diff = 0
-        if h < 0:
-            h = 24 + h
-            day_diff = -1
-        elif h > 23:
-            h -= 24
-            day_diff += 1
-        #print "TWO", h, m
-            
+        
+        # first create the time with any random date
+        start = datetime.datetime(2000,01,01, self.time[0], self.time[1], 0)
+        result = start - datetime.timedelta(hours=self.tz_offset)
+        
+        h = result.hour
+        m = result.minute
+        if result > start:
+            day_diff = (result - start).days
+        else:
+            day_diff = (start - result).days
         
         _next_send_date = datetime.datetime(_next_send_date.year,
                                             _next_send_date.month,
                                             _next_send_date.day,
                                             h, m)
         if day_diff:
-            #print "DAY_DIFF", day_diff
-            #print "before", _next_send_date
             _next_send_date += datetime.timedelta(days=day_diff)
-            #print "after", _next_send_date
             
         assert self.weekdays
         # iterate until we hit the next weekday that is in this list
-        #print "_next_send_date", _next_send_date
-        #print _next_send_date.strftime('%A'), self.weekdays
         while _next_send_date.strftime('%A') not in self.weekdays or _next_send_date <= utcnow:
             _next_send_date += datetime.timedelta(days=1)
             
         if day_diff:
-            #print "SECOND TIME"
-            #print "DAY_DIFF", day_diff
-            #print "before", _next_send_date
             _next_send_date += datetime.timedelta(days=day_diff)
-            #print "after", _next_send_date
-            
-        assert _next_send_date > utcnow
+        
+        assert _next_send_date > utcnow, _next_send_date
         self._next_send_date = _next_send_date
         
 

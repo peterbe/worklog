@@ -1428,7 +1428,7 @@ class HelpHandler(BaseHandler):
         self.application.settings['template_path']
         if page == '':
             page = 'index'
-            
+        
         filename = "help/%s.html" % page.lower()
         if os.path.isfile(os.path.join(self.application.settings['template_path'],
                                        filename)):

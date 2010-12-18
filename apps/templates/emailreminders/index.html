@@ -42,11 +42,30 @@ form div { margin-bottom:10px; }
 .disabled {
   text-through:strike;
 }
+
+p#addresses {
+  font-size:80%;
+  margin-top:5px;
+}
 </style>
 {% end %}
 
+{% block sidebar %}
+
+{% if count_reminders %}
+<h3>Tip!</h3>
+<p id="addresses">The reminder{% if count_reminders > 1 %}s{% end %} will come from:
+{{ ', '.join(['<code>%s</code>' % x for x in email_reminders_addresses]) }}
+<br>
+You might want to add this to your addressbook to avoid it getting trapped as spam.
+</p>
+{% end %}
+
+
+{% end %}
+
 {% block content_inner %}
-<h1>Email reminders</h1>
+<h1>Email reminders <sup>beta</sup></h1>
 
 {% if not count_reminders %}
 <p>Email reminders are emails that are sent to you at a particular time of the day
@@ -75,8 +94,6 @@ at the begining of the next day.
   </tr>
 </tbody>
 </table>
-
-</form>
 
 <form action="." method="post" id="reminders">
   {% if edit_reminder %}

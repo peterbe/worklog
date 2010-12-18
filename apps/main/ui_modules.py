@@ -410,6 +410,19 @@ class HelpSeeAlsoLinks(tornado.web.UIModule):
         return self.render_string("help/see_also.html",
           links=links
         )
+
+class HelpPageTitle(tornado.web.UIModule):
+    def render(self):
+        links = []
+        current_path = self.request.path
+        for each in self.handler.get_see_also_links():
+            link = each['link']
+            if not link.startswith('/help'):
+                link = '/help' + link
+            if link == current_path:
+                return "%s - DoneCal" % each['label']
+                              
+        return "Help on DoneCal"
         
 class ShowUserName(tornado.web.UIModule):
     def render(self, user, first_name_only=False, anonymize_email=False):

@@ -122,7 +122,7 @@ class ModelsTestCase(BaseModelsTestCase):
         email_reminder.user = user
         email_reminder.time = (22, 30)
         email_reminder.weekdays = [unicode(tomorrow.strftime('%A'))]
-        email_reminder.tz_offset = 5
+        email_reminder.tz_offset = 5 # +5 means the GMT is 22-5=17
         email_reminder.validate()
         
         email_reminder.set_next_send_date()

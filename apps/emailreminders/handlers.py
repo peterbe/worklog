@@ -32,10 +32,12 @@ class EmailRemindersHandler(BaseHandler):
         options['weekday_reminders'] = dict()
         options['count_reminders'] = 0
         options['all_reminder_classnames'] = dict()
+        options['email_reminders_addresses'] = list()
         
         background_colors = iter(("#ff5800", "#0085cc",
                     "#c747a3","#26B4E3", "#bd70c7", "#cddf54", "#FBD178" ))
         
+        email_reminder_ids = set()
         user = self.get_current_user()
         if user:
             _base_search = {'user.$id': user._id}
@@ -47,6 +49,10 @@ class EmailRemindersHandler(BaseHandler):
                 weekday_reminders[weekday] = _reminders.sort('time')
                 options['count_reminders'] += _reminders.count()
                 
+            for each in self.db.EmailReminder.find(_base_search):
+                options['email_reminders_addresses'].append(
+                  EMAIL_REMINDER_SENDER % {'id':each._id}
+                )
             options['weekday_reminders'] = weekday_reminders
             
             user_settings = self.db.UserSettings.one({'user.$id': user._id})
@@ -93,7 +99,6 @@ class EmailRemindersHandler(BaseHandler):
         
     @login_required
     def post(self):
-        
         edit_reminder = self.get_edit_reminder()
         if edit_reminder:
             if self.get_argument('delete', False):
@@ -104,7 +109,7 @@ class EmailRemindersHandler(BaseHandler):
         assert isinstance(weekdays, list), type(weekdays)
         time_hour = int(self.get_argument('time_hour'))
         time_minute = int(self.get_argument('time_minute'))
-        tz_offset = int(self.get_argument('tz_offset'))
+        tz_offset = float(self.get_argument('tz_offset'))
         
         user = self.get_current_user()
         if edit_reminder:
@@ -293,13 +298,11 @@ class ReceiveEmailReminder(EventsHandler):
             else:
                 about_today = False
                 
+        tz_offset = email_reminder.tz_offset
         count_new_events = 0
         for text in new_text.strip().split('\n\n'):
-            #print "TEXT"
-            #print repr(text)
-            #print
             try:
-                event = self.parse_and_create_event(from_user, text, about_today)
+                event = self.parse_and_create_event(from_user, text, about_today, tz_offset)
                 if event:
                     self.write("Created %r\n" % event.title)
                     count_new_events += 1
@@ -316,19 +319,25 @@ class ReceiveEmailReminder(EventsHandler):
             
         self.write("\n")
         
-    def parse_and_create_event(self, user, text, about_today):
+    def parse_and_create_event(self, user, text, about_today, tz_offset):
         """parse the text (which can be more than one line) and return either a
         newly created event object or nothing.
         """
         text, time_ = parse_time(text)
-            
-        if time_:
-            # if the time part was the first word, then maybe the duration is
-            # the next first word
-            text, duration = parse_duration(text)
-            # remember, duration is always in minutes!
-        else:
-            duration = None
+        text, duration = parse_duration(text)
+        if not time_ and duration:
+            # if tz_offset is -5.5 we want the time to become
+            # (17, 30), not (17.5, 0)
+            tz_offset_minutes = tz_offset * 60
+            tz_offset_h = int(tz_offset_minutes) / 60
+            tz_offset_m = int(tz_offset_minutes) % 60
+            if tz_offset_h > 0:
+                tz_offset_h -= 1
+            else:
+                tz_offset_h += 1
+                tz_offset_m *= -1
+
+            time_ = (12 - tz_offset_h, 0 - tz_offset_m)
         
         if len(text.splitlines()) > 1:
             title = text.splitlines()[0]
@@ -398,4 +407,3 @@ class ReceiveEmailReminder(EventsHandler):
                    )
         
         #self.error_reply("Not a registered account: %s" % msg['From'], msg)
-

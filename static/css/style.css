@@ -15,7 +15,7 @@ html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
 del, dfn, em, font, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
+small, strike, strong, tt, var,
 dl, dt, dd, ol, ul, li,
 fieldset, form, label, legend,
 table, caption, tbody, tfoot, thead, tr, th, td {
@@ -512,6 +512,13 @@ the Post and Page Edit screens.
 }
 #content_inner img.floatright { float:right; }
 #content_inner img.floatleft { float:left; }
+
+
+#sidebar h3 {
+       font-size: 19px;
+       margin-bottom:20px;
+       margin-top:60px;
+}
 
 /*
 .breadcrumb {
