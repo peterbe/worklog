@@ -1,6 +1,5 @@
-* (HIGH) API shouldn't allow all_day=False events to be longer than 24
-  hours
-  
+* (LOW) spell correct tags
+
 * (MEDIUM) Replace with Tipped
   http://projects.nickstakenburg.com/tipped/
   

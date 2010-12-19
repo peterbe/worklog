@@ -374,8 +374,9 @@ function __inner_setup_ajaxsubmit(element, event_id) {
             if (!event_id) {
                increment_total_no_events();
          
-               if ($('#introduction-video').size()) {
-                  $('#introduction-video').hide('slow');
+               if ($('#introduction-video, #introduction-video-after').size()) {
+                  $('#introduction-video:visible').hide('slow');
+                  $('#introduction-video-after:visible').hide('slow');
                   if ($('#report-link:hidden').size()) {
                      $('#report-link').show('slow');
                   }

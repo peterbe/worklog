@@ -72,7 +72,13 @@ $(function() {
       'height': '65%',
       'transitionIn': 'none',
       'transitionOut': 'none',
-      'type': 'iframe'
+      'type': 'iframe',
+      onClosed: function() {
+	 if ($('#introduction-video:visible').size()) {
+	    $('#introduction-video').hide();
+	    $('#introduction-video-after').show('slow');
+	 }
+      }
    });
       
    $('a.share').fancybox({
