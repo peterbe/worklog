@@ -8,3 +8,4 @@ xlwt
 lxml
 python-dateutil
 formatflowed
+markdown

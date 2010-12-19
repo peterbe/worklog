@@ -150,7 +150,8 @@ class FeatureRequest(BaseDocument):
         'description_format': unicode,
         'response': unicode,
         'response_format': unicode,
-        'author': User
+        'author': User,
+        'implemented': bool,
       }
       
       required_fields = [
@@ -161,6 +162,7 @@ class FeatureRequest(BaseDocument):
         'vote_weight': 0,
         'description_format': u'plaintext',
         'response_format': u'markdown',
+        'implemented': False,
       }
       
       

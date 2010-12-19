@@ -12,6 +12,7 @@ from utils.timesince import smartertimesince
 from subprocess import Popen, PIPE
 from utils import mkdir
 from utils.truncate import truncate_words
+import markdown
 
 try:
     import pygments
@@ -352,7 +353,7 @@ class Static64(tornado.web.UIModule):
 class RenderText(tornado.web.UIModule):
     def render(self, text, format='plaintext'):
         if format == 'markdown':
-            raise NotImplementedError('markdown?')
+            return markdown.markdown(text, safe_mode="escape")
         else:
             # plaintext
             html = '<p>%s</p>' % tornado.escape.linkify(text).replace('\n','<br>\n')
