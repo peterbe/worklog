@@ -65,3 +65,22 @@ from random import choice
 from string import letters
 def random_string(length):
     return ''.join(choice(letters) for i in xrange(length))
+
+
+
+def all_hash_tags(tags, title):
+    """return true if all tags in the title were constructed with a '#' instead
+    of a '@' sign"""
+    for tag in tags:
+        if re.findall(r'(^|\s)@%s\b' % re.escape(tag), title):
+            return False
+    return True
+
+def all_atsign_tags(tags, title):
+    """return true if all tags in the title were constructed with a '@' instead
+    of a '#' sign"""
+    for tag in tags:
+        if re.findall(r'(^|\s)#%s\b' % re.escape(tag), title):
+            return False
+    return True
+

@@ -24,14 +24,15 @@ from utils.datatoxml import dict_to_xml
 from utils.send_mail import send_email
 from utils.decorators import login_required
 from utils import parse_datetime, niceboolean, \
-  DatetimeParseError, valid_email, random_string
+  DatetimeParseError, valid_email, random_string, \
+  all_hash_tags, all_atsign_tags
 
 from ui_modules import EventPreview
 from config import *
 
 
 def title_to_tags(title):
-    return list(set([x[1:] for x in re.findall(r'\B@[\w\-\.]+', title, re.U)]))
+    return list(set([x[1:] for x in re.findall(r'\B[@#][\w\-\.]+', title, re.U)]))
 
 class BaseHandler(tornado.web.RequestHandler):
     def _handle_request_exception(self, exception):
@@ -109,13 +110,25 @@ class BaseHandler(tornado.web.RequestHandler):
         if guid:
             return self.db.User.one({'guid': guid})
         
-    def get_current_user_settings(self, user=None):
+    def get_current_user_settings(self, user=None, fast=False):
         if user is None:
             user = self.get_current_user()
             
         if not user:
             raise ValueError("Can't get settings when there is no user")
-        return self.db.UserSettings.one({'user.$id': user._id})
+        _search = {'user.$id': user['_id']}
+        if fast:
+            return self.db[UserSettings.__collection__].one(_search) # skip mongokit
+        else:
+            return self.db.UserSettings.one(_search)
+        
+    def create_user_settings(self, user, **default_settings):
+        user_settings = self.db.UserSettings()
+        user_settings.user = user
+        for key in default_settings:
+            setattr(user_settings, key, default_settings[key])
+        user_settings.save()
+        return user_settings
     
     def write_json(self, struct, javascript=False):
         if javascript:
@@ -426,7 +439,14 @@ class EventsHandler(BaseHandler):
         if include_tags:
             tags = list(tags)
             tags.sort(lambda x, y: cmp(x.lower(), y.lower()))
-            tags = ['@%s' % x for x in tags]
+            if tags:
+                # if the user prefers to start his tags with a # instead of an @
+                # then we need to find that out by interrogating the user settings.b
+                user_settings = self.get_current_user_settings(user, fast=True)
+                if user_settings and user_settings['hash_tags']:
+                    tags = ['#%s' % x for x in tags]
+                else:
+                    tags = ['@%s' % x for x in tags]
             data['tags'] = tags
             
         if sharers:
@@ -466,7 +486,12 @@ class EventsHandler(BaseHandler):
             # account.
             self.set_secure_cookie("guid", str(user.guid), expires_days=14)
         
-        self.write_event(event, format)
+        user_settings = self.get_current_user_settings(user, fast=True)
+        if user_settings and user_settings['hash_tags']:
+            tag_prefix = '#'
+        else:
+            tag_prefix = '@'
+        self.write_event(event, format, tag_prefix=tag_prefix)
         
            
     def create_event(self, user, title=None, description=None, all_day=None,
@@ -538,6 +563,23 @@ class EventsHandler(BaseHandler):
                 all_day = True
 
         tags = title_to_tags(title)
+        if tags:
+            user_settings = self.get_current_user_settings(user)
+            hash_tags_prev = getattr(user_settings, 'hash_tags', None)
+            if not hash_tags_prev and all_hash_tags(tags, title):
+                # has changed! his mind
+                if not user_settings:
+                    self.create_user_settings(user, hash_tags=True)
+                else:
+                    user_settings.hash_tags = True
+                    user_settings.save()
+            else:
+                # the user might have hash_tags on already
+                # if that's the case and this one was with @ signs then change back
+                if hash_tags_prev and all_atsign_tags(tags, title):
+                    user_settings.hash_tags = False
+                    user_settings.save()
+                
         self.case_correct_tags(tags, user)
         
         event = self.db.Event.one({
@@ -566,11 +608,11 @@ class EventsHandler(BaseHandler):
         
         return event, True
     
-    def write_event(self, event, format):
+    def write_event(self, event, format, tag_prefix='@'):
         fullcalendar_event = self.transform_fullcalendar_event(event, serialize=True)
         
         result = dict(event=fullcalendar_event,
-                      tags=['@%s' % x for x in event.tags],
+                      tags=['%s%s' % (tag_prefix, x) for x in event.tags],
                       )
         if format == '.xml':
             self.set_header("Content-Type", "text/xml; charset=UTF-8")
@@ -677,7 +719,13 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
           external_url=external_url,
         )
         
-        self.write_event(event, format)
+        user_settings = self.get_current_user_settings(user, fast=True)
+        if user_settings and user_settings['hash_tags']:
+            tag_prefix = '#'
+        else:
+            tag_prefix = '@'
+        
+        self.write_event(event, format, tag_prefix=tag_prefix)
         self.set_status(created and 201 or 200) # Created
             
 #@route(r'/events(\.json|\.js|\.xml|\.txt)?')

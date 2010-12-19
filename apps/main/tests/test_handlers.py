@@ -1336,4 +1336,74 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(hours_spent[0], ['<em>Untagged</em>', min_hours + 2])
         self.assertEqual(hours_spent[1], ['Tag1', min_hours])
         self.assertEqual(hours_spent[2], ['Tag2', min_hours + 1.0])
+        
+    def test_changing_tag_prefix(self):
+        db = self.get_db()
+        today = datetime.date.today()
+        
+        self.assertEqual(db.User.find().count(), 0)
+        data = {'title': "@tag1 and #tag2 Foo",
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        response = self.post('/events/', data)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertTrue(struct.get('event'))
+        self.assertTrue(isinstance(struct['event'].get('start'), float))
+        self.assertTrue(isinstance(struct['event'].get('end'), float))
+        self.assertEqual(struct['event']['start'], struct['event']['end'])
+        self.assertEqual(struct['event'].get('title'), data['title'])
+        self.assertEqual(struct.get('tags'), [u'@tag1',u'@tag2'])
+
+        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
+        cookie = 'guid=%s;' % guid_cookie
+        guid = base64.b64decode(guid_cookie.split('|')[0])
+        
+        # the user hasn't yet proven that he prefers all hash_tags so there
+        # shouldn't exist any user settings yet
+        self.assertTrue(not db.UserSettings.one())
+        data = {'title': "#tag2 and #tag3 Bar", # clearly prefers '#' as prefix
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        response = self.post('/events/', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct.get('tags'), [u'#tag2',u'#tag3'])
+        
+        user_settings = db.UserSettings.one()
+        
+        self.assertTrue(user_settings.hash_tags)
+        
+        # get all events out including all tags and expect it to contain 
+        # ['#tag1', '#tag2']
+        
+        
+        data = dict(start=mktime(today.timetuple()),
+                    end=mktime((today + datetime.timedelta(days=1)).timetuple()))
+        
+        data['include_tags'] = 'yes'
+        response = self.get('/events.json', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['tags'], ["#tag1", "#tag2", "#tag3"])
+        
+        # now change your mind again
+        data = {'title': "@tag3 alone", # clearly prefers '#' as prefix
+                'date': mktime(today.timetuple()),
+                'all_day': 'yes'}
+        response = self.post('/events/', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct.get('tags'), [u'@tag3'])
+        
+        data = dict(start=mktime(today.timetuple()),
+                    end=mktime((today + datetime.timedelta(days=1)).timetuple()))
+        
+        data['include_tags'] = 'yes'
+        response = self.get('/events.json', data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['tags'], ["@tag1", "@tag2", "@tag3"])
+        
+        
 

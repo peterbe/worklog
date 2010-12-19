@@ -86,5 +86,29 @@ class UtilsTestCase(unittest.TestCase):
         self.assertEqual(len(y), 10)
         self.assertNotEqual(x, y)
         
+    def test_all_hash_tags(self):
+        from utils import all_hash_tags
+        def T(text):
+            tags = ['tag1','tag2']
+            return all_hash_tags(tags, text)
+
+        self.assertFalse(T('@tag1 and @tag2'))
+        self.assertFalse(T('@tag1 and #tag2'))
+        self.assertFalse(T('#tag1 and @tag2'))
+        self.assertFalse(T('foo#tag1 and @tag2'))
+        self.assertTrue(T('#tag1 and #tag2'))
+
+    def test_all_atsign_tags(self):
+        from utils import all_atsign_tags
+        def T(text):
+            tags = ['tag1','tag2']
+            return all_atsign_tags(tags, text)
+
+        self.assertFalse(T('@tag1 and #tag2'))
+        self.assertFalse(T('#tag1 and @tag2'))
+        self.assertTrue(T('foo#tag1 and @tag2'))
+        self.assertFalse(T('#tag1 and #tag2'))
+        self.assertTrue(T('@tag1 and @tag2'))
+        
         
         

@@ -2,7 +2,7 @@
 import unittest
 
 TEST_MODULES = [
-    'apps.main.tests.test_app',
+    'apps.main.tests.test_handlers',
     'apps.main.tests.test_api',
     'apps.main.tests.test_models',
     'apps.main.tests.test_utils',
@@ -15,7 +15,7 @@ def all():
     try:
         return unittest.defaultTestLoader.loadTestsFromNames(TEST_MODULES)
     except AttributeError, e:
-        if "'module' object has no attribute 'test_app'" in str(e):
+        if "'module' object has no attribute 'test_handlers'" in str(e):
             # most likely because of an import error
             for m in TEST_MODULES:
                 __import__(m, globals(), locals())
