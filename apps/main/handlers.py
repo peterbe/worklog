@@ -89,7 +89,7 @@ class BaseHandler(tornado.web.RequestHandler):
                    subject, 
                    out.getvalue(),
                    self.application.settings['webmaster'],
-                   [self.application.settings['webmaster']],
+                   self.application.settings['admin_emails'],
                    )
     
     @property
@@ -1253,11 +1253,52 @@ class RecoverForgottenPasswordHandler(ForgottenPasswordHandler):
         self.redirect("/")
         
         
+class BaseAuthHandler(BaseHandler):
+
+    def get_next_url(self, default='/'):
+        next = default
+        if self.get_argument('next', None):
+            next = self.get_argument('next')
+        elif self.get_cookie('next', None):
+            next = self.get_cookie('next')
+            self.clear_cookie('next')
+        return next
+    
+    def notify_about_new_user(self, user):
+        if self.application.settings['debug']:
+            return
+        try:
+            self._notify_about_new_user()
+        except: 
+            # I hate to have to do this but I don't want to make STMP errors
+            # stand in the way of getting signed up
+            logging.error("Unable to notify about new user", exc_info=True)
+        
+    def _notify_about_new_user(self, user):
+        subject = "[DoneCal] New user!"
+        email_body = "%s %s\n" % (user.first_name, user.last_name)
+        email_body += "%s\n" % user.email
+        email_body += "%s events\n" % \
+          self.db.Event.find({'user.$id': user._id}).count()
+        user_settings = self.get_current_user_settings(user)
+        if user_settings:
+            bits = []
+            for key, value in UserSettings.structure.items():
+                if value == bool:
+                    yes_or_no = getattr(user_settings, key, False)
+                    bits.append('%s: %s' % (key, yes_or_no and 'Yes' or 'No'))
+            email_body += "User settings:\n\t%s\n" % ', '.join(bits)
+            
+        send_email(self.application.settings['email_backend'],
+                   subject,
+                   email_body,
+                   self.application.settings['webmaster'],
+                   self.application.settings['admin_emails'])
 
 
         
 @route('/user/signup/')
-class SignupHandler(BaseHandler):
+class SignupHandler(BaseAuthHandler):
           
     def get(self):
         if self.get_argument('validate_email', None):
@@ -1302,6 +1343,8 @@ class SignupHandler(BaseHandler):
         user.last_name = last_name
         user.save()
         
+        self.notify_about_new_user(user)
+        
         #self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
             
@@ -1316,16 +1359,6 @@ class SignupHandler(BaseHandler):
 #        self.render("feed.xml", entries=entries)
 
 
-class BaseAuthHandler(BaseHandler):
-
-    def get_next_url(self, default='/'):
-        next = default
-        if self.get_argument('next', None):
-            next = self.get_argument('next')
-        elif self.get_cookie('next', None):
-            next = self.get_cookie('next')
-            self.clear_cookie('next')
-        return next
         
 
 
@@ -1391,6 +1424,8 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
                 user.last_name = last_name
             user.set_password(random_string(20))
             user.save()
+            
+            self.notify_about_new_user(user)
             
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
         

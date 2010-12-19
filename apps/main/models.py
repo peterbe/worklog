@@ -80,6 +80,7 @@ class UserSettings(BaseDocument):
        'check': False,
        'unique': True},
     ]
+    
 
 class Event(BaseDocument):
     __collection__ = 'events'

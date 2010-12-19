@@ -80,6 +80,7 @@ class Application(tornado.web.Application):
                  'utils.send_mail.backends.console.EmailBackend' \
               or 'utils.send_mail.backends.smtp.EmailBackend',
             webmaster=settings.WEBMASTER,
+            admin_emails=settings.ADMIN_EMAILS,
             CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__), 
                                       "static", "compiler.jar"),
             YUI_LOCATION=os.path.join(os.path.dirname(__file__),
