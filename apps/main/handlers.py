@@ -1456,6 +1456,7 @@ class HelpHandler(BaseHandler):
       ['/Google-calendar', u"Google Calendar"],
       u"Feature requests",
       ['/Secure-passwords', u"Secure passwords"],
+      ['/Internet-Explorer', u"Internet Explorer"],
     )
     
     def get(self, page):
