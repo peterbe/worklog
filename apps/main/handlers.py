@@ -1267,22 +1267,24 @@ class BaseAuthHandler(BaseHandler):
             self.clear_cookie('next')
         return next
     
-    def notify_about_new_user(self, user):
+    def notify_about_new_user(self, user, extra_message=None):
         if self.application.settings['debug']:
             return
         try:
-            self._notify_about_new_user(user)
+            self._notify_about_new_user(user, extra_message=extra_message)
         except:
             # I hate to have to do this but I don't want to make STMP errors
             # stand in the way of getting signed up
             logging.error("Unable to notify about new user", exc_info=True)
         
-    def _notify_about_new_user(self, user):
+    def _notify_about_new_user(self, user, extra_message=None):
         subject = "[DoneCal] New user!"
         email_body = "%s %s\n" % (user.first_name, user.last_name)
         email_body += "%s\n" % user.email
         email_body += "%s events\n" % \
           self.db.Event.find({'user.$id': user._id}).count()
+        if extra_message:
+            email_body += '%s\n' % extra_message
         user_settings = self.get_current_user_settings(user)
         if user_settings:
             bits = []
@@ -1428,7 +1430,7 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
             user.set_password(random_string(20))
             user.save()
             
-            self.notify_about_new_user(user)
+            self.notify_about_new_user(user, extra_message="Used Google OpenID")
             
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
         
