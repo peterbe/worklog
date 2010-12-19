@@ -1521,9 +1521,9 @@ class HelpHandler(BaseHandler):
         filename = "help/%s.html" % page.lower()
         if os.path.isfile(os.path.join(self.application.settings['template_path'],
                                        filename)):
-            if page == 'API':
+            if page.lower() == 'api':
                 self._extend_api_options(options)
-            elif page == 'Bookmarklet':
+            elif page.lower() == 'bookmarklet':
                 self._extend_bookmarklet_options(options)
                 
             return self.render(filename, **options)
