@@ -1005,7 +1005,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue('success' in response.body)
         self.assertTrue('peterbe@gmail.com' in response.body)
         
-        sent_email = mail.outbox[0]
+        sent_email = mail.outbox[-1]
         self.assertTrue('peterbe@gmail.com' in sent_email.to)
         
         links = [x.strip() for x in sent_email.body.split() 

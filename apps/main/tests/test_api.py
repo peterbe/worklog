@@ -387,7 +387,24 @@ class APITestCase(base.BaseHTTPTestCase):
         struct = json.loads(response.body)
         start = struct['event']['start']
         end = struct['event']['end']
-        self.assertEqual(int(end-start), MINIMUM_DAY_SECONDS)        
+        self.assertEqual(int(end-start), MINIMUM_DAY_SECONDS)
+        
+    def test_error_on_hourly_event_longer_than_24_hours(self):
+        peter = self.get_db().users.User()
+        assert peter.guid
+        peter.save()
+        
+        def dt(x):
+            return mktime(x.timetuple())
+        
+        data = dict(guid=peter.guid, 
+                    title="Spanning multiple days", 
+                    all_day=False,
+                    start=dt(datetime.datetime.today()),
+                    end=dt(datetime.datetime.today() + datetime.timedelta(days=1))
+                    )
+        response = self.post('/api/events/', data)
+        self.assertEqual(response.code, 400)
         
         
         

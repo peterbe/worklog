@@ -11,6 +11,7 @@ from time import mktime, sleep
 import datetime
 import os.path
 import re
+import logging
 
 # tornado
 import tornado.auth
@@ -513,6 +514,9 @@ class EventsHandler(BaseHandler):
                     raise tornado.web.HTTPError(400, 
                      "End must be at least %s minutes more than the start" % \
                      (MINIMUM_DAY_SECONDS / 60))
+                if (end - start).days > 0:
+                    raise tornado.web.HTTPError(400,
+                      "Event length greater than 24 hours for an hourly event")
         elif self.get_argument('start', None) and \
           not self.get_argument('end', None) and not all_day:
             start = parse_datetime(self.get_argument('start'))
@@ -632,7 +636,6 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
         
         
     def post(self, format):
-        
         if not self.application.settings.get('xsrf_cookies'):
             if not self.check_guid():
                 return
@@ -1268,8 +1271,8 @@ class BaseAuthHandler(BaseHandler):
         if self.application.settings['debug']:
             return
         try:
-            self._notify_about_new_user()
-        except: 
+            self._notify_about_new_user(user)
+        except:
             # I hate to have to do this but I don't want to make STMP errors
             # stand in the way of getting signed up
             logging.error("Unable to notify about new user", exc_info=True)
