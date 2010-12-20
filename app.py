@@ -111,7 +111,8 @@ class Application(tornado.web.Application):
  
 for app_name in settings.APPS:
     __import__('apps.%s' % app_name, globals(), locals(), ['handlers'], -1)
-    
+
+        
         
 def main(): # pragma: no cover
     tornado.options.parse_command_line()
@@ -119,6 +120,7 @@ def main(): # pragma: no cover
         for path, class_ in route.get_routes():
             print path
         return
+    
     http_server = tornado.httpserver.HTTPServer(Application())
     print "Starting tornado on port", options.port
     if options.prefork:

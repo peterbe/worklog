@@ -2,9 +2,10 @@ import datetime
 import re
 from base64 import encodestring
 import stat
+import os
 import cPickle
 from time import time
-import os
+import marshal
 from tempfile import gettempdir
 import tornado.web
 import tornado.escape
@@ -31,7 +32,6 @@ class Footer(tornado.web.UIModule):
           calendar_link=self.request.path != '/',
           user=user,
          )
-
 
 class TruncateWords(tornado.web.UIModule):
     def render(self, string, max_words=20):
@@ -82,7 +82,42 @@ class Syntax(tornado.web.UIModule):
 ################################################################################    
 # Global variable where we store the conversions so we don't have to do them 
 # again every time the UI module is rendered with the same input
-_name_conversion = {}
+
+out_file = os.path.join(os.path.abspath(os.curdir), '.static_name_conversion')
+def _delete_old_static_name_conversion():
+    """In this app we marshal all static file conversion into a file called
+    '.static_name_conversion' located here in the working directory.
+    The reason we're doing this is so that when you start multiple Python 
+    interpreters of the app (e.g. production environment) you only need to 
+    work out which name conversions have been done once. 
+    
+    When you do a new deployment it's perfectly natural that this name 
+    conversion should be invalidated since there are now potentially new static
+    resources so it needs to have different static names.
+    
+    So delete the file it's older than a small amount of time in a human
+    sense.
+    """
+    if os.path.isfile(out_file):
+        mtime = os.stat(out_file)[stat.ST_MTIME]
+        age = time() - mtime
+        if age >= 20:
+            print "REMOVE FILE"
+            os.remove(out_file)
+
+def load_name_conversion():
+    try:
+        #print "Loading marshalled file"
+        return marshal.load(file(out_file))
+    except IOError:
+        #print "File did NOT exist"
+        return dict()
+
+_delete_old_static_name_conversion()
+_name_conversion = load_name_conversion()
+
+def save_name_conversion():
+    marshal.dump(_name_conversion, file(out_file, 'w'))
 
 class StaticURL(tornado.web.UIModule):
 
@@ -161,6 +196,7 @@ class StaticURL(tornado.web.UIModule):
         prefix = self.handler.settings.get('combined_static_url_prefix', '/combined/')
         new_name = os.path.join(prefix, os.path.basename(new_name))
         _name_conversion[basic_name] = new_name
+        save_name_conversion()
         return new_name
     
 
@@ -220,7 +256,6 @@ class StaticURL(tornado.web.UIModule):
         for part in ('.min.', '.minified.', '.pack.', '-jsmin.'):
             if part in file_name:
                 return True
-        print "NOT", repr(file_name)
         return False
 
     
@@ -441,6 +476,3 @@ class ShowUserName(tornado.web.UIModule):
                 name = name[:3] + '...@...' + name.split('@')[1][3:]
         return name
                 
-                
-        
-        
