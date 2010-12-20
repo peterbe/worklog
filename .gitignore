@@ -5,6 +5,7 @@ coverage_report/
 run_mongodb.sh
 start_mongod.sh
 db/
+live-db/
 mongodb
 tags
 *.py.done

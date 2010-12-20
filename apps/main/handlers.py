@@ -1922,14 +1922,14 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
                 this_search = dict(add_date={'$gte':date, '$lt':date + interval})
                 date_serialized = date.strftime('%Y-%m-%d')#mktime(date.timetuple())
                 this_count = self.db[User.__collection__]\
-                  .find(dict(this_search, email=None)).count()
+                  .find(dict(this_search, email={'$ne':None})).count()
                 
                 new_w_email.append((date_serialized, this_count))
                 cum_w_email.append((date_serialized, this_count + cum_w_email_count))
                 cum_w_email_count += this_count
 
                 this_count = self.db[User.__collection__]\
-                  .find(dict(this_search, email={'$ne':None})).count()
+                  .find(dict(this_search, email=None)).count()
                   
                 new_wo_email.append((date_serialized, this_count))
                 cum_wo_email.append((date_serialized, this_count + cum_wo_email_count))

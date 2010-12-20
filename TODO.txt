@@ -1,3 +1,6 @@
+* (LOW) When you need memcaching, consider
+  https://github.com/gmr/Tinman/blob/master/tinman/cache.py
+  
 * (LOW) spell correct tags
 
 * (MEDIUM) Replace with Tipped
