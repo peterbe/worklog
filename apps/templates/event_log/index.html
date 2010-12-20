@@ -1,0 +1,33 @@
+{% extends "../base.html" %}
+{% block content_inner %}
+
+<h1>Event Log <sup>beta</sup></h1>
+
+<table>
+  <thead>
+    <tr>
+      {% if superuser %}
+      <td>USER</td>
+      {% end %}
+      <td>ACTION</td>
+      <td>CONTEXT</td>
+      <td>EVENT</td>
+      <td>DATE</td>
+      <td>COMMENT</td>
+    </tr>
+  </thead>
+  {% for entry in event_logs %}
+  <tr>
+      {% if superuser %}
+      <td>{{ entry.user.email }}</td>
+      {% end %}
+      <td>{{ entry.event.title }}</td>
+      <td>{{ modules.VerboseEventLog(entry, 'action') }}</td>
+      <td>{{ entry.context }}</td>
+      <td>{{ modules.VerboseEventLog(entry, 'date') }}</td>
+      <td>{{ modules.VerboseEventLog(entry, 'comment') }}</td>
+    <td>
+  </tr>
+{% end %}
+</table>
+{% end %}

@@ -29,6 +29,7 @@ from utils import parse_datetime, niceboolean, \
 
 from ui_modules import EventPreview
 from config import *
+from models import EventLog
 
 
 def title_to_tags(title):
@@ -478,7 +479,16 @@ class EventsHandler(BaseHandler):
         if not user:
             user = self.db.User()
             user.save()
+            
         event, created = self.create_event(user)
+        
+        if created:
+            event_log = self.db.EventLog()
+            event_log.user = user
+            event_log.event = event
+            event_log.action = EventLog.ACTION_ADD
+            event_log.context = EventLog.CONTEXT_CALENDAR
+            event_log.save()
         
         if not self.get_secure_cookie('user'):
             # if you're not logged in, set a cookie for the user so that
@@ -719,6 +729,14 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
           external_url=external_url,
         )
         
+        if created:
+            event_log = self.db.EventLog()
+            event_log.user = user
+            event_log.event = event
+            event_log.action = EventLog.ACTION_ADD
+            event_log.context = EventLog.CONTEXT_API
+            event_log.save()
+        
         user_settings = self.get_current_user_settings(user, fast=True)
         if user_settings and user_settings['hash_tags']:
             tag_prefix = '#'
@@ -887,12 +905,35 @@ class EditEventHandler(BaseEventHandler):
             # the special "undoer" user
             undoer = self.get_undoer_user(create_if_necessary=True)
             event.chown(undoer, save=True)
+            
+            event_log = self.db.EventLog()
+            event_log.user = user
+            event_log.event = event
+            event_log.action = EventLog.ACTION_DELETE
+            event_log.context = EventLog.CONTEXT_CALENDAR
+            event_log.save()
+            
             return self.write("Deleted")
+        
         elif action == 'undodelete':
             event.chown(user, save=True)
-            #return self.write("Delete undone")
+            
+            event_log = self.db.EventLog()
+            event_log.user = user
+            event_log.event = event
+            event_log.action = EventLog.ACTION_RESTORE
+            event_log.context = EventLog.CONTEXT_CALENDAR
+            event_log.save()
         else:
             raise NotImplementedError(action)
+        
+        event_log = self.db.EventLog()
+        event_log.user = user
+        event_log.event = event
+        event_log.action = EventLog.ACTION_EDIT
+        event_log.context = EventLog.CONTEXT_CALENDAR
+        event_log.comment = unicode(action)
+        event_log.save()
         
         return self.write_json(dict(event=self.transform_fullcalendar_event(event, True)))
     
@@ -1688,6 +1729,14 @@ class Bookmarklet(EventsHandler):
               end=end,
             )
             
+            if created:
+                event_log = self.db.EventLog()
+                event_log.user = user
+                event_log.event = event
+                event_log.action = EventLog.ACTION_ADD
+                event_log.context = EventLog.CONTEXT_BOOKMARKLET
+                event_log.save()
+            
             if not self.get_secure_cookie('user'):
                 # if you're not logged in, set a cookie for the user so that
                 # this person can save the events without having a proper user
@@ -2188,3 +2237,22 @@ class FindFeatureRequestsHandler(FeatureRequestsHandler):
                                                  description=feature_request.description))
         self.write_json(data)
         
+
+@route('/log/$')
+class EventLogHandler(BaseHandler):
+    
+    @login_required
+    def get(self):
+        options = self.get_base_options()
+        user = self.get_current_user()
+        superuser = user.email == 'peterbe@gmail.com'
+        search = {'user.$id': user._id}
+        if superuser:
+            search = dict()
+        event_logs = self.db.EventLog.find(search)
+        options['count_event_logs'] = event_logs.count()
+        options['superuser'] = superuser
+        skip = 0 
+        options['event_logs'] = event_logs.sort('add_date', -1).limit(10).skip(skip)
+        
+        self.render("event_log/index.html", **options)
