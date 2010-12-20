@@ -1644,7 +1644,7 @@ class Bookmarklet(EventsHandler):
         
         title = u""
         #doc_title = self.get_argument('doc_title', u'')
-        if external_url:#doc_title:
+        if external_url and user:#doc_title:
             tags = self._suggest_tags(user, external_url)
             if tags:
                 title = ' '.join(tags) + ' '
