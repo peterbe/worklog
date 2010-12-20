@@ -102,15 +102,12 @@ def _delete_old_static_name_conversion():
         mtime = os.stat(out_file)[stat.ST_MTIME]
         age = time() - mtime
         if age >= 20:
-            print "REMOVE FILE"
             os.remove(out_file)
 
 def load_name_conversion():
     try:
-        #print "Loading marshalled file"
         return marshal.load(file(out_file))
     except IOError:
-        #print "File did NOT exist"
         return dict()
 
 _delete_old_static_name_conversion()

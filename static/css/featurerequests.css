@@ -94,10 +94,12 @@ form.centered { margin-top:40px }
 }
 
 .implemented {
+  float:right;
   margin-left:40px;
   background-color:#faff78;
   color:black;
   font-size:70%;
+  font-weight:bold;
   padding:5px;
    -moz-border-radius: 6px;
   border-radius: 6px;
