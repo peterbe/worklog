@@ -962,7 +962,9 @@ label.valid { color:green; }
   /*width:200px;*/
   left:250px;
   z-index:99999;
-  border:1px solid #ccc;
+  border-left:1px solid #ccc;
+  border-right:1px solid #ccc;
+  border-bottom:1px solid #ccc;
   background-color:#fff;
   padding:3px 30px 9px 30px;
   border-radius-bottomleft: 15px;
@@ -970,7 +972,7 @@ label.valid { color:green; }
   -moz-border-radius-bottomleft:10px;
   -moz-border-radius-bottomright:10px;
   -webkit-border-radius:0 0 10px 10px;
-  opacity:0.7;
+  opacity:0.9;
 }
 
 input {

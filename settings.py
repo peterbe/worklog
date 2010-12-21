@@ -3,6 +3,7 @@ APPS = (
   'main',
   'smartphone',
   'emailreminders',
+  'eventlog',
 )
 
 LOGIN_URL = "/auth/login"
