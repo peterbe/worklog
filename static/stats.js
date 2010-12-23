@@ -128,7 +128,7 @@ function plot_events(cumulative, interval, date_format_string) {
       interval: interval,
       cumulative: cumulative,
       start: startDate.datepicker('getDate').getTime(),
-	end: endDate.datepicker('getDate').getTime()}, 
+	end: endDate.datepicker('getDate').getTime()},
              function(response) {
                 var lines = new Array();
                 $.each(response_keys, function(i, e) {
@@ -177,6 +177,52 @@ function update_numbers() {
 }
 
 
+function plot_usersettings() {
+   $('#plot-usersettings').html('');
+   $.getJSON('/stats/usersettings.json', {
+      start: startDate.datepicker('getDate').getTime(),
+      end: endDate.datepicker('getDate').getTime()
+   }, function(response) {
+      $.jqplot('plot-usersettings', response.lines, {
+        title:'Switched on settings',
+        grid:{
+            drawGridlines:true,
+            background: '#ffffff',
+            borderWidth: 0,
+            shadow: false
+        },
+        stackSeries: true, 
+        seriesColors: ["#82BC24","#ffffff"],
+        seriesDefaults: {
+            renderer: $.jqplot.BarRenderer,
+            rendererOptions:{barMargin: 25}, 
+            pointLabels:{stackedValue: true},
+            yaxis:'y2axis',
+            shadow: false
+        },
+        series:[
+            {pointLabels:{ypadding: -15}},
+            {pointLabels:{ypadding:9000}}   // this hack will push the labels for the top series off of the page so they don't appear.
+        ],
+        axes: {
+            xaxis:{
+                ticks: response.labels,
+                renderer:$.jqplot.CategoryAxisRenderer, 
+                tickOptions:{
+                    showGridline:false, 
+                    markSize:0
+                }
+            },
+            y2axis:{
+                ticks:[0, 100], 
+                tickOptions:{formatString:'%d\%'}
+            }
+        }
+    });
+
+   });
+}
+
 function refresh_date_range() {
    update_numbers();
    var interval = get_automatic_interval_string();
@@ -184,6 +230,7 @@ function refresh_date_range() {
    var cumulative = $('#cumulative:checked').size();
    plot_users(cumulative, interval, date_format_string);
    plot_events(cumulative, interval, date_format_string);
+   plot_usersettings();
 }
 
 $(function() {

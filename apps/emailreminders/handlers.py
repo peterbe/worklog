@@ -192,7 +192,11 @@ class SendEmailRemindersHandler(BaseHandler):
 class ReceiveEmailReminder(EventsHandler):
 
     def post(self):
-        message = self.request.body
+        if self.request.body:
+            message = self.request.body
+        else:
+            message = self.get_argument('message')
+        
         from email import Parser
         parser = Parser.Parser()
         msg = parser.parsestr(message)

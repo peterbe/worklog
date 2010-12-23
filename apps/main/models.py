@@ -83,6 +83,12 @@ class UserSettings(BaseDocument):
        'unique': True},
     ]
     
+    @staticmethod
+    def get_bool_keys():
+        return [key for (key, value) 
+                in UserSettings.structure.items()
+                if value is bool]
+                
 
 class Event(BaseDocument):
     __collection__ = 'events'

@@ -101,7 +101,7 @@ def _delete_old_static_name_conversion():
     if os.path.isfile(out_file):
         mtime = os.stat(out_file)[stat.ST_MTIME]
         age = time() - mtime
-        if age >= 20:
+        if age >= 60:
             os.remove(out_file)
 
 def load_name_conversion():

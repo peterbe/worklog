@@ -118,6 +118,7 @@ class BaseHTTPTestCase(AsyncHTTPTestCase, LogTrapTestCase, HTTPClientMixin):
             self._emptyCollections()
             
         self._app.settings['email_backend'] = 'utils.send_mail.backends.locmem.EmailBackend'
+        self._app.settings['email_exceptions'] = False
         
     def _emptyCollections(self):
         db = self.get_db()

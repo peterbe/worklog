@@ -4,6 +4,8 @@
 {{ modules.Static("css/ext/jquery.jqplot.min.css", "css/smoothness/jquery-ui-1.8.6.slider.datepicker.css", "css/stats.css") }}
 {% end %}
 
+{% block title %}Statistics on DoneCal{% end %}
+
 {% block content_inner %}
 
 <h1>Stats</h1>
@@ -32,6 +34,9 @@ or
 <div id="plot-users">
 </div>
 
+<div id="plot-usersettings">
+</div>
+
 {% end %}
 
 {% block sidebar %}
@@ -58,5 +63,5 @@ $(function() {
   });
 });
 </script>
-{{ modules.Static("ext/jquery-ui-1.8.6.slider.datepicker.min.js", "ext/jquery.jqplot.js", "ext/jqplot.dateAxisRenderer.min.js", "ext/jqplot.highlighter.min.js","stats.js") }}
+{{ modules.Static("ext/jquery-ui-1.8.6.slider.datepicker.min.js", "ext/jquery.jqplot.js", "ext/jqplot.categoryAxisRenderer.min.js", "ext/jqplot.dateAxisRenderer.min.js", "ext/jqplot.pointLabels.min.js", "ext/jqplot.barRenderer.min.js", "ext/jqplot.highlighter.min.js","stats.js") }}
 {% end %}

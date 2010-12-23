@@ -102,5 +102,13 @@ class ModelsTestCase(BaseModelsTestCase):
         frc.save()
         self.assertEqual(frc.vote_weight, 1)
         
+    def test_usersettings_bool_keys(self):
+        from apps.main.models import UserSettings
+        keys = UserSettings.get_bool_keys()
+        self.assertTrue(isinstance(keys, list))
+        print keys
+        self.assertTrue(keys) # at least one
+        self.assertTrue(isinstance(keys[0], basestring))
+        
         
         

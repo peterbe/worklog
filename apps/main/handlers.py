@@ -39,6 +39,7 @@ class BaseHandler(tornado.web.RequestHandler):
     def _handle_request_exception(self, exception):
         if not isinstance(exception, tornado.web.HTTPError) and \
           not self.application.settings['debug']:
+
             # ie. a 500 error
             try:
                 self._email_exception(exception)
@@ -57,7 +58,7 @@ class BaseHandler(tornado.web.RequestHandler):
         print >>out, "TRACEBACK:"
         traceback.print_exception(err_type, err_val, err_traceback, 500, out)
         traceback_formatted = out.getvalue()
-        
+        print traceback_formatted
         print >>out, "\nREQUEST ARGUMENTS:"
         arguments = self.request.arguments
         if arguments.get('password') and arguments['password'][0]:
@@ -467,9 +468,10 @@ class EventsHandler(BaseHandler):
             for event in data['events']:
                 pprint(event, out)
                 out.write("\n")
-            out.write('TAGS\n')
-            out.write('\n'.join(data['tags']))
-            out.write("\n")
+            if 'tags' in data:
+                out.write('TAGS\n')
+                out.write('\n'.join(data['tags']))
+                out.write("\n")
             self.write_txt(out.getvalue())
         
         
@@ -1038,11 +1040,11 @@ class UserSettingsHandler(BaseHandler):
         # default initials
         default = dict()
         setting_keys = list()
-        for key, value in UserSettings.structure.items():
-            if value == bool:
-                default[key] = False
-                setting_keys.append(key)
         
+        for key in UserSettings.get_bool_keys():
+            default[key] = False
+            setting_keys.append(key)
+            
         user = self.get_current_user()
         if user:
             user_settings = self.get_current_user_settings(user)
@@ -1994,6 +1996,34 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
             numbers = self._get_numbers(start, end)
             data['numbers'] = numbers
                     
+        elif report_name == 'usersettings':
+            #data['lines'] = list()
+            trues = list()
+            falses = list()
+            data['labels'] = list()
+            
+            counts = {}
+            _translations = {
+              'hash_tags': "Tag with #",
+            }
+            total_count = self.db[UserSettings.__collection__].find().count()
+            for key in UserSettings.get_bool_keys():
+                if key in ('offline_mode'):
+                    # skip these
+                    continue
+                count_true = self.db[UserSettings.__collection__].find({key:True}).count()
+                #count_false = self.db[UserSettings.__collection__].find({key:False}).count()
+                p = int(100. * count_true / total_count)
+                try:
+                    label = _translations[key]
+                except KeyError:
+                    label = key.replace('_',' ').capitalize()
+                data['labels'].append(label)
+                trues.append(p)
+                falses.append(100 - p)
+            
+            data['lines'] = [trues, falses]
+            
         else:
             raise tornado.web.HTTPError(404, report_name)
         

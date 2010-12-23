@@ -55,6 +55,16 @@ class APITestCase(base.BaseHTTPTestCase):
         response = self.get('/api/events.json', dict(data, include_tags='yes'))
         struct = json.loads(response.body)
         self.assertEqual(struct.get('tags'), [])
+
+        response = self.get('/api/events.txt', dict(data))
+        self.assertEqual(response.code, 200)
+        self.assertTrue('ENTRIES' in response.body)
+        self.assertTrue('TAGS' not in response.body)
+
+        response = self.get('/api/events.txt', dict(data, include_tags='yes'))
+        self.assertEqual(response.code, 200)
+        self.assertTrue('ENTRIES' in response.body)
+        self.assertTrue('TAGS' in response.body)
         
         # post an event
         event1 = self.get_db().events.Event()
