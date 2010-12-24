@@ -3,6 +3,7 @@ from cStringIO import StringIO
 import datetime
 from pymongo.objectid import InvalidId, ObjectId
 import tornado.web
+import logging
 
 from mongokit import ValidationError
 from utils.decorators import login_required
@@ -191,13 +192,23 @@ class SendEmailRemindersHandler(BaseHandler):
 
 @route('/emailreminders/receive/$')
 class ReceiveEmailReminder(EventsHandler):
-
+    def check_xsrf_cookie(self):
+        pass
+    
     def post(self):
+        try:
+            print "BEFORE"
+            self._post()
+            print "AFTER"
+        except:
+            logging.error("Failed to receive post", exc_info=True)
+            
+    def _post(self):
+        
         if self.request.body:
             message = self.request.body
         else:
             message = self.get_argument('message')
-        
         from email import Parser
         parser = Parser.Parser()
         msg = parser.parsestr(message)
@@ -397,7 +408,9 @@ class ReceiveEmailReminder(EventsHandler):
     
     def error_reply(self, error_message, msg):
         """send an email reply"""
-        body = msg.get_payload(decode=True)
+        body = msg.get_payload()#decode=True)
+        if isinstance(body, str):
+            body = unicode(body, 'utf-8')
         body = body.replace('\r\n', '\n')
         body = '\n'.join(['> %s' % line for line in body.splitlines()])
         body = u'Error in receiving email.\n   %s\n\nPlease try again.\n\n' \
