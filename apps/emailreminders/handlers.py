@@ -180,7 +180,8 @@ class SendEmailRemindersHandler(BaseHandler):
                                   email_reminder_edit_url=\
                                   email_reminder_edit_url)
                                    
-        from_ = EMAIL_REMINDER_SENDER % {'id': str(email_reminder._id)}
+        from_email = EMAIL_REMINDER_SENDER % {'id': str(email_reminder._id)}
+        from_ = "DoneCal <%s>" % from_email
         send_email(self.application.settings['email_backend'],
                    subject, 
                    body,
