@@ -4,6 +4,7 @@ from utils.routes import route
 
 @route('/log/$')
 class EventLogHandler(BaseHandler):
+    DEFAULT_BATCH_SIZE = 100
     
     @login_required
     def get(self):
@@ -18,10 +19,11 @@ class EventLogHandler(BaseHandler):
         options['superuser'] = superuser
         
         page = int(self.get_argument('page', 1))
-        skip = (page - 1) * 10
+        batch_size = self.DEFAULT_BATCH_SIZE
+        skip = (page - 1) * batch_size
         options['page'] = page
         options['skip'] = skip
-        options['pages'] = range(1, 1 + options['count_event_logs'] / 10)
-        options['event_logs'] = event_logs.sort('add_date', -1).limit(10).skip(skip)
+        options['pages'] = range(1, 1 + options['count_event_logs'] / batch_size)
+        options['event_logs'] = event_logs.sort('add_date', -1).skip(skip).limit(batch_size)
         
         self.render("eventlog/index.html", **options)
