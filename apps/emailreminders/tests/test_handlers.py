@@ -377,8 +377,8 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('INSTRUCTIONS' in sent_email.body)
         self.assertTrue('edit=%s' % email_reminder._id  in sent_email.body)
         self.assertEqual(sent_email.to, [bob.email])
-        from_ = 'reminder+%s@donecal.com' % email_reminder._id
-        self.assertEqual(sent_email.from_email, from_)
+        from_email = 'reminder+%s@donecal.com' % email_reminder._id
+        self.assertTrue('<%s>' % from_email in sent_email.from_email)
         
         
         

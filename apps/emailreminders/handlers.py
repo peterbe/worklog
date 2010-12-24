@@ -197,11 +197,10 @@ class ReceiveEmailReminder(EventsHandler):
     
     def post(self):
         try:
-            print "BEFORE"
             self._post()
-            print "AFTER"
         except:
             logging.error("Failed to receive post", exc_info=True)
+            raise
             
     def _post(self):
         
