@@ -124,6 +124,8 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         body += ['Subject: [DoneCal] what did you do today?']
         body += ['']
         body += ['This is a test on @tagg']
+        body += ['']
+        body += ['On 23 Dec someone wrote']
         body += ['> INSTRUCTIONS:']
         body += ['> BLa bla bla']
         
@@ -191,6 +193,8 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         body += ['Subject: [DoneCal] what did you do today?']
         body += ['']
         body += ['13:30pm This wont work']
+        body += ['']
+        body += ['On 23 Dec someone wrote']
         body += ['> INSTRUCTIONS:']
         body += ['> BLa bla bla']
         
@@ -229,6 +233,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         body += ['']
         body += ['3:30pm 60min This will work']
         body += ['']
+        body += ['On 23 Dec someone wrote']
         body += ['> INSTRUCTIONS:']
         body += ['> BLa bla bla']
         
@@ -267,7 +272,9 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         body += ['This is the title']
         body += ['This is the description']
         body += ['']
+        body += ['On 23 Dec someone wrote']
         body += ['> INSTRUCTIONS:']
+        body += ['']
         body += ['> BLa bla bla']
         
         db = self.get_db()
@@ -284,7 +291,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         email_reminder.tz_offset = 0.0
         email_reminder.save()
         
-        body[1] = 'To: reminder+%s@donecal.com' % email_reminder._id
+        body[1] = 'To: DoneCal <reminder+%s@donecal.com>' % email_reminder._id
 
         response = self.post(url, '\r\n'.join(body))
         self.assertEqual(db.Event.find().count(), 1)
@@ -300,6 +307,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         body += ['']
         body += ['2 hours @tagg This is the title']
         body += ['']
+        body += ['On 23 Dec someone wrote:']
         body += ['> INSTRUCTIONS:']
         body += ['> BLa bla bla']
         

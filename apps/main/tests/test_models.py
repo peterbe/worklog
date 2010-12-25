@@ -106,7 +106,6 @@ class ModelsTestCase(BaseModelsTestCase):
         from apps.main.models import UserSettings
         keys = UserSettings.get_bool_keys()
         self.assertTrue(isinstance(keys, list))
-        print keys
         self.assertTrue(keys) # at least one
         self.assertTrue(isinstance(keys[0], basestring))
         

@@ -231,7 +231,8 @@ class ReceiveEmailReminder(EventsHandler):
                       .one({'_id': ObjectId(_id)})
                 except InvalidId:
                     pass
-            
+        
+        
         ## Check that it was sent from someone we know
         from_user = None
         for from_email in parse_email_line(msg['From']):
@@ -248,7 +249,6 @@ class ReceiveEmailReminder(EventsHandler):
         
         assert from_user
         
-
         if not email_reminder:
             # At this point, we know it was not a proper reply,
             # but it was sent from one of our users because otherwise it would have been
@@ -263,8 +263,6 @@ class ReceiveEmailReminder(EventsHandler):
         
         assert email_reminder
         
-        
-        
         if email_reminder.user._id != from_user._id:
             if 'INSTRUCTIONS' in msg.get_payload(decode=True) \
               and 'DoneCal' in msg['Subject']:
@@ -278,11 +276,14 @@ class ReceiveEmailReminder(EventsHandler):
             self.write("No email reminders set up")
             return
             
-        body = msg.get_payload(decode=True)
-        from formatflowed import decode
+        body = msg.get_payload()#decode=True)
         character_set = msg.get_charset()
-        #CRLF = '\r\n'
-        #body = body.replace('\n', CRLF)
+        CRLF = '\r\n'
+        # formatflowed expects the line breakers to be \r\n
+        if not body.count(CRLF):
+            body = body.replace('\n', CRLF)
+            
+        from formatflowed import decode
         try:
             if character_set:
                 textflow = decode(body, character_set=character_set)
@@ -300,6 +301,8 @@ class ReceiveEmailReminder(EventsHandler):
             if not segment[0]['quotedepth']:
                 # level zero
                 new_text.write("%s\n" % segment[1])
+            else:
+                break
 
         new_text = new_text.getvalue()
         if email_reminder:
@@ -315,7 +318,14 @@ class ReceiveEmailReminder(EventsHandler):
                 
         tz_offset = email_reminder.tz_offset
         count_new_events = 0
-        for text in new_text.strip().split('\n\n'):
+        paragraphs = new_text.strip().split('\n\n')
+        # Because we expect the last line to be something like
+        #    On 25 December 2010 09:00, DoneCal
+        #    <reminder+4d11e7d674a1f8360a000078@donecal.com> wrote:
+        #
+        # So we have to remove it.
+        paragraphs = paragraphs[:-1]
+        for text in paragraphs:
             try:
                 event = self.parse_and_create_event(from_user, text, about_today, tz_offset)
                 if event:

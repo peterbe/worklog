@@ -5,6 +5,7 @@ import code, re
 if __name__ == '__main__':
     
     from apps.main.models import *
+    from apps.emailreminders.models import EmailReminder
     from mongokit import Connection
     from pymongo.objectid import InvalidId, ObjectId
     con = Connection()
@@ -13,4 +14,4 @@ if __name__ == '__main__':
     print '\n'.join(['\t%s'%x for x in locals().keys() 
                      if re.findall('[A-Z]\w+|db|con', x)])
     print "Database available as 'db'"
-    #code.interact(local=locals())
+    code.interact(local=locals())

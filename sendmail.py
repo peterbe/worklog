@@ -2,27 +2,37 @@
 import sys
 import datetime
 import urllib2
+import os.path
+
+import logging
+LOG_DIR = '/tmp'
+LOG_FILENAME = 'sendmail.py.log'
+logging.basicConfig(filename=os.path.join(LOG_DIR, LOG_FILENAME),
+                    level=logging.DEBUG,
+                    datefmt="%Y-%m-%d %H:%M:%S",
+                    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+                   )
+
 
 def main(domain=None, protocol=None):
     if not domain:
         domain = 'donecal.com'
     if not protocol:
         protocol = 'http'
-    email_content = sys.stdin.read()
-    f =open('/tmp/sendmail.py.log','a')
-    f.write("%s\n" % datetime.datetime.now().isoformat())
-    #f.write("ARGS: %s\n" % str(args))
-    f.write(email_content)
+    now = datetime.datetime.now()
+    save_as_file = os.path.join(LOG_DIR, 
+      now.strftime('%Y-%m-%d_%H%M%S_%f.email'))
+    open(save_as_file, 'w').write(sys.stdin.read())
+    logging.debug("Incoming email (%s)" % save_as_file)
+    url = '%s://%s/emailreminders/receive/' % (protocol, domain)
+    req = urllib2.Request(url, open(save_as_file).read())
     try:
-        url = '%s://%s/emailreminders/receive/' % (protocol, domain)
-        print repr(url)
-        req = urllib2.Request(url, email_content)
         response = urllib2.urlopen(req)
-        f.write(response.read())
-    finally:
-        
-        f.write('\n')
-        f.close()
+        logging.info(response.read())
+    except:
+        logging.error(
+          "Error on opening receiver. Look into %s" % save_as_file,
+          exc_info=True)
     
 def run(*args):
     domain = None
