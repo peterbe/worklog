@@ -6,6 +6,7 @@
 import re
 import os.path
 from mongokit import Connection, Document as mongokit_Document
+import logging
 
 # tornado
 import tornado.httpserver
@@ -27,8 +28,6 @@ define("database_name", default="worklog", help="mongodb database name")
 define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 define("showurls", default=False, help="Show all routed URLs", type=bool)
 define("dont_combine", default=False, help="Don't combine static resources", type=bool)
-
-
 
 
 class Application(tornado.web.Application):
@@ -59,6 +58,13 @@ class Application(tornado.web.Application):
             ui_modules_map['Static'] = ui_modules_map['PlainStatic']
             ui_modules_map['StaticURL'] = ui_modules_map['PlainStaticURL']
             
+        try:
+            cdn_prefix = [x.strip() for x in file('cdn_prefix.conf')
+                             if x.strip() and not x.strip().startswith('#')][0]
+            logging.info("Using %r as static URL prefix" % cdn_prefix)
+        except (IOError, IndexError):
+            cdn_prefix = None
+            
         # unless explicitly set, then if in debug mode, disable optimization
         # of static content
         if optimize_static_content is None:
@@ -86,6 +92,7 @@ class Application(tornado.web.Application):
             YUI_LOCATION=os.path.join(os.path.dirname(__file__),
                                       "static", "yuicompressor-2.4.2.jar"),
             UNDOER_GUID=u'UNDOER', # must be a unicode string
+            cdn_prefix=cdn_prefix,
         )
         tornado.web.Application.__init__(self, handlers, **app_settings)
 

@@ -124,6 +124,9 @@ class StaticURL(tornado.web.UIModule):
         basic_name = ''.join(static_urls)
         already = _name_conversion.get(basic_name)
         if already:
+            cdn_prefix = self.handler.get_cdn_prefix()
+            if cdn_prefix:
+                already = cdn_prefix + already
             return already
         
         new_name = self._combine_filename(static_urls)
@@ -194,6 +197,9 @@ class StaticURL(tornado.web.UIModule):
         new_name = os.path.join(prefix, os.path.basename(new_name))
         _name_conversion[basic_name] = new_name
         save_name_conversion()
+        cdn_prefix = self.handler.get_cdn_prefix()
+        if cdn_prefix:
+            new_name = cdn_prefix + new_name
         return new_name
     
 

@@ -166,6 +166,18 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         user_settings.save()
         return user_settings
     
+    def get_cdn_prefix(self):
+        """return something that can be put in front of the static filename
+        E.g. if filename is '/static/image.png' and you return '//cloudfront.com'
+        then final URL presented in the template becomes
+        '//cloudfront.com/static/image.png'
+        """
+        
+        # at the time of writing, I'm just going to use the CDN if you're running
+        # a secure connection. This is because the secure connection is limited
+        # to paying customers and they deserve it
+        if self.is_secure():
+            return self.application.settings.get('cdn_prefix')
     
     def write_json(self, struct, javascript=False):
         if javascript:
