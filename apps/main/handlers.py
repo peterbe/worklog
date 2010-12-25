@@ -66,12 +66,12 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
             print exception
         super(BaseHandler, self)._handle_request_exception(exception)
          
-    def x_log(self):
+    def _log(self):
         """overwritten from tornado.web.RequestHandler because we want to put 
         all requests as logging.debug and keep all normal logging.info()"""
-        print self._status_code
         if self._status_code < 400:
-            log_method = logging.info
+            #log_method = logging.info
+            log_method = logging.debug
         elif self._status_code < 500:
             log_method = logging.warning
         else:
@@ -365,7 +365,6 @@ class APIHandlerMixin(object):
 class HomeHandler(BaseHandler):
     
     def get(self):
-        
         if self.get_argument('share', None):
             shared_keys = self.get_secure_cookie('shares')
             if not shared_keys:
