@@ -1,3 +1,5 @@
+* (MEDIUM) Error on API if you use HTTPS and is not a premium user
+
 * (LOW) When you need memcaching, consider
   https://github.com/gmr/Tinman/blob/master/tinman/cache.py
   
