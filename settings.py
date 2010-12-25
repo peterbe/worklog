@@ -14,3 +14,4 @@ WEBMASTER = 'noreply@donecal.com'
 ADMIN_EMAILS = ['peterbe@gmail.com']
 
 EMAIL_REMINDER_SENDER = 'reminder+%(id)s@donecal.com'
+EMAIL_REMINDER_NOREPLY = 'noreplyplease@donecal.com'

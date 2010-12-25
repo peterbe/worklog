@@ -65,3 +65,9 @@ Now, run the restore:
         $ ~/worklog/mongodb/bin/mongorestore dump
 	
 	
+To test to send emails in
+-------------------------
+
+Simple as this:
+
+        $ python sendmail.py -d worklog < mail.txt

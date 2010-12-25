@@ -219,6 +219,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         import utils.send_mail as mail
         sent_email = mail.outbox[-1]
         self.assertTrue(sent_email.to, ['bob@builder.com'])
+        self.assertTrue(str(email_reminder._id) in sent_email.from_email)
         self.assertEqual(sent_email.subject, body[2].replace('Subject:', 'Re:'))
         self.assertTrue('Error message' in sent_email.body)
         
@@ -387,6 +388,35 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertEqual(sent_email.to, [bob.email])
         from_email = 'reminder+%s@donecal.com' % email_reminder._id
         self.assertTrue('<%s>' % from_email in sent_email.from_email)
+
+    def test_sending_reminders_to_a_premium_user(self):
+        db = self.get_db()
+        bob = db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.premium = True
+        bob.first_name = u"Bob"
+        bob.save()
+        
+        email_reminder = db.EmailReminder()
+        email_reminder.user = bob
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (10,0)
+        email_reminder.tz_offset = 0
+        email_reminder.save()
+        email_reminder.set_next_send_date()
+        email_reminder.save()
+        fake_utcnow = email_reminder._next_send_date
+        
+        url = '/emailreminders/send/'
+        url += '?now_utc=%s' % mktime(fake_utcnow.timetuple())
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        
+        import utils.send_mail as mail
+        sent_email = mail.outbox[-1]
+        self.assertTrue(sent_email.body.count('https://'))
+        self.assertTrue(not sent_email.body.count('http://'))
         
         
         

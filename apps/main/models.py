@@ -26,12 +26,14 @@ class User(BaseDocument):
       'password': unicode,
       'first_name': unicode,
       'last_name': unicode,
+      'premium': bool,
     }
     
     use_autorefs = True
     required_fields = ['guid']
     default_values = {
       'guid': lambda:unicode(uuid.uuid4()),
+      'premium': False,
     }
     
     indexes = [

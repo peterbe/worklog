@@ -974,6 +974,25 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/help/API', headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         self.assertTrue(guid in response.body)
+        self.assertTrue(response.body.count('https://') == 0)
+            
+        # now log in as a wealthy premium user
+        db = self.get_db()
+        user = db.User()
+        user.email = u"test@test.com"
+        user.premium = True
+        user.set_password('secret')
+        user.save()
+        
+        data = dict(email=user.email, password="secret")
+        response = self.post('/auth/login/', data, follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
+        cookie = 'user=%s;' % user_cookie
+        response = self.get('/help/API', headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertTrue(response.body.count('https://') >= 1)
+            
         
     def test_reset_password(self):
         # sign up first
@@ -1404,6 +1423,37 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['tags'], ["@tag1", "@tag2", "@tag3"])
+        
+    def test_rendering_with_or_without_https(self):
+        response = self.get('/', headers={'X-Scheme':'https'}, follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        self.assertTrue(response.headers['Location'].startswith('http://'))
+
+        db = self.get_db()
+        user = db.User()
+        user.email = u"test@test.com"
+        user.premium = True
+        user.set_password('secret')
+        user.save()
+        
+        data = dict(email=user.email, password="secret")
+        response = self.post('/auth/login/', data, follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
+        cookie = 'user=%s;' % user_cookie
+        guid = base64.b64decode(user_cookie.split('|')[0])
+        user = db.User.one({'guid':guid})
+        assert user.premium
+        
+        response = self.get('/', headers={'Cookie':cookie, 'X-Scheme':'https'}, follow_redirects=False)
+        self.assertEqual(response.code, 200)
+        
+        response = self.get('/', headers={'Cookie':cookie}, follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        self.assertTrue(response.headers['Location'].startswith('https://'))
+        
+        
+        
         
         
 

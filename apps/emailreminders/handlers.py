@@ -15,7 +15,7 @@ from models import EmailReminder
 from utils.send_mail import send_email
 from reminder_utils import ParseEventError, parse_time, \
   parse_duration, parse_email_line
-from settings import EMAIL_REMINDER_SENDER
+from settings import EMAIL_REMINDER_SENDER, EMAIL_REMINDER_NOREPLY
 
 
 @route('/emailreminders/$')
@@ -173,6 +173,10 @@ class SendEmailRemindersHandler(BaseHandler):
         first_name = email_reminder.user.first_name
         
         email_reminder_edit_url = 'http://%s/emailreminders/' % self.request.host
+        if email_reminder.user.premium:
+            email_reminder_edit_url = email_reminder_edit_url\
+              .replace('http://','https://')
+            
         email_reminder_edit_url += '?edit=%s' % email_reminder._id
         body = self.render_string("emailreminders/send_reminder.txt",
                                   email_reminder=email_reminder,
@@ -271,7 +275,7 @@ class ReceiveEmailReminder(EventsHandler):
                 owner_email_brief = owner_email[:p-2] + '...' + owner_email[p+2:]
                 err_msg = u"This is a reply to someone else's email reminder "\
                           u"that belonged to: %s" % owner_email_brief
-                self.error_reply(err_msg, msg)
+                self.error_reply(err_msg, msg, email_reminder=email_reminder)
                 
             self.write("No email reminders set up")
             return
@@ -338,7 +342,7 @@ class ReceiveEmailReminder(EventsHandler):
                     err_msg = "Failed to create an event from this line:\n\t%s\n" \
                       % text
                     err_msg += "(Error message: %s)\n" % exception_message
-                    self.error_reply(err_msg, msg)
+                    self.error_reply(err_msg, msg, email_reminder=email_reminder)
                 else:
                     logging.error("Parse event error on email not replied to", exc_info=True)
             
@@ -415,7 +419,7 @@ class ReceiveEmailReminder(EventsHandler):
         return event
         
     
-    def error_reply(self, error_message, msg):
+    def error_reply(self, error_message, msg, email_reminder=None):
         """send an email reply"""
         body = msg.get_payload()#decode=True)
         if isinstance(body, str):
@@ -425,11 +429,17 @@ class ReceiveEmailReminder(EventsHandler):
         body = u'Error in receiving email.\n   %s\n\nPlease try again.\n\n' \
           % error_message + body
         subject = "Re: %s" % msg['Subject']
+
+        if email_reminder:
+            from_email = EMAIL_REMINDER_SENDER % {'id': str(email_reminder._id)}
+        else:
+            from_email = EMAIL_REMINDER_NOREPLY
+        from_ = "DoneCal <%s>" % from_email
         
         send_email(self.application.settings['email_backend'],
                    subject, 
                    body,
-                   EMAIL_REMINDER_SENDER,
+                   from_,
                    [msg['From']],
                    )
         

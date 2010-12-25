@@ -15,6 +15,11 @@
   {% end %}
   it's <code style="font-size:16px;font-weight:bold;">{{ guid }}</code>
   </p>
+  {% if can_https %}
+  <p>And, because you're a <strong>premium</strong> user you can use HTTPS on all your API calls!
+  <img src="{{ static_url("images/premium.png") }}" alt="Premium badge">
+  </p>
+  {% end %}
 {% else %}
   <p>You will get a <code>guid</code> once you've created some events in the calendar or
    if you have created an account and logged in.</p>

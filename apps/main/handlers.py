@@ -35,18 +35,51 @@ from apps.eventlog import log_event, actions, contexts
 def title_to_tags(title):
     return list(set([x[1:] for x in re.findall(r'\B[@#][\w\-\.]+', title, re.U)]))
 
-class BaseHandler(tornado.web.RequestHandler):
+class HTTPSMixin(object):
+    
+    def is_secure(self):
+        # XXX is this really the best/only way?
+        return self.request.headers.get('X-Scheme') == 'https'
+    
+    def httpify_url(self):
+        return self.request.full_url().replace('https://', 'http://')
+
+    def httpsify_url(self):
+        return self.request.full_url().replace('http://', 'https://')
+    
+
+class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
     def _handle_request_exception(self, exception):
         if not isinstance(exception, tornado.web.HTTPError) and \
           not self.application.settings['debug']:
-
+            print "About to email"
             # ie. a 500 error
             try:
                 self._email_exception(exception)
             except:
                 print "** Failing even to email exception **"
-                
+
+        if self.application.settings['debug']:
+            # Because of
+            # https://groups.google.com/d/msg/python-tornado/Zjv6_3OYaLs/CxkC7eLznv8J
+            print "Exception!"
+            print exception
         super(BaseHandler, self)._handle_request_exception(exception)
+         
+    def x_log(self):
+        """overwritten from tornado.web.RequestHandler because we want to put 
+        all requests as logging.debug and keep all normal logging.info()"""
+        print self._status_code
+        if self._status_code < 400:
+            log_method = logging.info
+        elif self._status_code < 500:
+            log_method = logging.warning
+        else:
+            log_method = logging.error
+        request_time = 1000.0 * self.request.request_time()
+        log_method("%d %s %.2fms", self._status_code,
+                   self._request_summary(), request_time)
+   
         
     def _email_exception(self, exception): # pragma: no cover
         import sys
@@ -99,6 +132,7 @@ class BaseHandler(tornado.web.RequestHandler):
     @property
     def db(self):
         return self.application.con[self.application.database_name]
+    
 
     def get_current_user(self):
         # the 'user' cookie is for securely logged in people
@@ -131,6 +165,7 @@ class BaseHandler(tornado.web.RequestHandler):
             setattr(user_settings, key, default_settings[key])
         user_settings.save()
         return user_settings
+    
     
     def write_json(self, struct, javascript=False):
         if javascript:
@@ -355,7 +390,17 @@ class HomeHandler(BaseHandler):
 
         # default settings
         options = self.get_base_options()
-        
+        user = options['user']
+        if self.is_secure():
+            # but are you allowed to use secure URLs?
+            if not user or (user and not user['premium']):
+                # not allowed!
+                return self.redirect(self.httpify_url())
+        else:
+            if user and user['premium']:
+                # allowed but not using it
+                return self.redirect(self.httpsify_url())
+            
         hidden_shares = self.get_secure_cookie('hidden_shares')
         if not hidden_shares: 
             hidden_shares = ''
@@ -1571,14 +1616,19 @@ class HelpHandler(BaseHandler):
     def _extend_api_options(self, options):
         """get all the relevant extra variables for the API page"""
         user = self.get_current_user()
-        options['base_url'] = '%s://%s' % (self.request.protocol, 
+        options['can_https'] = user and user['premium']
+        protocol = 'http'
+        if options['can_https']:
+            protocol = 'https'
+        
+        options['base_url'] = '%s://%s' % (protocol,
                                            self.request.host)
         options['sample_guid'] = '6a971ed0-7105-49a4-9deb-cf1e44d6c718'
         options['guid'] = None
         if user:
             options['guid'] = user.guid
             options['sample_guid'] = user.guid
-        
+            
         t = datetime.date.today()
         first = datetime.date(t.year, t.month, 1)
         if t.month == 12:
@@ -2096,8 +2146,15 @@ class FeatureRequestsHandler(BaseHandler):
         return self.db.FeatureRequest.find({'title':re.compile(re.escape(title), re.I)})
     
     def get_user_voting_weight(self, user):
-        voting_weight = self.db[Event.__collection__].find({'user.$id': user._id}).count()
-        voting_weight = max(1, voting_weight)
+        no_events = self.db[Event.__collection__].find({'user.$id': user._id}).count()
+        if no_events > 100:
+            voting_weight = 5
+        elif no_events > 50:
+            voting_weight = 3
+        elif no_events > 10:
+            voting_weight = 2
+        else:
+            voting_weight = 1
         
         if user.first_name and user.last_name:
             # boost for nice friends
@@ -2106,6 +2163,10 @@ class FeatureRequestsHandler(BaseHandler):
         # XXX could perhaps give another boost to people who have many events
         # over a long period of time
         
+        if user.premium:
+            # extra privilege
+            voting_weight *= 2
+            
         return int(voting_weight)
 
     def post(self):

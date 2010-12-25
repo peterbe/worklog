@@ -9,7 +9,11 @@
 	<style type="text/css">
         #login {
           {% if user %}
-	  background-image:url('{{ modules.Static64("images/locked.gif") }}');
+            {% if user.premium %}
+              background-image:url('{{ modules.Static64("images/premium.png") }}');
+            {% else %}
+              background-image:url('{{ modules.Static64("images/locked.gif") }}');
+            {% end %}
           {% else %}
 	  background-image:url('{{ modules.Static64("images/key.gif") }}');
           {% end %}
@@ -22,7 +26,7 @@
     <body class="content-sidebar">
     <div id="login">
       {% if user %}
-      <p><a href="/user/account/" class="account">Hi {{ user_name }}</a>
+      <p><a href="/user/account/" {% if user.premium %}title="You're a premium user!"{% end %} class="account">Hi {{ user_name }}</a>
       <a href="/auth/logout/" class="log-out">log out</a></p>
       {% else %}
       <p><a href="/user/account/" class="account">Login &amp; registration</a></p>
