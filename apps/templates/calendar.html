@@ -34,7 +34,7 @@
               </div>
               {% if not user %}
 	      <p id="introduction-video"><strong>What on earth <em>is</em> this?</strong><br>
-	      <a href="/help/show_vimeo_video" class="vimeovideo"><img src="{{ static_url("images/vimeovideo.png") }}" alt="Introduction to DoneCal.com on Vimeo"></a><br>
+	      <a href="/help/show_vimeo_video" class="vimeovideo"><img src="{{ modules.StaticURL("images/vimeovideo.png") }}" alt="Introduction to DoneCal.com on Vimeo"></a><br>
 	      <a href="/help/show_vimeo_video" class="vimeovideo">Watch an introduction video</a>
 	      </p>
 	      <p id="introduction-video-after" style="display:none">
@@ -116,11 +116,11 @@
 
 {{ modules.Static("ext/fullcalendar.js", "ext/jquery.cookie.js", "calendar.js") }}
 {{ modules.Static("sidebar.js", "ext/jquery-ui-1.8.4.draggable-resizable.min.js", "ext/jquery.autocomplete.pack.js") }}
-<script type="text/javascript" src="{{ static_url("ext/soundmanager2-nodebug-jsmin.js") }}"></script>
+<script type="text/javascript" src="{{ modules.StaticURL("ext/soundmanager2-nodebug-jsmin.js") }}"></script>
 <script type="text/javascript">
 soundManager.onready(function(status) {
   if (status.success) {
-    soundManager.createSound('pling', '{{ static_url("sounds/glass.mp3") }}');
+    soundManager.createSound('pling', '{{ modules.StaticURL("sounds/glass.mp3") }}');
   } else {
     SETTINGS.disable_sound = true;
   }
