@@ -188,7 +188,9 @@ class StaticURL(tornado.web.UIModule):
                   os.path.dirname(old_paths[full_path])
                   )
             else:
-                raise ValueError("Unknown extension %s" % full_path)
+                # this just copies the file
+                pass
+                #raise ValueError("Unknown extension %s" % full_path)
             destination.write(code)
             destination.write("\n")
             
