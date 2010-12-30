@@ -172,7 +172,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         then final URL presented in the template becomes
         '//cloudfront.com/static/image.png'
         """
-        
+        return self.application.settings.get('cdn_prefix')
         # at the time of writing, I'm just going to use the CDN if you're running
         # a secure connection. This is because the secure connection is limited
         # to paying customers and they deserve it
