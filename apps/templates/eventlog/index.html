@@ -25,9 +25,9 @@
   {% for entry in event_logs %}
   <tr>
       {% if superuser %}
-      <td>{{ entry.user.email }}</td>
+      <td>{{ modules.VerboseEventLog(entry, 'user') }}</td>
       {% end %}
-      <td>{{ entry.event.title }}</td>
+      <td>{{ modules.VerboseEventLog(entry, 'event') }}</td>
       <td>{{ modules.VerboseEventLog(entry, 'action') }}</td>
       <td>{{ entry.context }}</td>
       <td>{{ modules.VerboseEventLog(entry, 'date') }}</td>

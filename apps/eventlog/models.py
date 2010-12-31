@@ -10,6 +10,10 @@ class EventLog(BaseDocument):
       'context': unicode,
       'comment': unicode,
     }
+
+    # we're not using autorefs here because then we don't have to cascade 
+    # deletes
+    use_autorefs = False
     
     ACTION_READ = 0
     ACTION_ADD = 1

@@ -24,6 +24,6 @@ class EventLogHandler(BaseHandler):
         options['page'] = page
         options['skip'] = skip
         options['pages'] = range(1, 1 + options['count_event_logs'] / batch_size)
-        options['event_logs'] = event_logs.sort('add_date', -1).skip(skip).limit(batch_size)
+        options['event_logs'] = list(event_logs.sort('add_date', -1).skip(skip).limit(batch_size))
         
         self.render("eventlog/index.html", **options)
