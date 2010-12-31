@@ -61,7 +61,7 @@ class Application(tornado.web.Application):
         try:
             cdn_prefix = [x.strip() for x in file('cdn_prefix.conf')
                              if x.strip() and not x.strip().startswith('#')][0]
-            logging.info("Using %r as static URL prefix" % cdn_prefix)
+            #logging.info("Using %r as static URL prefix" % cdn_prefix)
         except (IOError, IndexError):
             cdn_prefix = None
             
