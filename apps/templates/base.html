@@ -7,6 +7,7 @@
 	<link rel="Shortcut Icon" href="{{ modules.StaticURL("images/favicon.ico") }}" type="image/x-icon">
         {{ modules.Static("css/style.css", "css/ext/jquery.fancybox-1.3.2.css") }}
 	<style type="text/css">
+        #home { background-image:url('{{ modules.Static64("images/calendar_home.png") }}'); }
         #login {
           {% if user %}
             {% if user.premium %}
@@ -24,7 +25,14 @@
         {% end %}
     </head>
     <body class="content-sidebar">
-    <div id="login">
+    
+    {% block home_nav %}
+    <div id="home" class="topnav">
+      <p><a href="/">Home/Calendar</a></p>
+    </div>
+    {% end %}
+    
+    <div id="login" class="topnav">
       {% if user %}
       <p><a href="/user/account/" {% if user.premium %}title="You're a premium user!"{% end %} class="account">Hi {{ user_name }}</a>
       <a href="/auth/logout/" class="log-out">log out</a></p>

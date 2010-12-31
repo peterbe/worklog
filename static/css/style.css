@@ -863,20 +863,46 @@ p.taxonomy-people {
         font-size:10px;
 }
 
-
-#login {
+.topnav {
+  font-weight:bold;
+  padding:4px 20px 12px 40px;
   background-color:#57554E;
   background-position:15px center;
   background-repeat:no-repeat;
   color:#DBDBDA;
-  /*display:none;*/
-  font-weight:bold;
-  padding:4px 20px 12px 40px;
+  z-index:99998;
+}
+
+.topnav p {
+  color:#DBDBDA;
+  font-size:12px;
+  font-weight:normal;
+  line-height:100%;
+  margin:5px 0 0;
+}
+.topnav a {
+  color:#DBDBDA;
+}
+.topnav a:hover {
+  background-color:#57554E;
+}
+
+
+#home {
+  position:fixed;
+  left:0;
+  top:0;
+  width:105px;
+  border-radius-bottomright: 15px;
+  -moz-border-radius-bottomright:10px;
+  -webkit-border-radius:0 0 10px 0;
+}
+
+#login {
   position:fixed;
   right:10px;
   top:0;
   width:245px;
-  z-index:99998;
   border-radius-bottomleft: 15px;
   border-radius-bottomright: 15px;
   -moz-border-radius-bottomleft:10px;
@@ -884,21 +910,7 @@ p.taxonomy-people {
   -webkit-border-radius:0 0 10px 10px;
 }
 
-#login p {
-  color:#DBDBDA;
-  /*display:none;*/
-  font-size:12px;
-  font-weight:normal;
-  line-height:100%;
-  margin:5px 0 0;
-}
-#login p a {
-  color:#DBDBDA;
-}
-#login p a:hover {
-  background-color:#57554E;
-}
-#login p a.log-out {
+#login a.log-out {
   float:right;
   font-size:10px;
 }
