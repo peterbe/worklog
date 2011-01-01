@@ -1962,10 +1962,12 @@ class GeneralStatisticsHandler(BaseHandler): # pragma: no cover
         user = self.get_current_user()
 
         first_event = self.db[Event.__collection__].find().sort('add_date', 1).limit(1)[0]
-        last_event = self.db[Event.__collection__].find().sort('add_date', -1).limit(1)[0]
+        #last_event = self.db[Event.__collection__].find().sort('add_date', -1).limit(1)[0]
         
         options['first_date'] = first_event['start']
-        options['last_date'] = last_event['start']
+        #options['last_date'] = last_event['start']
+        today = datetime.datetime.today()
+        options['last_date'] = today
         
         self.render("stats/index.html", **options)
 
@@ -2074,6 +2076,7 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
             counts = {}
             _translations = {
               'hash_tags': "Tag with #",
+              'ampm_format': "AM/PM format",
             }
             total_count = self.db[UserSettings.__collection__].find().count()
             for key in UserSettings.get_bool_keys():
