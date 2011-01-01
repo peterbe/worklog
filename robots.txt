@@ -7,3 +7,4 @@ Disallow: /user/account/
 Disallow: /user/logout/
 Disallow: /report/report.xls
 Disallow: /report/report.csv
+Disallow: /events.json

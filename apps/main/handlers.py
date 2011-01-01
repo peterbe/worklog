@@ -457,8 +457,14 @@ class EventsHandler(BaseHandler):
             include_tags = niceboolean(include_tags)
             tags = set()
             
-        start = parse_datetime(self.get_argument('start'))
-        end = parse_datetime(self.get_argument('end'))
+        try:
+            start = parse_datetime(self.get_argument('start'))
+        except DatetimeParseError, msg:
+            raise tornado.web.HTTPError(400, str(msg))
+        try:
+            end = parse_datetime(self.get_argument('end'))
+        except DatetimeParseError, msg:
+            raise tornado.web.HTTPError(400, str(msg))
         search = {}
         search['start'] = {'$gte': start}
         search['end'] = {'$lt': end}

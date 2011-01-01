@@ -12,9 +12,15 @@ def parse_datetime(datestr):
     if _parsed:
         datestr = _parsed[0]
         if len(datestr) >= len('1285041600000'):
-            return datetime.datetime.fromtimestamp(float(datestr)/1000)
+            try:
+                return datetime.datetime.fromtimestamp(float(datestr)/1000)
+            except ValueError:
+                pass
         if len(datestr) >= len('1283140800'):
-            return datetime.datetime.fromtimestamp(float(datestr))
+            try:
+                return datetime.datetime.fromtimestamp(float(datestr))
+            except ValueError:
+                pass # will raise
     raise DatetimeParseError(datestr)
 
 def datetime_to_date(dt):

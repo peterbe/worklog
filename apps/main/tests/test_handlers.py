@@ -1453,7 +1453,14 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(response.headers['Location'].startswith('https://'))
         
         
-        
-        
-        
+    def test_getting_events_with_bad_parameters(self):
+        # this is based on an actual error that happened
+        # {'end': ['288000000'], 'include_tags': ['all'], 'start': ['-2736000000']}
 
+        url = '/events.json'
+        data = dict(start='-2736000000', 
+                    end='288000000',
+                    include_tags='all')
+        response = self.get(url, data)
+        self.assertEqual(response.code, 400)
+        
