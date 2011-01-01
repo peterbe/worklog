@@ -87,7 +87,7 @@ function plot_users(cumulative, interval, date_format_string) {
                 $.jqplot('plot-users', lines,
                          {
                    title:'Users',
-                     legend:{show:true},
+			      legend:{show:true, location:'nw'},
                      series:series,
                      
                      //gridPadding:{right:35},
@@ -137,7 +137,7 @@ function plot_events(cumulative, interval, date_format_string) {
                 $.jqplot('plot-events', lines,
                          {
                    title:'Events',
-                     legend:{show:true},
+                     legend:{show:false},
                      series:series,
                      
                      
