@@ -1,3 +1,4 @@
+import re
 from time import mktime
 import datetime
 from apps.main.tests.base import BaseHTTPTestCase, TestClient
@@ -388,6 +389,12 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertEqual(sent_email.to, [bob.email])
         from_email = 'reminder+%s@donecal.com' % email_reminder._id
         self.assertTrue('<%s>' % from_email in sent_email.from_email)
+        
+        # by default, the setting to this user is to use the 24h time format
+        ampm_example_regex = re.compile('\d\d:\d\d(am|pm)')
+        self.assertTrue(not ampm_example_regex.findall(sent_email.body))
+        _24hour_example_regex = re.compile('\d{1,2}:\d\d\s')
+        self.assertTrue(_24hour_example_regex.findall(sent_email.body))
 
     def test_sending_reminders_to_a_premium_user(self):
         db = self.get_db()

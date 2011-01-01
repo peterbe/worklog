@@ -482,3 +482,36 @@ class ShowUserName(tornado.web.UIModule):
         return name
                 
     
+class ShowTime(tornado.web.UIModule):
+    def render(self, time_):
+        assert isinstance(time_, list), type(time_)
+        assert len(time_) == 2, len(time_)
+        ampm_format = False
+        
+        user = self.handler.get_current_user()
+        if user:
+            user_settings = self.handler\
+              .get_current_user_settings(user=user, fast=True)
+            if user_settings:
+                ampm_format = \
+                  user_settings.get('ampm_format', ampm_format)
+        
+        h = time_[0]
+        m = time_[1]
+        if ampm_format:
+            if h > 12:
+                h -= 12
+                ampm = 'pm'
+            else:
+                ampm = 'am'
+            if m:
+                return "%s.%s%s" % (h, m, ampm)
+            else:
+                return "%s%s" % (h, ampm)
+        else:
+            
+            if not m:
+                m = '00'
+            return "%s:%s" % (h, m)
+            
+        

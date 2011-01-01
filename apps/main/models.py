@@ -66,6 +66,7 @@ class UserSettings(BaseDocument):
       'disable_sound': bool,
       'offline_mode': bool,
       'hash_tags': bool, # whether to use #tagg instead of @tagg
+      'ampm_format': bool,
     }
     use_autorefs = True
     

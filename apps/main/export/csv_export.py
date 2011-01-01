@@ -27,7 +27,7 @@ def export_events(events, out_file, user=None, encoding='utf-8'):
         else:
             row.append('')
             hours = (event['end'] - event['start']).seconds / 3600.0
-            row.append(str(hours))
+            row.append(str(round(hours, 1)))
             total_hours += hours
         row.append(event['description'])
         writer.writerow(list(utf_8_encoder(row)))

@@ -14,6 +14,9 @@ label { text-align:left; width:230px; }
       <label for="id_disable_sound">Disable sound?</label>
       <input type="checkbox" id="id_disable_sound" name="disable_sound" {% if disable_sound %}checked{% end %}>
       <br>
+      <label for="id_ampm_format">AM/PM format?</label>
+      <input type="checkbox" id="id_ampm_format" name="ampm_format" {% if ampm_format %}checked{% end %}>
+      <br>
     <!--    
       <label for="id_offline_mode">Offline mode?</label>
       <input type="checkbox" id="id_offline_mode" name="offline_mode" {% if offline_mode %}checked{% end %}>

@@ -277,7 +277,8 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         settings = dict(hide_weekend=False,
                         monday_first=False,
                         disable_sound=False,
-                        offline_mode=False)
+                        offline_mode=False,
+                        ampm_format=False)
 
         user = self.get_current_user()
         user_name = None
@@ -300,7 +301,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                 settings['monday_first'] = user_settings.monday_first
                 settings['disable_sound'] = user_settings.disable_sound
                 settings['offline_mode'] = getattr(user_settings, 'offline_mode', False)
-                
+                settings['ampm_format'] = user_settings.ampm_format
         
         options['settings'] = settings
         
@@ -1060,7 +1061,7 @@ class EventStatsHandler(BaseHandler):
         days_spent = days_spent.items()
         days_spent.sort(lambda x,y: cmp_tags(x[0], y[0]))
         
-        hours_spent = [(x,y) for (x, y) in hours_spent.items() if y]
+        hours_spent = [(x, round(y, 1)) for (x, y) in hours_spent.items() if y]
         hours_spent.sort(lambda x,y: cmp_tags(x[0], y[0]))
         
         
@@ -1143,7 +1144,8 @@ class UserSettingsHandler(BaseHandler):
             user_settings.user = user
             user_settings.save()
                 
-        for key in ('monday_first', 'hide_weekend', 'disable_sound', 'offline_mode'):
+        for key in ('monday_first', 'hide_weekend', 'disable_sound', 
+                    'offline_mode', 'ampm_format'):
             user_settings[key] = bool(self.get_argument(key, None))
             
         user_settings.save()

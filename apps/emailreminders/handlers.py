@@ -176,6 +176,13 @@ class SendEmailRemindersHandler(BaseHandler):
         if email_reminder.user.premium:
             email_reminder_edit_url = email_reminder_edit_url\
               .replace('http://','https://')
+        
+        hour_example_1 = '14:45'
+        hour_example_2 = '10:30'
+        user_settings = self.get_current_user_settings(user=email_reminder.user)
+        if user_settings and user_settings.ampm_format:
+            hour_example_1 = '2pm'
+            hour_example_2 = '10:30am'
             
         email_reminder_edit_url += '?edit=%s' % email_reminder._id
         body = self.render_string("emailreminders/send_reminder.txt",
@@ -183,7 +190,9 @@ class SendEmailRemindersHandler(BaseHandler):
                                   first_name=first_name,
                                   about_today=about_today,
                                   email_reminder_edit_url=\
-                                  email_reminder_edit_url)
+                                  email_reminder_edit_url,
+                                  hour_example_1=hour_example_1,
+                                  hour_example_2=hour_example_2)
                                    
         from_email = EMAIL_REMINDER_SENDER % {'id': str(email_reminder._id)}
         from_ = "DoneCal <%s>" % from_email

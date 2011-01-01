@@ -37,7 +37,7 @@ def export_events(events, out_file, user=None, encoding='utf-8'):
         else:
             sheet1.write(row, 2, '')
             hours = (event['end'] - event['start']).seconds / 3600.0
-            sheet1.write(row, 3, hours)
+            sheet1.write(row, 3, round(hours,1))
             for tag in event['tags']:
                 hours_spent[tag] += hours
             if not event['tags']:

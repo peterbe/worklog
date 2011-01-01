@@ -615,7 +615,8 @@ $(function() {
       year: year,
       month: month,
       date: day,
-      timeFormat: 'h(:mm)tt',
+      //timeFormat: 'h(:mm)tt',
+      timeFormat: SETTINGS.ampm_format ? 'h(:mm)tt' : 'H:mm',
       defaultView: defaultView,
       editable: true,
       aspectRatio: 1.65, // 1.35 is default
