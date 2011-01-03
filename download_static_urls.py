@@ -41,8 +41,8 @@ def get_static_urls(url):
 def main(*args):
     for arg in args:
         for url in get_static_urls(arg):
-            print url
-            continue
+            #print url
+            #continue
             t0=time()
             content = urlopen(url).read()
             t1=time()
