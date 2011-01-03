@@ -27,10 +27,22 @@ def get_static_urls(url):
     for link in CSSSelector('link')(page):
         yield wrap(url, link.attrib['href'])
         
+    for link in CSSSelector('script')(page):
+        
+        try:
+            src = wrap(url, link.attrib['src'])
+            if not src.count('googleapis'):
+                yield wrap(url, link.attrib['src'])
+        except KeyError:
+            # block
+            pass
+        
     
 def main(*args):
     for arg in args:
         for url in get_static_urls(arg):
+            print url
+            continue
             t0=time()
             content = urlopen(url).read()
             t1=time()
