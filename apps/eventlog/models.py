@@ -15,13 +15,13 @@ class EventLog(BaseDocument):
     # deletes
     use_autorefs = False
     
-    ACTION_READ = 0
-    ACTION_ADD = 1
-    ACTION_EDIT = 2
-    ACTION_DELETE = 3
-    ACTION_RESTORE = 4
+    #ACTION_READ = 0
+    #ACTION_ADD = 1
+    #ACTION_EDIT = 2
+    #ACTION_DELETE = 3
+    #ACTION_RESTORE = 4
     
-    CONTEXT_CALENDAR = u'calendar'
-    CONTEXT_API = u'api'
-    CONTEXT_BOOKMARKLET = u'bookmarklet'
-    CONTEXT_EMAILREMINDER = u'emailreminder'
+    #CONTEXT_CALENDAR = u'calendar'
+    #CONTEXT_API = u'api'
+    #CONTEXT_BOOKMARKLET = u'bookmarklet'
+    #CONTEXT_EMAILREMINDER = u'emailreminder'
