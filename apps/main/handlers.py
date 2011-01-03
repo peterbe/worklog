@@ -2134,6 +2134,10 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
             months = days/ 30
             data.append(dict(number='%.1f' % (c/float(months)),
                              label=u"Events per month"))
+                             
+        data.append(dict(number=self.db.EmailReminder.find(_search).count(),
+                         label=u"Email reminders set up"))
+
         return data
         
     
