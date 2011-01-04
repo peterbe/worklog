@@ -8,9 +8,6 @@ collection = con.worklog[EmailReminder.__collection__]
 print "Fixing", collection.EmailReminder.find({'include_instructions':{'$exists': False}}).count(), "objects"
 for each in collection.EmailReminder.find({'include_instructions':{'$exists': False}}):
     each['include_instructions'] = True
-    each.save()
-
-print "Fixing", collection.EmailReminder.find({'include_summary':{'$exists': False}}).count(), "objects"
-for each in collection.EmailReminder.find({'include_summary':{'$exists': False}}):
     each['include_summary'] = False
     each.save()
+

@@ -633,3 +633,5 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('Done today' in sent_email.body)
         self.assertTrue('INSTRUCTIONS' not in sent_email.body)
         
+        
+        

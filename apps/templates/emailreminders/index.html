@@ -140,6 +140,26 @@ at the begining of the next day.
   </select>
   <span id="as_ampm"></span>
   </div>
+  {% if edit_reminder %}
+  <div>
+  <strong>Instructions or summary of recently added events:</strong>
+  <label for="id_instructions_only">
+    <input type="radio" name="instructions_or_summary" id="id_instructions_only" value="instructions"
+    {% if edit_reminder.include_instructions and not edit_reminder.include_summary %}checked{% end %}
+    > instructions
+  </label>
+  <label for="id_instructions_both">
+    <input type="radio" name="instructions_or_summary" id="id_instructions_both" value="both"
+    {% if edit_reminder.include_instructions and edit_reminder.include_summary %}checked{% end %}
+    > both
+  </label>
+  <label for="id_summary_only">
+    <input type="radio" name="instructions_or_summary" id="id_summary_only" value="summary"
+    {% if not edit_reminder.include_instructions and edit_reminder.include_summary %}checked{% end %}
+    > summary
+  </label>
+  </div>
+  {% end %}
   
   <div>
   {% if edit_reminder %}

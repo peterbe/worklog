@@ -112,6 +112,7 @@ class EmailRemindersHandler(BaseHandler):
         time_hour = int(self.get_argument('time_hour'))
         time_minute = int(self.get_argument('time_minute'))
         tz_offset = float(self.get_argument('tz_offset'))
+        instructions_or_summary = self.get_argument('instructions_or_summary', None)
         
         user = self.get_current_user()
         if edit_reminder:
@@ -123,6 +124,15 @@ class EmailRemindersHandler(BaseHandler):
         email_reminder.time = (time_hour, time_minute)
         email_reminder.tz_offset = tz_offset
         email_reminder.set_next_send_date()
+        if instructions_or_summary == 'instructions':
+            email_reminder.include_instructions = True
+            email_reminder.include_summary = False
+        elif instructions_or_summary == 'both':
+            email_reminder.include_instructions = True
+            email_reminder.include_summary = True
+        elif instructions_or_summary == 'summary':
+            email_reminder.include_instructions = False
+            email_reminder.include_summary = True
         try:
             email_reminder.save()
         except ValidationError, msg:
