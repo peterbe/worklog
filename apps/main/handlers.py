@@ -717,7 +717,11 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
     def get(self, format=None):
         user = self.check_guid()
         if not user:
-            return 
+            return
+        
+        if not user['premium'] and self.is_secure():
+            self.set_status(400)
+            return self.write("HTTPS is only available to Premium users")
             
         start = self.get_argument('start', None) 
         if not start:
@@ -753,8 +757,13 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
         
     def post(self, format):
         if not self.application.settings.get('xsrf_cookies'):
-            if not self.check_guid():
+            user = self.check_guid()
+            if not user:
                 return
+            
+            if not user['premium'] and self.is_secure():
+                self.set_status(400)
+                return self.write("HTTPS is only available to Premium users")
             
         def get(key):
             return self.get_argument(key, None)
