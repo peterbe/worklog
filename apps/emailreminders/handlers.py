@@ -7,7 +7,7 @@ import logging
 
 from mongokit import ValidationError
 from utils.decorators import login_required
-from utils import parse_datetime, niceboolean
+from utils import parse_datetime, niceboolean, format_time_ampm
 from utils.routes import route
 from apps.main.handlers import BaseHandler, EventsHandler
 from apps.main.config import MINIMUM_DAY_SECONDS
@@ -16,6 +16,7 @@ from utils.send_mail import send_email
 from reminder_utils import ParseEventError, parse_time, \
   parse_duration, parse_email_line
 from settings import EMAIL_REMINDER_SENDER, EMAIL_REMINDER_NOREPLY
+from utils.timesince import smartertimesince
 
 
 @route('/emailreminders/$')
@@ -148,7 +149,10 @@ class SendEmailRemindersHandler(BaseHandler):
         search = dict(_next_send_date={'$lte':now_utc})
         for email_reminder in self.db.EmailReminder.find(search):
             self.write("TO: %s\n" % email_reminder.user.email)
-            self._send_reminder(email_reminder, dry_run=dry_run)
+            # the reason we're including the now date is so that we can 
+            # A) make a dry run on a specific date and B) override what "now"
+            # is for unit tests.
+            self._send_reminder(email_reminder, now_utc, dry_run=dry_run)
             
             if not dry_run:
                 email_reminder.set_next_send_date(now_utc)
@@ -160,7 +164,7 @@ class SendEmailRemindersHandler(BaseHandler):
             
         self.write("Done\n")
         
-    def _send_reminder(self, email_reminder, dry_run=False):
+    def _send_reminder(self, email_reminder, now, dry_run=False):
         
         subject = u"[DoneCal]"
         if email_reminder.time[0] > 12:
@@ -184,6 +188,20 @@ class SendEmailRemindersHandler(BaseHandler):
             hour_example_1 = '2pm'
             hour_example_2 = '10:30am'
             
+        summary_events = list()
+        if email_reminder.include_summary:
+            _search = {'user.$id': email_reminder.user._id}
+            # if it was about today, make the search start at 00.00 today
+            _today = datetime.datetime(now.year, now.month, now.day)
+            if about_today:
+                _search['start'] = {'$gte': _today}
+            else:
+                _yesterday = _today - datetime.timedelta(days=1)
+                _search['start'] = {'$gte': _yesterday, '$lt':_today}
+
+            for event in self.db.Event.find(_search).sort('start', 1):
+                summary_events.append(self._summorize_event(event))
+        
         email_reminder_edit_url += '?edit=%s' % email_reminder._id
         body = self.render_string("emailreminders/send_reminder.txt",
                                   email_reminder=email_reminder,
@@ -192,7 +210,9 @@ class SendEmailRemindersHandler(BaseHandler):
                                   email_reminder_edit_url=\
                                   email_reminder_edit_url,
                                   hour_example_1=hour_example_1,
-                                  hour_example_2=hour_example_2)
+                                  hour_example_2=hour_example_2,
+                                  include_instructions=email_reminder.include_instructions,
+                                  summary_events=summary_events)
                                    
         from_email = EMAIL_REMINDER_SENDER % {'id': str(email_reminder._id)}
         from_ = "DoneCal <%s>" % from_email
@@ -202,6 +222,21 @@ class SendEmailRemindersHandler(BaseHandler):
                    from_,
                    [email_reminder.user.email],
                    )
+                   
+    def _summorize_event(self, event):
+        """return a one-line summary of the event"""
+        user_settings = self.get_user_settings(event.user)
+        ampm_format = user_settings and user_settings.get('ampm_format', False) or False
+        
+        line = u''
+        if event.all_day:
+            line += u"(All day) "
+        else:
+            duration = smartertimesince(event.start, event.end)
+            line += u"(%s, %s) " % (format_time_ampm(event.start), duration)
+        return line + event.title
+    
+        
 
 @route('/emailreminders/receive/$')
 class ReceiveEmailReminder(EventsHandler):

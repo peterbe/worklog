@@ -2,8 +2,7 @@
 What did you do {% if about_today %}*today*{% else %}*yesterday*{% end %}?
 
 
-INSTRUCTIONS:
-
+{% if include_instructions %}INSTRUCTIONS:
 Just hit reply and type at the start of the email as you would enter
 an event normally on DoneCal with tags and everything. To enter
 multiple events separate them by two line breaks. A single line break
@@ -18,11 +17,12 @@ If you want to specify exactly when it happened enter it like a 24 hour clock or
  {{ hour_example_2 }} 1h Helped Santa with gift wrapping
 
 If you don't start the line with a time, but do start the line with a duration it will assume it's noon your local time.
+{% end %}{% if summary_events %}{% if about_today %}SUMMARY OF EVENTS TODAY{% else %}SUMMARY OF EVENTS YESTERDAY{% end %}:
+{% for summary in summary_events %}
+  {{ summary }}
+{% end %}{% end %}
 
- 
 SETTINGS:
-
 If you want to change your email reminders simply go to this page:
-
 {{ email_reminder_edit_url }}
 

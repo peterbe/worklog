@@ -1,3 +1,6 @@
+* (HIGH) Edit template for editing email reminder (include
+  summary/instructions)
+
 * (MEDIUM) Error on API if you use HTTPS and is not a premium user
 
 * (LOW) When you need memcaching, consider

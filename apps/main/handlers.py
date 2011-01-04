@@ -145,7 +145,11 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         guid = self.get_secure_cookie("guid")
         if guid:
             return self.db.User.one({'guid': guid})
-        
+    
+    # shortcut where the user parameter is not optional
+    def get_user_settings(self, user, fast=False):
+        return self.get_current_user_settings(user=user, fast=fast)
+    
     def get_current_user_settings(self, user=None, fast=False):
         if user is None:
             user = self.get_current_user()

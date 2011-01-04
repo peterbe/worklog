@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 class UtilsTestCase(unittest.TestCase):
@@ -109,6 +110,40 @@ class UtilsTestCase(unittest.TestCase):
         self.assertTrue(T('foo#tag1 and @tag2'))
         self.assertFalse(T('#tag1 and #tag2'))
         self.assertTrue(T('@tag1 and @tag2'))
+        
+    def test_format_time_ampm(self):
+        from utils import format_time_ampm
+        d = datetime.datetime(2001, 1,1, 9, 45,0)
+        self.assertEqual(format_time_ampm(d), '9:45am')
+        
+        d = datetime.datetime(2001, 1,1, 19, 45,0)
+        self.assertEqual(format_time_ampm(d), '7:45pm')
+
+        d = datetime.datetime(2001, 1,1, 9, 0,0)
+        self.assertEqual(format_time_ampm(d), '9am')
+        
+        d = datetime.datetime(2001, 1,1, 19, 0,0)
+        self.assertEqual(format_time_ampm(d), '7pm')
+        
+        # pass a time tuple
+        d = (9, 45)
+        self.assertEqual(format_time_ampm(d), '9:45am')
+        
+        d = [19, 45]
+        self.assertEqual(format_time_ampm(d), '7:45pm')
+
+        d = (9, 0)
+        self.assertEqual(format_time_ampm(d), '9am')
+        
+        d = (19, 0)
+        self.assertEqual(format_time_ampm(d), '7pm')
+        
+        # pass some other junk
+        self.assertRaises(ValueError, format_time_ampm,
+                          datetime.date.today())
+        self.assertRaises(ValueError, format_time_ampm,
+                          (1,))
+        
         
         
         

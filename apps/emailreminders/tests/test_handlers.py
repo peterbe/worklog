@@ -2,6 +2,8 @@ import re
 from time import mktime
 import datetime
 from apps.main.tests.base import BaseHTTPTestCase, TestClient
+from utils import format_time_ampm
+import utils.send_mail as mail
 
 class LoginError(Exception):
     pass
@@ -134,7 +136,6 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('Not recognized from user' in response.body)
         # because there is no user called bob@builder.com it would send an 
         # error reply
-        import utils.send_mail as mail
         sent_email = mail.outbox[-1]
         self.assertTrue(sent_email.to, ['bob@builder.com'])
         self.assertEqual(sent_email.subject, body[2].replace('Subject:', 'Re:'))
@@ -217,7 +218,6 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
 
         response = self.post(url, '\r\n'.join(body))
         self.assertTrue("Parse event error" in response.body)
-        import utils.send_mail as mail
         sent_email = mail.outbox[-1]
         self.assertTrue(sent_email.to, ['bob@builder.com'])
         self.assertTrue(str(email_reminder._id) in sent_email.from_email)
@@ -380,7 +380,6 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         response = self.client.get(url)
         self.assertEqual(response.code, 200)
         
-        import utils.send_mail as mail
         sent_email = mail.outbox[-1]
         self.assertTrue('What did you do' in sent_email.subject)
         self.assertTrue('yesterday' in sent_email.subject)
@@ -420,12 +419,217 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         response = self.client.get(url)
         self.assertEqual(response.code, 200)
         
-        import utils.send_mail as mail
         sent_email = mail.outbox[-1]
         self.assertTrue(sent_email.body.count('https://'))
         self.assertTrue(not sent_email.body.count('http://'))
+
+    def test_sending_reminder_with_summary(self):
+        db = self.get_db()
+        bob = db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.first_name = u"Bob"
+        bob.save()
+        
+        user_settings = db.UserSettings()
+        user_settings.user = bob
+        user_settings.ampm_format = True
+        user_settings.save()
         
         
+        email_reminder = db.EmailReminder()
+        email_reminder.user = bob
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (10,0)
+        email_reminder.tz_offset = 0
+        email_reminder.include_instructions = False
+        email_reminder.include_summary = True
+        email_reminder.save()
+        email_reminder.set_next_send_date()
+        email_reminder.save()
+        fake_utcnow = email_reminder._next_send_date
+
+        # for this to work we need to add some events to include.
+        # Because we're sending the email reminder before noon it doesn't make 
+        # sense to summorize what has already been done today.
+        
+        event1 = db.Event()
+        event1.user = bob
+        event1.all_day = True
+        event1.start = fake_utcnow - datetime.timedelta(minutes=60)
+        event1.end = fake_utcnow - datetime.timedelta(minutes=60)
+        event1.title = u"Done today"
+        event1.save()
+        
+        event2 = db.Event()
+        event2.user = bob
+        event2.all_day = True
+        event2.start = fake_utcnow - datetime.timedelta(days=1)
+        event2.end = fake_utcnow - datetime.timedelta(days=1)
+        event2.title = u"Done all day yesterday"
+        event2.save()
+        
+        event3 = db.Event()
+        event3.user = bob
+        event3.all_day = False
+        event3.start = fake_utcnow - datetime.timedelta(days=1)
+        event3.end = fake_utcnow - datetime.timedelta(days=1) + datetime.timedelta(minutes=90)
+        event3.title = u"Done specific time yesterday"
+        event3.save()
+        
+        # add another one so we make sure the order is right
+        event3b = db.Event()
+        event3b.user = bob
+        event3b.all_day = False
+        event3b.start = event3.start - datetime.timedelta(minutes=60)
+        event3b.end = event3.end - datetime.timedelta(minutes=60)
+        event3b.title = u"Specific time yesterday earlier"
+        event3b.save()        
+        
+        event4 = db.Event()
+        event4.user = bob
+        event4.all_day = True
+        event4.start = fake_utcnow - datetime.timedelta(days=2)
+        event4.end = fake_utcnow - datetime.timedelta(days=2)
+        event4.title = u"Done long time ago"
+        event4.save()
+        
+        url = '/emailreminders/send/'
+        url += '?now_utc=%s' % mktime(fake_utcnow.timetuple())
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        
+        sent_email = mail.outbox[-1]
+        
+        self.assertTrue('yesterday' in sent_email.subject)
+        
+        self.assertTrue('Done all day yesterday' in sent_email.body)
+        self.assertTrue('(All day) ' in sent_email.body)
+        self.assertTrue('Done specific time yesterday' in sent_email.body)
+        self.assertTrue(u"Specific time yesterday earlier" in sent_email.body)
+        self.assertTrue(format_time_ampm(event3.start) in sent_email.body)
+        self.assertTrue("Done long time ago" not in sent_email.body)
+        self.assertTrue('Done today' not in sent_email.body)
+        self.assertTrue('INSTRUCTIONS' not in sent_email.body)
+        
+        self.assertTrue(sent_email.body.find("Specific time yesterday earlier") < \
+                        sent_email.body.find('Done specific time yesterday'))
+        
+        # by default, the setting to this user is to use the 24h time format
+        ampm_example_regex = re.compile('\d{1,2}:\d\d(am|pm)')
+        ampm_example_regex2 = re.compile('\d{1,2}(am|pm)')
+        self.assertTrue(ampm_example_regex.findall(sent_email.body) or \
+                        ampm_example_regex2.findall(sent_email.body))
+        _24hour_example_regex = re.compile('\d{1,2}:\d\d\s')
+        self.assertTrue(not _24hour_example_regex.findall(sent_email.body))
+
+        self.assertEqual(db.Event.find({'user.$id': bob._id}).count(), 5)
+        
+        # now reply to it
+        body = ['From: bob@builder.com']
+        body += ['To: %s' % sent_email.from_email]
+        body += ['Subject: Re: %s' % sent_email.subject]
+        body += ['']
+        body += ['2 hours @tagg This is the title']
+        body += ['']
+        body += ['On 23 Dec someone wrote:']
+        
+        body.extend(['> %s' % x for x in sent_email.body.splitlines()])
+        #body += ['> INSTRUCTIONS:']
+        #body += ['> BLa bla bla']
+        
+        url = '/emailreminders/receive/'
+        response = self.post(url, '\r\n'.join(body))
+        self.assertTrue('Created' in response.body)
+        
+        self.assertEqual(db.Event.find({'user.$id': bob._id}).count(), 6)
         
         
+    def test_sending_reminder_with_summary_about_today(self):
+        db = self.get_db()
+        bob = db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.first_name = u"Bob"
+        bob.save()
+        
+        user_settings = db.UserSettings()
+        user_settings.user = bob
+        user_settings.ampm_format = True
+        user_settings.save()
+        
+        
+        email_reminder = db.EmailReminder()
+        email_reminder.user = bob
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (19,0)
+        email_reminder.tz_offset = 0
+        email_reminder.include_instructions = False
+        email_reminder.include_summary = True
+        email_reminder.save()
+        email_reminder.set_next_send_date()
+        email_reminder.save()
+        fake_utcnow = email_reminder._next_send_date
+
+        # for this to work we need to add some events to include.
+        # Because we're sending the email reminder before noon it doesn't make 
+        # sense to summorize what has already been done today.
+        
+        event1 = db.Event()
+        event1.user = bob
+        event1.all_day = True
+        event1.start = fake_utcnow - datetime.timedelta(minutes=60)
+        event1.end = fake_utcnow - datetime.timedelta(minutes=60)
+        event1.title = u"Done today"
+        event1.save()
+        
+        event2 = db.Event()
+        event2.user = bob
+        event2.all_day = True
+        event2.start = fake_utcnow - datetime.timedelta(days=1)
+        event2.end = fake_utcnow - datetime.timedelta(days=1)
+        event2.title = u"Done all day yesterday"
+        event2.save()
+        
+        event3 = db.Event()
+        event3.user = bob
+        event3.all_day = False
+        event3.start = fake_utcnow - datetime.timedelta(days=1)
+        event3.end = fake_utcnow - datetime.timedelta(days=1) + datetime.timedelta(minutes=90)
+        event3.title = u"Done specific time yesterday"
+        event3.save()
+        
+        # add another one so we make sure the order is right
+        event3b = db.Event()
+        event3b.user = bob
+        event3b.all_day = False
+        event3b.start = event3.start - datetime.timedelta(minutes=60)
+        event3b.end = event3.end - datetime.timedelta(minutes=60)
+        event3b.title = u"Specific time yesterday earlier"
+        event3b.save()        
+        
+        event4 = db.Event()
+        event4.user = bob
+        event4.all_day = True
+        event4.start = fake_utcnow - datetime.timedelta(days=2)
+        event4.end = fake_utcnow - datetime.timedelta(days=2)
+        event4.title = u"Done long time ago"
+        event4.save()
+        
+        url = '/emailreminders/send/'
+        url += '?now_utc=%s' % mktime(fake_utcnow.timetuple())
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        
+        
+        sent_email = mail.outbox[-1]
+        
+        self.assertTrue('today' in sent_email.subject)
+        self.assertTrue('Done all day yesterday' not in sent_email.body)
+        self.assertTrue('(All day) ' in sent_email.body)
+        self.assertTrue('Done specific time yesterday' not in sent_email.body)
+        self.assertTrue(u"Specific time yesterday earlier" not in sent_email.body)
+        self.assertTrue("Done long time ago" not in sent_email.body)
+        self.assertTrue('Done today' in sent_email.body)
+        self.assertTrue('INSTRUCTIONS' not in sent_email.body)
         

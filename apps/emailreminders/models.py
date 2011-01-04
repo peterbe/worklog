@@ -10,6 +10,8 @@ class EmailReminder(BaseDocument):
       'time': (int, int),
       'tz_offset': float,
       'disabled': bool,
+      'include_instructions': bool,
+      'include_summary': bool,
       '_next_send_date': datetime.datetime,
     }
     
@@ -25,6 +27,8 @@ class EmailReminder(BaseDocument):
     
     default_values = {
       'disabled': False,
+      'include_summary': False,
+      'include_instructions': True,
       'tz_offset': 0.0,
       'weekdays': [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY],
     }

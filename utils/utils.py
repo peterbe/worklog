@@ -90,3 +90,27 @@ def all_atsign_tags(tags, title):
             return False
     return True
 
+def format_time_ampm(time_or_datetime):
+    if isinstance(time_or_datetime, datetime.datetime):
+        h = int(time_or_datetime.strftime('%I'))
+        ampm = time_or_datetime.strftime('%p').lower()
+        if time_or_datetime.minute:
+            m = time_or_datetime.strftime('%M')
+            return "%s:%s%s" % (h, m, ampm)
+        else:
+            return "%s%s" % (h, ampm)
+    elif isinstance(time_or_datetime, (tuple, list)) and len(time_or_datetime) >= 2:
+        h = time_or_datetime[0]
+        m = time_or_datetime[1]
+        assert isinstance(h, int), type(h)
+        assert isinstance(m, int), type(m)
+        ampm = 'am'
+        if h > 12:
+            ampm = 'pm'
+            h -= 12
+        if m:
+            return "%s:%s%s" % (h, m, ampm)
+        else:
+            return "%s%s" % (h, ampm)
+    else:
+        raise ValueError("Wrong parameter to this function")
