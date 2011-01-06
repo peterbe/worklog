@@ -1448,6 +1448,7 @@ class BaseAuthHandler(BaseHandler):
                    self.application.settings['admin_emails'])
 
 
+                   
         
 @route('/user/signup/')
 class SignupHandler(BaseAuthHandler):
@@ -2156,6 +2157,47 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
     
 @route('/features/$')
 class FeatureRequestsHandler(BaseHandler):
+
+    def notify_about_new_feature_request(self, feature_request, extra_message=None):
+        if self.application.settings['debug']:
+            return
+        try:
+            self._notify_about_new_feature_request(feature_request, 
+                                                   extra_message=extra_message)
+        except:
+            # I hate to have to do this but I don't want to make STMP errors
+            # stand in the way
+            logging.error("Unable to notify about new feature request", exc_info=True)
+        
+    def _notify_about_new_feature_request(self, feature_request, extra_message=None):
+        subject = "[DoneCal] New feature request!"
+        user = feature_request.author
+        email_body = "Feature request: %s\n\n" % feature_request.title
+        email_body += "Description: %s\n" % feature_request.description
+        email_body += "Vote weight: %s\n\n" % feature_request.vote_weight
+        email_body += "%s %s\n" % (user.first_name, user.last_name)
+        email_body += "%s\n" % user.email
+        email_body += "%s events\n\n" % \
+          self.db.Event.find({'user.$id': user._id}).count()
+        email_body += "http://donecal.com/features/\n"
+        if extra_message:
+            email_body += '%s\n' % extra_message
+        user_settings = self.get_current_user_settings(user)
+        if user_settings:
+            bits = []
+            for key, value in UserSettings.structure.items():
+                if value == bool:
+                    yes_or_no = getattr(user_settings, key, False)
+                    bits.append('%s: %s' % (key, yes_or_no and 'Yes' or 'No'))
+            email_body += "User settings:\n\t%s\n" % ', '.join(bits)
+            
+        send_email(self.application.settings['email_backend'],
+                   subject,
+                   email_body,
+                   self.application.settings['webmaster'],
+                   self.application.settings['admin_emails'])
+
+
     
     def get(self):
         options = self.get_base_options()
@@ -2250,6 +2292,8 @@ class FeatureRequestsHandler(BaseHandler):
         feature_request_comment.comment = u''
         feature_request_comment.vote_weight = voting_weight
         feature_request_comment.save()
+        
+        self.notify_about_new_feature_request(feature_request)
         
         self.redirect('/features/#added-%s' % feature_request._id)
 

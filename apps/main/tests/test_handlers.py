@@ -1295,6 +1295,40 @@ class ApplicationTestCase(BaseHTTPTestCase):
         struct = json.loads(response.body)
         self.assertTrue(not struct['feature_requests'])
         
+    def test_new_feature_requests_sends_email(self):
+        db = self.get_db()
+        
+        me = db.User()
+        me.email = u'peter@test.com'
+        me.set_password('secret')
+        me.first_name = u"Peter"
+        me.save()
+        
+        response = self.post('/auth/login/', 
+                             dict(email=me.email, password="secret"),
+                             follow_redirects=False)
+        self.assertEqual(response.code, 302)
+        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
+        guid = base64.b64decode(user_cookie.split('|')[0])
+        self.assertEqual(me.guid, guid)
+        cookie = 'user=%s;' % user_cookie
+        
+        url = '/features/'
+        data = dict(title=u'This is my feature request', description="Great!")
+        response = self.post(url, data, headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(db.FeatureRequest.find().count(), 1)
+        self.assertEqual(db.FeatureRequestComment.find().count(), 1)
+        
+        sent_email = mail.outbox[-1]
+        self.assertEqual(sent_email.from_email, self._app.settings['webmaster'])
+        self.assertEqual(sent_email.to, self._app.settings['admin_emails'])
+        self.assertTrue('New feature request' in sent_email.subject)
+        self.assertTrue('Description: Great!' in sent_email.body)
+        self.assertTrue(data['title'] in sent_email.body)
+        self.assertTrue(me.email in sent_email.body)
+        self.assertTrue(me.first_name in sent_email.body)
+        
         
     def test_sorting_hours_spent_stats(self):
         
