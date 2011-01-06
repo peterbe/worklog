@@ -37,7 +37,7 @@ if __name__=='__main__':
         comment = raw_input("Comment? (optional): ")
         if comment:
             comment = comment.strip()
-        print create_domain('donecal.com', use_https=True, comment=comment)
+        print create_domain('donecal.com', use_https=False, comment=comment)
     elif '-i' in args or '--invalidate' in args:
         print invalidate_files(args[1], args[1:])
     else:

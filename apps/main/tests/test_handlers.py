@@ -974,7 +974,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/help/API', headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         self.assertTrue(guid in response.body)
-        self.assertTrue(response.body.count('https://') == 0)
+        self.assertTrue(response.body.split('<body')[1].count('https://') == 0)
             
         # now log in as a wealthy premium user
         db = self.get_db()

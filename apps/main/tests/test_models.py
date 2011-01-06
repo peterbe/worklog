@@ -37,6 +37,18 @@ class ModelsTestCase(BaseModelsTestCase):
         event = self.db.events.Event.one()
         
         assert self.db.events.Event.find({"user.$id":event.user._id}).count() == 1
+        
+    def test_create_event_with_blank_title(self):
+        user = self.db.users.User()
+        user.save()
+        event = self.db.events.Event()
+        event.user = user
+        event.title = u" "
+        event.all_day = True
+        event.start = datetime.datetime.today() - datetime.timedelta(seconds=1)
+        event.end = datetime.datetime.today()
+        self.assertRaises(ValidationError, event.validate)
+        self.assertRaises(ValidationError, event.save)
     
     def test_create_event_wrongly(self):
         user = self.db.users.User()

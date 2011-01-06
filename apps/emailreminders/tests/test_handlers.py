@@ -223,7 +223,46 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue(str(email_reminder._id) in sent_email.from_email)
         self.assertEqual(sent_email.subject, body[2].replace('Subject:', 'Re:'))
         self.assertTrue('Error message' in sent_email.body)
+
+    def test_posting_email_in__from_real_user(self):
+        url = '/emailreminders/receive/'
+        body = ['From: bob@builder.com']
+        body += ['To: reminder@donecal.com']
+        body += ['Subject: [DoneCal] what did you do today?']
+        body += ['']
+        body += ['3h #rcpch working on the pdf creation']
+        body += ['']
+        body += ['1h #snapexpense excel exports and zip for complete report']
+        body += ['']
+        body += ['0.5 h #lc working on bug report and responding to feature requests']
+        body += ['13:30pm This wont work']
+        body += ['']
+        body += ['On 23 Dec someone wrote']
+        body += ['> INSTRUCTIONS:']
+        body += ['> BLa bla bla']
         
+        db = self.get_db()
+        bob = db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.first_name = u"Bob"
+        bob.save()
+        
+        email_reminder = db.EmailReminder()
+        email_reminder.user = bob
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (11,30)
+        email_reminder.tz_offset = 0.0
+        email_reminder.save()
+        
+        body[1] = 'To: reminder+%s@donecal.com' % email_reminder._id
+
+        response = self.post(url, '\r\n'.join(body))
+        self.assertEqual(response.body.count('Created'), 3)
+        self.assertEqual(db.Event.find().count(), 3)
+        self.assertEqual(db.Event.find({'tags':'rcpch'}).count(), 1)
+        self.assertEqual(db.Event.find({'tags':'snapexpense'}).count(), 1)
+        self.assertEqual(db.Event.find({'tags':'lc'}).count(), 1)
         
     def test_posting_email_in_one_valid_one_invalid_entry(self):
         url = '/emailreminders/receive/'

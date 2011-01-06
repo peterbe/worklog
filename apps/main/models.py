@@ -111,12 +111,14 @@ class Event(BaseDocument):
       {'fields': ['user.$id', 'start', 'end'], 'check':False},
     ]
     
+    validators = {
+      'title': lambda x: x.strip()
+    }
     
     def validate(self, *args, **kwargs):
         if self['end'] < self['start']:
             raise ValidationError("end must be greater than start")
         super(Event, self).validate(*args, **kwargs)
-                    
     
     def chown(self, user, save=False):
         self.user = user

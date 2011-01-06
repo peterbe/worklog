@@ -1,0 +1,74 @@
+{% extends "../base.html" %}
+
+{% block title %}Upgrade to a Premium Account{% end %}
+{% block extra_head %}
+<style type="text/css">
+#checkout-forms div {
+  float:left;
+  width: 450px;
+}
+
+</style>
+{% end %}
+
+{% block sidebar %}
+
+{% end %}
+
+
+{% block content_inner %}
+
+<h1>Upgrade to a Premium Account</h1>
+
+<table>
+  <thead>
+    <tr>
+      <td>&nbsp;</td>
+      <td>FREE</td>
+      <td>PREMIUM ACCOUNT</td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>HTTPS on everything</td>
+      <td>&nbsp;</td>
+      <td>CHECK</td>
+    </tr>
+    <tr>
+      <td>Limits on adding events</td>
+      <td>Max. 100 per month</td>
+      <td>None!</td>
+    </tr>
+    <tr>
+      <td>Limits on shared calendars</td>
+      <td>Max. 1</td>
+      <td>Unlimited!</td>
+    </tr>
+    <tr>
+      <td>Speed/Performance</td>
+      <td>100%</td>
+      <td>150%!</td>
+    </tr>
+  </tbody>
+</table>
+
+<div id="checkout-forms" class="center">
+
+{% for product in products %}
+<div id="{{ product['code'] }}">
+  <h3>{{ product['description'] }}</h3>
+  {{ modules.CheckoutCode(product['code'], currency) }}
+  {% if product.get('discount') %}
+    <p><strong>Discount:</strong>
+       {{ product['discount'] }}
+    </p>
+  {% end %}
+</div>
+{% end %}
+
+
+</div>
+
+
+
+{% end %}

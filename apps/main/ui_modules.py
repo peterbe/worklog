@@ -11,7 +11,7 @@ import tornado.web
 import tornado.escape
 from utils.timesince import smartertimesince
 from subprocess import Popen, PIPE
-from utils import mkdir
+from utils import mkdir, format_time_ampm
 from utils.truncate import truncate_words
 import markdown
 
@@ -495,23 +495,38 @@ class ShowTime(tornado.web.UIModule):
             if user_settings:
                 ampm_format = \
                   user_settings.get('ampm_format', ampm_format)
+                  
         
-        h = time_[0]
-        m = time_[1]
         if ampm_format:
-            if h > 12:
-                h -= 12
-                ampm = 'pm'
-            else:
-                ampm = 'am'
-            if m:
-                return "%s.%s%s" % (h, m, ampm)
-            else:
-                return "%s%s" % (h, ampm)
+            return format_time_ampm(time_)
+            #if h > 12:
+            #    h -= 12
+            #    ampm = 'pm'
+            #else:
+            #    ampm = 'am'
+            #if m:
+            #    return "%s.%s%s" % (h, m, ampm)
+            #else:
+            #    return "%s%s" % (h, ampm)
         else:
-            
+            h = time_[0]
+            m = time_[1]
             if not m:
                 m = '00'
             return "%s:%s" % (h, m)
             
+        
+class CheckoutCode(tornado.web.UIModule):
+    def render(self, code, currency):
+        for product in self.handler.get_products():
+            if product['code'] == code:
+                price = product['price']
+                description = product['description']
+                
+        return self.render_string("premium/checkout.html",
+          code=code,
+          currency=currency,
+          price=price, 
+          description=description,
+        )
         

@@ -2342,3 +2342,32 @@ class FindFeatureRequestsHandler(FeatureRequestsHandler):
                                                  description=feature_request.description))
         self.write_json(data)
         
+@route('/premium/')
+class PremiumHandler(BaseHandler):
+    
+    def get_products(self):
+        # prices are in USD
+        products = [
+          dict(code='6-months', 
+               description='6 months subscription to a Premium Account',
+               price=50),
+          dict(code='1-year', 
+               description='1 year subscription to a Premium Account',
+               price=90,
+               discount='10%'),
+        ]
+        return products
+    
+    def get(self):
+        options = self.get_base_options()
+        user = self.get_current_user()
+        
+        options['currency'] = 'USD'
+        
+        options['products'] = self.get_products()
+        
+        
+        return self.render('premium/index.html', **options)
+    
+    
+        

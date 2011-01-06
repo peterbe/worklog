@@ -1,11 +1,15 @@
 {% extends "../base.html" %}
 
+{% block title %}Event Log{% end %}
+
 {% block extra_head %}
 {{ modules.Static("css/ext/jquery.jqplot.min.css", "css/logs.css") }}
 {% end %}
 
 
 {% block sidebar %}
+  <h3>Statistics</h3>
+  
               <div class="plot" id="actions-plot">
               </div>
               <div class="plot" id="contexts-plot">
