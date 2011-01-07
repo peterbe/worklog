@@ -36,7 +36,7 @@ ul li { list-style:none; }
     <p class="drag-hint">Drag from here...</p>
     <ul>
       {% for tag in available_tags %}
-      <li class="tag"><span>{{ tag }}</span></li>
+      <li class="draggable-tag"><span>{{ tag }}</span></li>
       {% end %}
     </ul>
   </div>
@@ -44,7 +44,7 @@ ul li { list-style:none; }
     <p class="drag-hint">...to here</p>
     <ul>
       {% for tag in chosen_tags %}
-      <li class="tag"><span>{{ tag }}</span></li>
+      <li class="draggable-tag"><span>{{ tag }}</span></li>
       {% end %}
     </ul>
   </div>  

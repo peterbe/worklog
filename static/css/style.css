@@ -957,7 +957,13 @@ input.error {
 label.error { color:red; }
 label.valid { color:green; }
 
-.tag span, span.tag { 
+span.tag {
+  -moz-border-radius:3px;
+  -webkit-border-radius:3px;
+  padding:0 2px;
+}
+
+.draggable-tag span, span.draggable-tag {
   font-size:90%;
   background-color: #efefef;
   border:1px solid #ccc;

@@ -37,10 +37,28 @@ function display_sidebar_stats(start, end) {
       } else {
          $('#hours-plot:visible').hide();
       }
+                
+            
+      if (response.tag_colors) {
+         $('span.fc-event-title').each(function() {
+            $(this).html(_tag_highlight(response.tag_colors, $(this).text()));
+         });
+      }
       
    });
 }
 
+function _tag_highlight(colors, text) {
+   var ncolors={};
+   function f(m, n) {
+      return '<span class="tag" style="background-color:' + ncolors[n.toLowerCase()] +'">' + m + '</span>';
+   }
+   // convert the associate dig to lower case
+   for (var k in colors) {
+      ncolors[k.toLowerCase()] = colors[k];
+   }
+   return text.replace(/\B[#@]([\w-]+)/ig, f);
+}
 
 var jqplot_loaded = false;
 $(function() {

@@ -1103,9 +1103,22 @@ class EventStatsHandler(BaseHandler):
                 color = _map.get(tag)
                 if color is None:
                     color = color_series.pop()
+                    _map[tag] = color
                 hours_colors.append(color)
+                #print tag, color
                 
             data['hours_colors'] = hours_colors
+            
+            # This is commented out at the moment because the feature needs more
+            # work. For example, when you switch between views you would have to
+            # to run this in the client side. 
+            # Also, doing all the tag highlighting in Javascript might be slow.
+            # Perhaps it's better to do it as part of the 
+            # /events.json?with_colors=true or something more clever.
+            # That would also require that I create a standalone AJAX function 
+            # or something that figures out which colours every tag should have.
+            # Also more work is needed to support addition of new events.
+            #data['tag_colors'] = _map
             
         return data
                      
