@@ -46,13 +46,13 @@ def export_events(events, out_file, user=None, encoding='utf-8'):
         
         row += 1
         
-     
-    style_bold = easyxf('font: bold true')
-    days_cell_range = Utils.rowcol_pair_to_cellrange(row1=1, col1=2, row2=row - 1, col2=2)
-    sheet1.write(row, 2, Formula('SUM(%s)' % days_cell_range), style_bold)
-
-    days_cell_range = Utils.rowcol_pair_to_cellrange(row1=1, col1=3, row2=row - 1, col2=3)
-    sheet1.write(row, 3, Formula('SUM(%s)' % days_cell_range), style_bold)
+    if row > 1:
+        style_bold = easyxf('font: bold true')
+        days_cell_range = Utils.rowcol_pair_to_cellrange(row1=1, col1=2, row2=row - 1, col2=2)
+        sheet1.write(row, 2, Formula('SUM(%s)' % days_cell_range), style_bold)
+    
+        days_cell_range = Utils.rowcol_pair_to_cellrange(row1=1, col1=3, row2=row - 1, col2=3)
+        sheet1.write(row, 3, Formula('SUM(%s)' % days_cell_range), style_bold)
     
     
     ## Now write the summations by tags
