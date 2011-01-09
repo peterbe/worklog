@@ -29,35 +29,21 @@
         <meta http-equiv="cleartype" content="on">
 	
 
-	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.css" />
-	<script src="http://code.jquery.com/jquery-1.4.4.min.js"></script>
+	<!--<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.css" />-->
+        {{ modules.Static("css/ext/jquery.mobile/jquery.mobile-1.0a2.css") }}
+        
+        {% if debug %}
+        {{ modules.Static("ext/jquery-1.4.4.js") }}
+        {% else %}
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript"></script>
+        {% end %}
+
         {{ modules.Static("smartphone.js") }}
-	<script src="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.js"></script>
+        {{ modules.Static("ext/jquery.mobile-1.0a2.js") }}
+	<!--<script src="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.js"></script>-->
 	
 </head> 
 <body> 
-{% block body %}
-
-{% block start %}
-<div data-role="page" id="start">
-
-	<div data-role="header">
-		<h1>DoneCal</h1>
-	</div><!-- /header -->
-
-	<div data-role="content">	
-                {% if user %}
-		<p><a href="#clock">Clock</a></p>
-		<p><a href="/auth/logout/?next={{ request.path }}">Log out</a></p>
-                {% else %}
-		<p><a href="#login">Log in</a></p>
-                {% end %}
-                
-	</div><!-- /content -->
-
-</div><!-- /page -->
-{% end %}
-
 {% block pages %}
 {% end %}
 

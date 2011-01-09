@@ -1531,13 +1531,13 @@ class SignupHandler(BaseAuthHandler):
 
         
 
+class CredentialsError(Exception):
+    pass
 
 @route('/auth/login/')
 class AuthLoginHandler(BaseAuthHandler):
     
-    def post(self):
-        email = self.get_argument('email')
-        password = self.get_argument('password')
+    def check_credentials(self, email, password):
         user = self.find_user(email)
         if not user:
             # The reason for this sleep is that if a hacker tries every single
@@ -1545,16 +1545,30 @@ class AuthLoginHandler(BaseAuthHandler):
             # get quick responses and test many passwords. Try to put some break
             # on that. 
             sleep(0.5)
-            return self.write("Error. No user by that email address")
+            raise CredentialsError("No user by that email address")
         
         if not user.check_password(password):
-            return self.write("Error. Incorrect password")
-            
+            raise CredentialsError("Incorrect password")
+        
+        return user
+        
+    
+    def post(self):
+        email = self.get_argument('email')
+        password = self.get_argument('password')
+        try:
+            user = self.check_credentials(email, password)
+        except CredentialsError, msg:
+            return self.write("Error: %s" % msg)
+        
         #self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
         
-        if self.request.headers.get("X-Requested-With") != "XMLHttpRequest":
-            self.redirect(self.get_next_url())
+        self.redirect(self.get_next_url())
+        #if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        #    return str(user.guid)
+        #else:
+        #    self.redirect(self.get_next_url())
             
 
 @route('/auth/openid/google/')
