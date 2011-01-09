@@ -25,7 +25,7 @@ from utils.send_mail import send_email
 from utils.decorators import login_required
 from utils import parse_datetime, niceboolean, \
   DatetimeParseError, valid_email, random_string, \
-  all_hash_tags, all_atsign_tags
+  all_hash_tags, all_atsign_tags, generate_random_color
 
 from ui_modules import EventPreview
 from config import *
@@ -1097,12 +1097,16 @@ class EventStatsHandler(BaseHandler):
                 days_colors.append(color)
                 
             data['days_colors'] = days_colors
-            
             hours_colors = []
             for tag, __ in hours_spent:
                 color = _map.get(tag)
                 if color is None:
-                    color = color_series.pop()
+                    try:
+                        color = color_series.pop()
+                    except IndexError:
+                        # wow! run out of colours
+                        color = generate_random_color()
+                    
                     _map[tag] = color
                 hours_colors.append(color)
                 #print tag, color

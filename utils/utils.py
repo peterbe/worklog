@@ -2,6 +2,7 @@ import os
 import re
 import bcrypt
 import datetime
+import random
 
 class DatetimeParseError(Exception):
     pass
@@ -114,3 +115,13 @@ def format_time_ampm(time_or_datetime):
             return "%s%s" % (h, ampm)
     else:
         raise ValueError("Wrong parameter to this function")
+    
+    
+def generate_random_color():
+    def dec2hex(d):
+        return "%02X" % d
+    return '#%s%s%s' % (
+      dec2hex(random.randint(0, 255)),
+      dec2hex(random.randint(0, 255)),
+      dec2hex(random.randint(0, 255)),
+    )

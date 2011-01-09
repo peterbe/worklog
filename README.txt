@@ -46,6 +46,7 @@ First log in to the server:
 and run mongodump anywhere:
 
 	$ cd /tmp/
+	$ rm -fr dump
 	$ mongodump -d worklog
 	
 Then copy those files to the local server:
