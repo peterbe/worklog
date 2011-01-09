@@ -2097,6 +2097,37 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
             # misc numbers
             numbers = self._get_numbers(start, end)
             data['numbers'] = numbers
+            
+        elif report_name == 'no_events':
+            ranges = dict()
+            _prev = 0
+            for i in (0, 1, 5, 10, 25, 50, 100, 200, 400):
+                ranges[(_prev, i)] = 0
+                _prev = i
+            for user in self.db.User.find(dict(email={'$ne':None})):
+                c = self.db[Event.__collection__].find({'user.$id': user._id}).count()
+                if c == 0:
+                    ranges[(0,0)] += 1
+                elif c == 1:
+                    ranges[(0,1)] += 1
+                else:
+                    for (f, t) in ranges:
+                        if c > f and c <= t:
+                            ranges[(f,t)] += 1
+                            break
+                        
+            data['numbers'] = []
+            data['labels'] = []
+            for (f, t) in sorted(ranges.keys()):
+                data['numbers'].append([ranges[(f,t)]])
+                if t == 1:
+                    label = "1"
+                elif t:
+                    label = "%s - %s" % (f, t-1)
+                else:
+                    label = "0"
+                data['labels'].append(dict(label=label))
+                
                     
         elif report_name == 'usersettings':
             #data['lines'] = list()

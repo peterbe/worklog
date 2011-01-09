@@ -223,6 +223,31 @@ function plot_usersettings() {
    });
 }
 
+function plot_no_events() {
+   $('#plot-no_events').html('');
+   
+   $.getJSON('/stats/no_events.json', {
+      start: startDate.datepicker('getDate').getTime(),
+      end: endDate.datepicker('getDate').getTime()
+   }, function(response) {
+      console.log(response);
+      $.jqplot('plot-no_events', response.numbers, {
+         legend:{show:true, location:'ne'},
+         title: "Average number of events",
+         seriesDefaults:{
+              renderer:$.jqplot.BarRenderer, 
+              rendererOptions:{barPadding: 8, barMargin: 20}
+         },
+         series:response.labels,
+         axes:{
+            xaxis:{ show: false},
+           yaxis:{min:0}
+         }
+      });
+   });
+             
+}
+
 function refresh_date_range() {
    update_numbers();
    var interval = get_automatic_interval_string();
@@ -230,6 +255,7 @@ function refresh_date_range() {
    var cumulative = $('#cumulative:checked').size();
    plot_users(cumulative, interval, date_format_string);
    plot_events(cumulative, interval, date_format_string);
+   plot_no_events();
    plot_usersettings();
 }
 

@@ -28,13 +28,16 @@ or
 </p>
 </form>
 
-<div id="plot-events">
+<div id="plot-events" class="plot">
 </div>
 
-<div id="plot-users">
+<div id="plot-users" class="plot">
 </div>
 
-<div id="plot-usersettings">
+<div id="plot-usersettings" class="plot">
+</div>
+
+<div id="plot-no_events" class="plot">
 </div>
 
 {% end %}
@@ -63,5 +66,5 @@ $(function() {
   });
 });
 </script>
-{{ modules.Static("ext/jquery-ui-1.8.6.slider.datepicker.min.js", "ext/jquery.jqplot.js", "ext/jqplot.categoryAxisRenderer.min.js", "ext/jqplot.dateAxisRenderer.min.js", "ext/jqplot.pointLabels.min.js", "ext/jqplot.barRenderer.min.js", "ext/jqplot.highlighter.min.js","stats.js") }}
+{{ modules.Static("ext/jquery-ui-1.8.6.slider.datepicker.min.js", "ext/jquery.jqplot.js", "ext/jqplot.categoryAxisRenderer.min.js", "ext/jqplot.dateAxisRenderer.min.js", "ext/jqplot.pointLabels.min.js", "ext/jqplot.barRenderer.min.js", "ext/jqplot.barRenderer.min.js", "ext/jqplot.highlighter.min.js","stats.js") }}
 {% end %}

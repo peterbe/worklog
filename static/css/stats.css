@@ -7,6 +7,7 @@ td.number {
   font:16px Courier,monospace;
 }
 
-#plot-usersettings {
-  margin-top:40px;
-}_
+
+.plot {
+  margin-bottom:50px
+}

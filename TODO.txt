@@ -1,3 +1,6 @@
+* (LOW) Possibly look into this to make things work in IE7 too
+  http://code.google.com/p/ie7-js/
+  
 * (MEDIUM) Try changing to use head.js
 
 * (LOW) When you need memcaching, consider
