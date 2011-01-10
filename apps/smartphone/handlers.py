@@ -12,6 +12,7 @@ class SmartphoneHandler(BaseHandler):
         #    template = 'smartphone/logged_in.html'
 
         self.render(template, **options)
+        
 
 @route('/(iphone|android)/auth/login/$')
 class SmartphoneAuthLoginHandler(AuthLoginHandler):
@@ -23,9 +24,24 @@ class SmartphoneAuthLoginHandler(AuthLoginHandler):
             user = self.check_credentials(self.get_argument('email'),
                                           self.get_argument('password'))
         except CredentialsError, msg:
-            return self.write("Error: %s" % msg)
+            return self.write_json(dict(error="Error: %s" % msg))
             
-        self.write(self.create_signed_value('guid', user.guid))
+        print "SIGNED", repr(self.create_signed_value('guid', user.guid))
+        self.write_json(dict(guid=self.create_signed_value('guid', user.guid)))
+        
+@route('/(iphone|android)/checkguid/$')
+class CheckGUIDHandler(BaseHandler):
+    def get(self, __):
+        guid = self.get_argument('guid')
+        if guid.count('|') == 2:
+            guid = self.get_secure_cookie('guid', value=guid)
+        user = self.db.User.one({'guid': guid})
+        self.write_json(dict(ok=bool(user)))
+
+        
+#@route(r'/(iphone|android)/events(\.json|\.js|\.xml|\.txt|/)?')
+#class SmartphoneEventsHandler(EventsHandler):
+#    def get(self, device_name, format=None):
         
         
 #@route('/smartphone/auth/login/')

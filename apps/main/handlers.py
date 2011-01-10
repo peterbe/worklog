@@ -353,7 +353,13 @@ class APIHandlerMixin(object):
  
     def check_guid(self):
         guid = self.get_argument('guid', None)
+        print "CHECK GUID"
+        print repr(guid)
         if guid:
+            if guid.count('|') == 2:
+                guid = self.get_secure_cookie('guid', value=guid)
+                #if guid.startswith('"') and guid.endswith('"'):
+                #    guid = guid[1:-1]
             user = self.db[User.__collection__].one({'guid':guid})
             if user:
                 return user

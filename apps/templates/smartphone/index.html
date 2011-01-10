@@ -10,7 +10,8 @@
 
 	<div data-role="content">	
 		<p><a href="#clock">Clock</a></p>
-		<p><a href="/auth/logout/?next={{ request.path }}">Log out</a></p>
+                <p><a href="#calendar-page">Calendar</a></p>
+		<p><a href="#logout">Log out</a></p>
 	</div><!-- /content -->
 
 </div><!-- /page -->
@@ -23,17 +24,17 @@
 	
         
 	<div data-role="content">
-	<form action="/auth/login/" method="post">
+	<form action="auth/login/" method="post">
 	<fieldset>
                 <input type="hidden" name="next" value="{{ request.path }}">
 		<div data-role="fieldcontain">
 		<label for="email">Email:</label>
-		<input type="email" name="email" id="email" value="">
+		<input type="email" name="email" id="email" value="peterbe@gmail.com">
 		</div>
 		
 		<div data-role="fieldcontain">
 		<label for="password">Password:</label>
-		<input type="password" name="password" id="password" value="">
+		<input type="password" name="password" id="password" value="test123">
 		</div>
 		
 		<button type="submit" data-theme="a">Log in</button>
@@ -45,6 +46,17 @@
         </p>
 	</div><!-- /content -->
 
+</div><!-- /page -->
+
+<div data-role="page" id="logout">
+
+	<div data-role="header" data-nobackbtn="true">
+		<h1>Logged out</h1>
+	</div><!-- /header -->
+	<div data-role="content">
+        <p>Logged out</p>
+        <p><a href="#login">Login again</a></p>
+        </div><!-- /content -->
 </div><!-- /page -->
 
 
@@ -80,12 +92,21 @@
 
 		<button type="submit" data-theme="a">Register</button>
 	</fieldset>			  
-        {{ xsrf_form_html() }}
         </form>
         <p>Already have an account? <a href="#login">Then log in</a></p>
 	</div><!-- /content -->
 
 </div><!-- /page -->
+
+<div data-role="page" id="calendar-page">
+	<div data-role="header">
+		<h1>Calendar</h1>
+	</div><!-- /header -->
+
+	<div data-role="content">
+        <div id="calendar"></div>
+	</div><!-- /content -->
+</div>
 
 {% end %}
 
