@@ -29,12 +29,12 @@
                 <input type="hidden" name="next" value="{{ request.path }}">
 		<div data-role="fieldcontain">
 		<label for="email">Email:</label>
-		<input type="email" name="email" id="email" value="peterbe@gmail.com">
+		<input type="email" name="email" id="email" value="">
 		</div>
 
 		<div data-role="fieldcontain">
 		<label for="password">Password:</label>
-		<input type="password" name="password" id="password" value="test123">
+		<input type="password" name="password" id="password" value="">
 		</div>
 
 		<button type="submit" data-theme="a">Log in</button>
@@ -128,8 +128,52 @@
 		<h1>Loading</h1>
 	</div><!-- /header -->
         <div data-role="content">
+		<div data-role="collapsible" data-collapsed="true" id="calendar-day-add-collapse">
+			<h3>Add new event</h3>
+			<form action="#" method="get">
+				<div data-role="fieldcontain">
+					<label for="title">Title (e.g <em>&quot;#project1 Worked hard&quot;</em>):</label>
+					<input type="text" name="title" value="">
+
+				</div>
+				
+				<div data-role="fieldcontain">
+					<fieldset data-role="controlgroup" data-type="horizontal">
+						<legend>Type:</legend>
+						<input type="radio" name="all_day" id="radio-view-all_day" value="true" checked>
+						<label for="radio-view-all_day">All day</label>
+						<input type="radio" name="all_day" id="radio-view-not_all_day" value="false">
+						<label for="radio-view-not_all_day">Specific time</label>
+					</fieldset>
+				</div>
+			
+			
+
+				<!--<div data-role="fieldcontain">
+					<label for="textarea">Description:</label>
+					<textarea cols="40" rows="8" name="textarea" id="textarea"></textarea>
+
+				</div>-->
+				<fieldset class="ui-grid-a">
+						<div class="ui-block-a"><button type="submit" data-theme="c">Cancel</button></div>
+						<div class="ui-block-b"><button type="submit" data-theme="b">Save</button></div>	   
+			    </fieldset>
+
+			</form>
+		</div><!-- /section 3 -->
+		
+	<p>&nbsp;</p>
         <ul data-role="listview" data-inset="false" id="calendar-day-events">
         </ul>
+
+	<!--<form action="#calendar-add-event" method="get">
+	<fieldset>
+		<button type="submit" data-theme="a">Add a new event</button>
+	</fieldset>
+        </form>-->
+	
         </div><!-- /content -->
 </div>
+
+
 {% end %}

@@ -2,7 +2,8 @@ function L() {
    console.log.apply(console, arguments);
 }
 $(document).bind("mobileinit", function () {
-   //$.extend($.mobile, { ajaxFormsEnabled: false });
+   $.extend($.mobile, { ajaxFormsEnabled: false });
+   
 });
 
 
@@ -116,42 +117,40 @@ var authentication = (function() {
 
 
 var calendar = (function() {
-   var months_loaded = null;
-
+   //var months_loaded = null;
+   //var current_year;
+   
    return {
       set_current_year: function(year) {
-         localStorage.setItem('current_year', year);
+	 //current_year=year;
+         sessionStorage.setItem('current_year', year);
+	 //L("SAT current_year="+year);
       },
       get_current_year: function(year) {
-         localStorage.getItem('current_year');
+	 //L("Getting current_year");
+	 //L("session", sessionStorage.getItem('current_year'));
+	 //L("private scope", current_year);
+         return sessionStorage.getItem('current_year');
       },
       set_current_month: function(month) {
-         localStorage.setItem('current_month', month);
+         sessionStorage.setItem('current_month', month);
       },
       get_current_month: function(month) {
-         localStorage.getItem('current_month');
+         return sessionStorage.getItem('current_month');
       },
       set_current_day: function(day) {
-         localStorage.setItem('current_day', day);
+         sessionStorage.setItem('current_day', day);
       },
       get_current_day: function(day) {
-         localStorage.getItem('current_day');
+         return sessionStorage.getItem('current_day');
       },
       init_months: function() {
-         if (months_loaded === null) {
-            this.load_months();
-            months_loaded = {};
-         }
+	 this.load_months();
+	 months_loaded = {};
       },
       init_month: function(year, month) {
-         this.set_current_year(year);
-         this.set_current_month(month);
          var key = year + '-' + month;
-         L("init_month()", key, months_loaded[key]===undefined);
-
-         if (undefined === months_loaded[key]) {
-            this.load_month(year, month);
-         }
+	 this.load_month(year, month);
       },
       load_month: function(year, month) {
          L("load_month()");
@@ -166,7 +165,8 @@ var calendar = (function() {
                          var inner_container = $('<li>').appendTo(container);
                          $('<a>', {text:i + 1, href:'#calendar-day'})
                            .click(function() {
-                              self.init_day(year, month, i + 1);
+			      self.set_current_day(i + 1);
+                              //self.init_day(year, month, i + 1);
                            })
 			   .appendTo(inner_container);
                          $('<span>', {text:e})
@@ -187,7 +187,9 @@ var calendar = (function() {
                          var text = utils.month_name(e.month) + ', ' + e.year;
 			 $('<a>', {text:text, href:'#calendar-month'})
                            .click(function() {
-                              self.init_month(e.year, e.month);
+			      self.set_current_year(e.year);
+			      self.set_current_month(e.month);
+                              //self.init_month(e.year, e.month);
                            })
 			   .appendTo(inner_container);
                          $('<span>', {text:e.count})
@@ -265,6 +267,32 @@ $(document).ready(function() {
       L("pageshow calendar");
       calendar.init_months();
    });
+   
+   $('#calendar-month').bind('pageshow', function() {
+      //L(calendar.get_current_year(), calendar.get_current_month());
+      var year = calendar.get_current_year();
+      var month = calendar.get_current_month();
+      if (year && month) {
+	 calendar.init_month(year, month);
+      } else {
+	 alert("need to redirect out");
+      }
+   });
+   
+   $('#calendar-day').bind('pageshow', function() {
+      var year = calendar.get_current_year();
+      var month = calendar.get_current_month();
+      var day = calendar.get_current_day();
+      if (year && month && day) {
+	 calendar.init_day(year, month, day);
+      } else {
+	 alert("need to redirect out");
+      }
+      
+      //$('#calendar-day-add-collapse').unbind('click').bind('tap', function() {
+      //  $.mobile.silentScroll(1000);
+      //});
+   });   
 
    //$('#start').bind('pageshow', function() {
    //   L('start pageshow');
