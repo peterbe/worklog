@@ -8,9 +8,9 @@
 		<h1>DoneCal</h1>
 	</div><!-- /header -->
 
-	<div data-role="content">	
+	<div data-role="content">
 		<p><a href="#clock">Clock</a></p>
-                <p><a href="#calendar-page">Calendar</a></p>
+                <p><a href="#calendar">Calendar</a></p>
 		<p><a href="#logout">Log out</a></p>
 	</div><!-- /content -->
 
@@ -21,8 +21,8 @@
 	<div data-role="header" data-nobackbtn="true">
 		<h1>Not logged in</h1>
 	</div><!-- /header -->
-	
-        
+
+
 	<div data-role="content">
 	<form action="auth/login/" method="post">
 	<fieldset>
@@ -31,14 +31,14 @@
 		<label for="email">Email:</label>
 		<input type="email" name="email" id="email" value="peterbe@gmail.com">
 		</div>
-		
+
 		<div data-role="fieldcontain">
 		<label for="password">Password:</label>
 		<input type="password" name="password" id="password" value="test123">
 		</div>
-		
+
 		<button type="submit" data-theme="a">Log in</button>
-	</fieldset>			  
+	</fieldset>
         {{ xsrf_form_html() }}
         </form>
         <p>Or use your <a href="/auth/openid/google/?next={{ request.path }}" rel="external">Google account</a><br>
@@ -65,8 +65,8 @@
 	<div data-role="header">
 		<h1>Registration</h1>
 	</div><!-- /header -->
-	
-        
+
+
 	<div data-role="content">
 	<form action="/auth/xxx/" method="post">
 	<fieldset>
@@ -74,12 +74,12 @@
 		<label for="email">Email:</label>
 		<input type="email" name="email" value="">
 		</div>
-		
+
 		<div data-role="fieldcontain">
 		<label for="password">Choose a password:</label>
 		<input type="password" name="password" value="">
 		</div>
-		
+
 		<div data-role="fieldcontain">
 		<label for="first_name">First name:</label>
 		<input type="text" name="first_name" id="first_name" value="">
@@ -91,22 +91,45 @@
 		</div>
 
 		<button type="submit" data-theme="a">Register</button>
-	</fieldset>			  
+	</fieldset>
         </form>
         <p>Already have an account? <a href="#login">Then log in</a></p>
 	</div><!-- /content -->
 
 </div><!-- /page -->
 
-<div data-role="page" id="calendar-page">
+<div data-role="page" id="calendar">
 	<div data-role="header">
 		<h1>Calendar</h1>
 	</div><!-- /header -->
 
 	<div data-role="content">
-        <div id="calendar"></div>
+        <ul data-role="listview" data-inset="true" id="calendar-months">
+        <!--<li><a href="docs-lists.html">List markup conventions</a></li>
+        <li><a href="lists-ul.html">Basic linked list</a></li>
+        <li><a href="lists-nested.html">Nested list</a></li>
+        <li><a href="lists-ol.html">Numbered list</a></li>-->
+        </ul>
 	</div><!-- /content -->
 </div>
 
-{% end %}
+<div data-role="page" id="calendar-month">
+	<div data-role="header">
+		<h1>Loading...</h1>
+	</div><!-- /header -->
+        <div data-role="content">
+        <ul data-role="listview" data-inset="true" id="calendar-month-days">
+        </ul>
+        </div><!-- /content -->
+</div>
 
+<div data-role="page" id="calendar-day">
+	<div data-role="header">
+		<h1>Loading</h1>
+	</div><!-- /header -->
+        <div data-role="content">
+        <ul data-role="listview" data-inset="false" id="calendar-day-events">
+        </ul>
+        </div><!-- /content -->
+</div>
+{% end %}

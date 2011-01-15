@@ -36,17 +36,17 @@ def title_to_tags(title):
     return list(set([x[1:] for x in re.findall(r'\B[@#][\w\-\.]+', title, re.U)]))
 
 class HTTPSMixin(object):
-    
+
     def is_secure(self):
         # XXX is this really the best/only way?
         return self.request.headers.get('X-Scheme') == 'https'
-    
+
     def httpify_url(self):
         return self.request.full_url().replace('https://', 'http://')
 
     def httpsify_url(self):
         return self.request.full_url().replace('http://', 'https://')
-    
+
 
 class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
     def _handle_request_exception(self, exception):
@@ -65,9 +65,9 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
             print "Exception!"
             print exception
         super(BaseHandler, self)._handle_request_exception(exception)
-         
+
     def _log(self):
-        """overwritten from tornado.web.RequestHandler because we want to put 
+        """overwritten from tornado.web.RequestHandler because we want to put
         all requests as logging.debug and keep all normal logging.info()"""
         if self._status_code < 400:
             #log_method = logging.info
@@ -79,8 +79,8 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         request_time = 1000.0 * self.request.request_time()
         log_method("%d %s %.2fms", self._status_code,
                    self._request_summary(), request_time)
-   
-        
+
+
     def _email_exception(self, exception): # pragma: no cover
         import sys
         from pprint import pprint
@@ -98,14 +98,14 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
             password = arguments['password'][0]
             arguments['password'] = password[:2] + '*' * (len(password) -2)
         pprint(arguments, out)
-        
+
         print >>out, "\nCOOKIES:"
         for cookie in self.cookies:
             print >>out, "  %s:" % cookie,
             print >>out, repr(self.get_secure_cookie(cookie))
-            
+
         print >>out, "\nREQUEST:"
-        for key in ('full_url', 'protocol', 'query', 'remote_ip', 
+        for key in ('full_url', 'protocol', 'query', 'remote_ip',
                     'request_time', 'uri', 'version'):
             print >>out, "  %s:" % key,
             value = getattr(self.request, key)
@@ -115,45 +115,45 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                 except:
                     pass
             print >>out, repr(value)
-            
+
         print >>out, "\nGIT REVISION: ",
         print >>out, self.application.settings['git_revision']
-        
+
         print >>out, "\nHEADERS:"
         pprint(dict(self.request.headers), out)
-        
+
         send_email(self.application.settings['email_backend'],
-                   subject, 
+                   subject,
                    out.getvalue(),
                    self.application.settings['webmaster'],
                    self.application.settings['admin_emails'],
                    )
-    
+
     @property
     def db(self):
         return self.application.con[self.application.database_name]
-    
+
 
     def get_current_user(self):
         # the 'user' cookie is for securely logged in people
         guid = self.get_secure_cookie("user")
         if guid:
             return self.db.User.one({'guid': guid})
-        
-        # the 'guid' cookie is for people who have posted something but not 
+
+        # the 'guid' cookie is for people who have posted something but not
         # logged in
         guid = self.get_secure_cookie("guid")
         if guid:
             return self.db.User.one({'guid': guid})
-    
+
     # shortcut where the user parameter is not optional
     def get_user_settings(self, user, fast=False):
         return self.get_current_user_settings(user=user, fast=fast)
-    
+
     def get_current_user_settings(self, user=None, fast=False):
         if user is None:
             user = self.get_current_user()
-            
+
         if not user:
             raise ValueError("Can't get settings when there is no user")
         _search = {'user.$id': user['_id']}
@@ -161,7 +161,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
             return self.db[UserSettings.__collection__].one(_search) # skip mongokit
         else:
             return self.db.UserSettings.one(_search)
-        
+
     def create_user_settings(self, user, **default_settings):
         user_settings = self.db.UserSettings()
         user_settings.user = user
@@ -169,7 +169,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
             setattr(user_settings, key, default_settings[key])
         user_settings.save()
         return user_settings
-    
+
     def get_cdn_prefix(self):
         """return something that can be put in front of the static filename
         E.g. if filename is '/static/image.png' and you return '//cloudfront.com'
@@ -182,30 +182,30 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         # to paying customers and they deserve it
         if self.is_secure():
             return self.application.settings.get('cdn_prefix')
-    
+
     def write_json(self, struct, javascript=False):
         if javascript:
             self.set_header("Content-Type", "text/javascript; charset=UTF-8")
         else:
             self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(tornado.escape.json_encode(struct))
-        
+
     def write_xml(self, struct):
         self.set_header("Content-Type", "text/xml; charset=UTF-8")
         self.write(dict_to_xml(struct))
-    
+
     def write_txt(self, str_):
         self.set_header("Content-Type", "text/plain; charset=UTF-8") # doesn;t seem to work
         self.write(str_)
-        
-        
+
+
     def transform_fullcalendar_event(self, item, serialize=False, **kwargs):
         data = dict(title=item['title'],
                     start=item['start'],
                     end=item['end'],
                     allDay=item['all_day'],
                     id=str(item['_id']))
-            
+
         data.update(**kwargs)
         if item.get('external_url'):
             data['external_url'] = item['external_url']
@@ -218,24 +218,24 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
             #        #time_tuple = (2008, 11, 12, 13, 59, 27, 2, 317, 0)
             #        timestamp = mktime(value.timetuple())
             #        data[key] = timestamp
-            
+
         return data
-    
+
     def serialize_dict(self, data):
         for key, value in data.items():
             if isinstance(value, (datetime.datetime, datetime.date)):
                 data[key] = mktime(value.timetuple())
         return data
-        
-    
+
+
     def case_correct_tags(self, tags, user):
         # the new correct case for these tags is per the parameter 'tags'
         # We need to change all other tags that are spelled with a different
-        # case to this style 
+        # case to this style
         base_search = {
           'user.$id': user._id,
         }
-        
+
         def get_checked_tags(event_tags, new_tag):
             checked_tags = []
             for t in event_tags:
@@ -244,11 +244,11 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                 else:
                     checked_tags.append(t)
             return checked_tags
-        
+
         for tag in tags:
-            search = dict(base_search, 
+            search = dict(base_search,
                           tags=re.compile(re.escape(tag), re.I))
-            
+
             for event in self.db[Event.__collection__].find(search):
                 checked_tags = get_checked_tags(event['tags'], tag)
                 if event['tags'] != checked_tags:
@@ -257,26 +257,26 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                     # before we can save it
                     event_obj = self.db.Event(event)
                     event_obj.save()
-                    
+
             for share in self.db[Share.__collection__].find(search):
                 checked_tags = get_checked_tags(share['tags'], tag)
                 if share['tags'] != checked_tags:
                     share['tags'] = checked_tags
                     obj = self.db.Share(share)
                     obj.save()
-        
+
     def find_user(self, email):
         return self.db.User.one(dict(email=\
          re.compile(re.escape(email), re.I)))
-         
+
     def has_user(self, email):
         return bool(self.find_user(email))
-    
+
     def get_base_options(self):
         # The templates rely on these variables
         options = dict(user=None,
                        user_name=None)
-                       
+
         # default settings
         settings = dict(hide_weekend=False,
                         monday_first=False,
@@ -286,7 +286,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
 
         user = self.get_current_user()
         user_name = None
-        
+
         if user:
             if self.get_secure_cookie('user'):
                 options['user'] = user
@@ -297,7 +297,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                 else:
                     user_name = "stranger"
                 options['user_name'] = user_name
-                
+
             # override possible settings
             user_settings = self.get_current_user_settings(user)
             if user_settings:
@@ -306,28 +306,28 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                 settings['disable_sound'] = user_settings.disable_sound
                 settings['offline_mode'] = getattr(user_settings, 'offline_mode', False)
                 settings['ampm_format'] = user_settings.ampm_format
-        
+
         options['settings'] = settings
-        
+
         options['git_revision'] = self.application.settings['git_revision']
         options['total_no_events'] = self._get_total_no_events()
         options['debug'] = self.application.settings['debug']
-        
+
         return options
-    
+
     def _get_total_no_events(self):
         search = dict()
         undoer = self.get_undoer_user()
         if undoer:
             search['user.$id'] = {'$ne': undoer._id}
         return self.db[Event.__collection__].find(search).count()
-    
+
     def share_keys_to_share_objects(self, shares):
-        if not shares: 
+        if not shares:
             shares = ''
         keys = [x for x in shares.split(',') if x]
         return self.db[Share.__collection__].find({'key':{'$in':keys}})
-    
+
     def get_all_available_tags(self, user):
         tags = set()
         search = {'user.$id': user['_id'],
@@ -336,7 +336,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
             for tag in event['tags']:
                 tags.add(tag)
         return tags
-    
+
     def get_undoer_user(self, create_if_necessary=False):
         guid = self.application.settings['UNDOER_GUID']
         undoer = self.db.User.one(dict(guid=guid))
@@ -346,15 +346,15 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
             undoer.save()
         return undoer
 
-    
-            
+
+
 
 class APIHandlerMixin(object):
- 
+
     def check_guid(self):
         guid = self.get_argument('guid', None)
-        print "CHECK GUID"
-        print repr(guid)
+        #print "CHECK GUID"
+        #print repr(guid)
         if guid:
             if guid.count('|') == 2:
                 guid = self.get_secure_cookie('guid', value=guid)
@@ -369,24 +369,24 @@ class APIHandlerMixin(object):
         else:
             self.set_status(404)
             self.write("guid not supplied")
-            
+
         self.set_header('Content-Type', 'text/plain')
 
     def check_xsrf_cookie(self):
         """use this to check the guid"""
         if not self.check_guid():
             raise tornado.web.HTTPError(403, "guid not right")
-        
+
     def get_error_html(self, status_code, **kwargs):
         return "ERROR: %(code)d: %(message)s\n" % \
-         dict(code=status_code, 
+         dict(code=status_code,
               message=httplib.responses[status_code])
 
 
 
 @route('/')
 class HomeHandler(BaseHandler):
-    
+
     def get(self):
         if self.get_argument('share', None):
             shared_keys = self.get_secure_cookie('shares')
@@ -396,7 +396,7 @@ class HomeHandler(BaseHandler):
                 shared_keys = [x.strip() for x in shared_keys.split(',')
                                if x.strip() and \
                                self.db[Share.__collection__].one(dict(key=x))]
-            
+
             key = self.get_argument('share')
             share = self.db.Share.one(dict(key=key))
             user = self.get_current_user()
@@ -405,7 +405,7 @@ class HomeHandler(BaseHandler):
                 pass
             elif share.key not in shared_keys:
                 shared_keys.append(share.key)
-                
+
             if shared_keys:
                 self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=70)
             return self.redirect('/')
@@ -422,9 +422,9 @@ class HomeHandler(BaseHandler):
             if user and user['premium']:
                 # allowed but not using it
                 return self.redirect(self.httpsify_url())
-            
+
         hidden_shares = self.get_secure_cookie('hidden_shares')
-        if not hidden_shares: 
+        if not hidden_shares:
             hidden_shares = ''
         hidden_keys = [x for x in hidden_shares.split(',') if x]
         hidden_shares = []
@@ -434,31 +434,31 @@ class HomeHandler(BaseHandler):
                                       className=className))
 
         options['settings']['hidden_shares'] = hidden_shares
-        
-        self.render("calendar.html", 
+
+        self.render("calendar.html",
           #
           **options
         )
 
-        
-         
+
+
 @route(r'/events(\.json|\.js|\.xml|\.txt|/)?')
 class EventsHandler(BaseHandler):
-    
+
     def get(self, format=None):
         user = self.get_current_user()
         shares = self.get_secure_cookie('shares')
-        
-        data = self.get_events_data(user, shares, 
+
+        data = self.get_events_data(user, shares,
                            include_tags=self.get_argument('include_tags', None))
         self.write_events_data(data, format)
-        
-        
+
+
     def get_events_data(self, user, shares, include_tags=False):
         events = list()
         sharers = list()
         data = dict()
-        
+
         if include_tags == 'all':
             if user:
                 tags = self.get_all_available_tags(user)
@@ -467,7 +467,7 @@ class EventsHandler(BaseHandler):
         else:
             include_tags = niceboolean(include_tags)
             tags = set()
-            
+
         try:
             start = parse_datetime(self.get_argument('start'))
         except DatetimeParseError, msg:
@@ -500,17 +500,17 @@ class EventsHandler(BaseHandler):
             sharers.append(dict(className=className,
                                 full_name=full_name,
                                 key=share['key']))
-                                
+
             for event in self.db[Event.__collection__].find(search):
                 events.append(
                   self.transform_fullcalendar_event(
-                    event, 
+                    event,
                     True,
                     className=className,
                     editable=False))
-        
+
         data['events'] = events
-        
+
         if include_tags:
             tags = list(tags)
             tags.sort(lambda x, y: cmp(x.lower(), y.lower()))
@@ -523,13 +523,13 @@ class EventsHandler(BaseHandler):
                 else:
                     tags = ['@%s' % x for x in tags]
             data['tags'] = tags
-            
+
         if sharers:
             sharers.sort(lambda x,y: cmp(x['full_name'], y['full_name']))
             data['sharers'] = sharers
-            
+
         return data
-            
+
     def write_events_data(self, data, format):
         if format in ('.json', '.js', None):
             self.write_json(data, javascript=format=='.js')
@@ -546,42 +546,42 @@ class EventsHandler(BaseHandler):
                 out.write('\n'.join(data['tags']))
                 out.write("\n")
             self.write_txt(out.getvalue())
-        
-        
+
+
     def post(self, format=None):#, *args, **kwargs):
         user = self.get_current_user()
-        
+
         if not user:
             user = self.db.User()
             user.save()
-            
+
         event, created = self.create_event(user)
-        
+
         if created:
             log_event(self.db, user, event, actions.ACTION_ADD, contexts.CONTEXT_CALENDAR)
-        
+
         if not self.get_secure_cookie('user'):
             # if you're not logged in, set a cookie for the user so that
             # this person can save the events without having a proper user
             # account.
             self.set_secure_cookie("guid", str(user.guid), expires_days=14)
-        
+
         user_settings = self.get_current_user_settings(user, fast=True)
         if user_settings and user_settings['hash_tags']:
             tag_prefix = '#'
         else:
             tag_prefix = '@'
         self.write_event(event, format, tag_prefix=tag_prefix)
-        
-           
+
+
     def create_event(self, user, title=None, description=None, all_day=None,
                      external_url=None, start=None, end=None):
         if title is None:
             title = self.get_argument("title")
-        
+
         if all_day is None:
             all_day = niceboolean(self.get_argument("all_day", False))
-            
+
         if start is not None:
             # manually setting this
             if not isinstance(start, datetime.datetime):
@@ -591,7 +591,7 @@ class EventsHandler(BaseHandler):
                     raise tornado.web.HTTPError(400, "end must be a datetime instance")
             elif all_day:
                 end = start
-                
+
         elif self.get_argument("date", None):
             date = self.get_argument("date")
             try:
@@ -606,7 +606,7 @@ class EventsHandler(BaseHandler):
                 else:
                     all_day = False
             if not all_day:
-                # default is to make it one hour 
+                # default is to make it one hour
                 end += datetime.timedelta(seconds=MINIMUM_DAY_SECONDS)
         elif self.get_argument('start', None) and self.get_argument('end', None):
             start = parse_datetime(self.get_argument('start'))
@@ -616,7 +616,7 @@ class EventsHandler(BaseHandler):
             if not all_day:
                 # then the end must be >= (start + MINIMUM_DAY_SECONDS)
                 if end < (start + datetime.timedelta(seconds=MINIMUM_DAY_SECONDS)):
-                    raise tornado.web.HTTPError(400, 
+                    raise tornado.web.HTTPError(400,
                      "End must be at least %s minutes more than the start" % \
                      (MINIMUM_DAY_SECONDS / 60))
                 if (end - start).days > 0:
@@ -626,7 +626,7 @@ class EventsHandler(BaseHandler):
           not self.get_argument('end', None) and not all_day:
             start = parse_datetime(self.get_argument('start'))
             end = start + datetime.timedelta(seconds=MINIMUM_DAY_SECONDS)
-            
+
         elif self.get_argument('start', None) or self.get_argument('end', None):
             raise tornado.web.HTTPError(400, "Need both 'start' and 'end'")
         else:
@@ -659,9 +659,9 @@ class EventsHandler(BaseHandler):
                 if hash_tags_prev and all_atsign_tags(tags, title):
                     user_settings.hash_tags = False
                     user_settings.save()
-                
+
         self.case_correct_tags(tags, user)
-        
+
         event = self.db.Event.one({
           'user.$id': user._id,
           'title': title,
@@ -670,7 +670,7 @@ class EventsHandler(BaseHandler):
         })
         if event:
             return event, False
-            
+
         event = self.db.Event()
         event.user = self.db.User(user)
         event.title = title
@@ -685,12 +685,12 @@ class EventsHandler(BaseHandler):
             assert isinstance(external_url, unicode), type(external_url)
             event.external_url = external_url.strip()
         event.save()
-        
+
         return event, True
-    
+
     def write_event(self, event, format, tag_prefix='@'):
         fullcalendar_event = self.transform_fullcalendar_event(event, serialize=True)
-        
+
         result = dict(event=fullcalendar_event,
                       tags=['%s%s' % (tag_prefix, x) for x in event.tags],
                       )
@@ -702,12 +702,12 @@ class EventsHandler(BaseHandler):
             self.set_header("Content-Type", "application/json")
             self.write(tornado.escape.json_encode(result))
 
-        
+
 @route('/api/version(\.json|\.xml|\.txt|/)?')
 class APIVersionHandler(APIHandlerMixin, BaseHandler):
     def get(self, format=None):
         version = "1.1"
-            
+
         data = dict(version=version)
         if format == '.json':
             self.write_json(data)
@@ -715,35 +715,35 @@ class APIVersionHandler(APIHandlerMixin, BaseHandler):
             self.write_xml(data)
         else:
             self.write_txt(unicode(data['version']))
-        
-            
+
+
 @route(r'/api/events(\.json|\.js|\.xml|\.txt|/)?')
 class APIEventsHandler(APIHandlerMixin, EventsHandler):
-    
+
     def get(self, format=None):
         user = self.check_guid()
         if not user:
             return
-        
+
         if not user['premium'] and self.is_secure():
             self.set_status(400)
             return self.write("HTTPS is only available to Premium users")
-            
-        start = self.get_argument('start', None) 
+
+        start = self.get_argument('start', None)
         if not start:
             self.set_status(404)
             return self.write("start timestamp not supplied")
-        
-        end = self.get_argument('end', None) 
+
+        end = self.get_argument('end', None)
         if not end:
             self.set_status(404)
-            return self.write("end timestamp not supplied")        
-        
+            return self.write("end timestamp not supplied")
+
         shares = self.get_argument('shares', u'')#self.get_secure_cookie('shares')
-        
+
         data = self.get_events_data(user, shares,
             include_tags=self.get_argument('include_tags', None))
-            
+
         if format == '.js':
             # pack the dict into a tuple instead.
             _events = []
@@ -759,25 +759,25 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
                 ))
             data['events'] = _events
         self.write_events_data(data, format)
-        
-        
+
+
     def post(self, format):
         if not self.application.settings.get('xsrf_cookies'):
             user = self.check_guid()
             if not user:
                 return
-            
+
             if not user['premium'] and self.is_secure():
                 self.set_status(400)
                 return self.write("HTTPS is only available to Premium users")
-            
+
         def get(key):
             return self.get_argument(key, None)
-            
+
         if not get('title'):
             self.set_status(400)
             return self.write("Missing 'title'")
-        
+
             #self.set_status(404)
             #return self.write("title not supplied")
         elif len(get('title')) > MAX_TITLE_LENGTH:
@@ -788,10 +788,10 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
         #if not (get('date') or (get('start') and get('end'))):
         #    self.set_status(404)
         #    return self.write("date or (start and end) not supplied")
-        
+
         guid = self.get_argument('guid')
         user = self.db.User.one({'guid': guid})
-        
+
         description = self.get_argument("description", None)
         external_url = self.get_argument("external_url", None)
         if external_url:
@@ -807,23 +807,23 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
           description=description,
           external_url=external_url,
         )
-        
+
         if created:
-            log_event(self.db, user, event, 
+            log_event(self.db, user, event,
                       actions.ACTION_ADD, contexts.CONTEXT_API)
-        
+
         user_settings = self.get_current_user_settings(user, fast=True)
         if user_settings and user_settings['hash_tags']:
             tag_prefix = '#'
         else:
             tag_prefix = '@'
-        
+
         self.write_event(event, format, tag_prefix=tag_prefix)
         self.set_status(created and 201 or 200) # Created
-            
+
 @route(r'/events(\.json|\.js|\.xml|\.txt)?')
 class BaseEventHandler(BaseHandler):
-    
+
     def write_event_data(self, data, format):
         if format in ('.json', '.js', None):
             self.write_json(data, javascript=format=='.js')
@@ -848,11 +848,11 @@ class BaseEventHandler(BaseHandler):
             }
         except InvalidId:
             raise tornado.web.HTTPError(404, "Invalid ID")
-        
+
         event = self.db.Event.one(search)
         if not event:
             raise tornado.web.HTTPError(404, "Can't find the event")
-        
+
         if event.user == user:
             pass
         elif shares:
@@ -869,30 +869,30 @@ class BaseEventHandler(BaseHandler):
                 raise tornado.web.HTTPError(403, "Not your event (not shared either)")
         else:
             raise tornado.web.HTTPError(403, "Not your event")
-            
+
         return event
-    
+
 @route(r'/event(\.json|\.js|\.xml|\.txt|\.html|/)?')
 class EventHandler(BaseEventHandler):
     def get(self, format):
         if format == '/':
             format = None
-            
+
         _id = self.get_argument('id')
-       
+
         user = self.get_current_user()
         if not user:
             return self.write(dict(error="Not logged in (no cookie)"))
-        
+
         shares = self.get_secure_cookie('shares')
         event = self.find_event(_id, user, shares)
-        
+
         if format == '.html':
             data = event
         else:
             data = self.transform_fullcalendar_event(event, True)
         self.write_event_data(data, format)
-        
+
         #if 0 and action == 'edit':
         #    external_url = getattr(event, 'external_url', None)
         #    self.render('event/edit.html', event=event, url=external_url)
@@ -900,10 +900,10 @@ class EventHandler(BaseEventHandler):
         #    ui_module = ui_modules.EventPreview(self)
         #    self.write(ui_module.render(event))
         #elif format == '
-    
+
 @route(r'/event/(edit|resize|move|undodelete|delete|)/')
 class EditEventHandler(BaseEventHandler):
-    
+
     def post(self, action):
         _id = self.get_argument('id')
 
@@ -933,7 +933,7 @@ class EditEventHandler(BaseEventHandler):
         if not user:
             return self.write(dict(error="Not logged in (no cookie)"))
             #raise tornado.web.HTTPError(403)
-            
+
         try:
             search = {
               'user.$id': user._id,
@@ -941,15 +941,15 @@ class EditEventHandler(BaseEventHandler):
             }
         except InvalidId:
             raise tornado.web.HTTPError(404, "Invalid ID")
-    
+
         if action == 'undodelete':
             undoer = self.get_undoer_user()
             search['user.$id'] = undoer._id
-        
+
         event = self.db.Event.one(search)
         if not event:
             raise tornado.web.HTTPError(404, "Can't find the event")
-        
+
         if action == 'resize':
             if event.all_day and not days and minutes:
                 return self.write_json(dict(error=\
@@ -975,39 +975,39 @@ class EditEventHandler(BaseEventHandler):
                 del event['url']
             event.save()
         elif action == 'delete':
-            # we never actually delete. instead we chown the event to belong to 
+            # we never actually delete. instead we chown the event to belong to
             # the special "undoer" user
             undoer = self.get_undoer_user(create_if_necessary=True)
             event.chown(undoer, save=True)
-            
+
             log_event(self.db, user, event,
-                      actions.ACTION_DELETE, 
+                      actions.ACTION_DELETE,
                       contexts.CONTEXT_CALENDAR)
-            
+
             return self.write("Deleted")
-        
+
         elif action == 'undodelete':
             event.chown(user, save=True)
-            
+
             log_event(self.db, user, event, actions.ACTION_RESTORE,
                       contexts.CONTEXT_CALENDAR)
         else:
             raise NotImplementedError(action)
-        
+
         if action in ('edit','move','resize'):
             log_event(self.db, user, event, actions.ACTION_EDIT,
                       contexts.CONTEXT_CALENDAR, comment=unicode(action))
-        
+
         return self.write_json(dict(event=self.transform_fullcalendar_event(event, True)))
-    
-        
-            
+
+
+
 @route('/events/stats(\.json|\.xml|\.txt|/)?')
 class EventStatsHandler(BaseHandler):
     def get(self, format):
-        
+
         stats = self.get_stats_data()
-                
+
         if format == '.json':
             self.write_json(stats)
         elif format == '.xml':
@@ -1016,30 +1016,30 @@ class EventStatsHandler(BaseHandler):
             out = StringIO()
             for key, values in stats.items():
                 out.write('%s:\n' % key.upper().replace('_', ' '))
-                
+
                 for tag, num in values:
                     tag = re.sub('</?em>', '*', tag)
                     out.write('  %s%s\n' % (tag.ljust(40), num))
                 out.write('\n')
-                
+
             self.write_txt(out.getvalue())
-            
+
     def get_stats_data(self):
         days_spent = defaultdict(float)
         hours_spent = defaultdict(float)
         user = self.get_current_user()
         with_colors = niceboolean(self.get_argument('with_colors', False))
-        
+
         if user:
             search = {'user.$id': user._id}
-            
+
             if self.get_argument('start', None):
                 start = parse_datetime(self.get_argument('start'))
                 search['start'] = {'$gte': start}
             if self.get_argument('end', None):
                 end = parse_datetime(self.get_argument('end'))
                 search['end'] = {'$lt': end}
-                
+
             for entry in self.db[Event.__collection__].find(search):
                 if entry['all_day']:
                     days = 1 + (entry['end'] - entry['start']).days
@@ -1048,7 +1048,7 @@ class EventStatsHandler(BaseHandler):
                             days_spent[tag] += days
                     else:
                         days_spent[u''] += days
-                    
+
                 else:
                     hours = (entry['end'] - entry['start']).seconds / 60.0 / 60
                     if entry['tags']:
@@ -1056,52 +1056,52 @@ class EventStatsHandler(BaseHandler):
                             hours_spent[tag] += round(hours, 1)
                     else:
                         hours_spent[u''] += round(hours, 1)
-                        
-                        
+
+
         _has_untagged_events = False
-        
+
         if '' in days_spent:
             days_spent['<em>Untagged</em>'] = days_spent.pop('')
             _has_untagged_events = True
-            
+
         if '' in hours_spent:
             hours_spent['<em>Untagged</em>'] = hours_spent.pop('')
             _has_untagged_events = True
-        
+
         def cmp_tags(one, two):
             if one.startswith('<em>Untagged'):
                 return -1
             elif two.startswith('<em>Untagged'):
                 return 1
             return cmp(one.lower(), two.lower())
-        
+
         # flatten as a list
-        
+
         days_spent = days_spent.items()
         days_spent.sort(lambda x,y: cmp_tags(x[0], y[0]))
-        
+
         hours_spent = [(x, round(y, 1)) for (x, y) in hours_spent.items() if y]
         hours_spent.sort(lambda x,y: cmp_tags(x[0], y[0]))
-        
-        
+
+
         data = dict(days_spent=days_spent,
                     hours_spent=hours_spent)
         if with_colors:
             # then define 'days_colors' and 'hours_colors'
-            
+
             color_series = list()
             if _has_untagged_events:
                 color_series.append(UNTAGGED_COLOR)
             color_series.extend(list(TAG_COLOR_SERIES))
             color_series.reverse()
-            
+
             days_colors = []
             _map = {}
             for tag, __ in days_spent:
                 color = color_series.pop()
                 _map[tag] = color
                 days_colors.append(color)
-                
+
             data['days_colors'] = days_colors
             hours_colors = []
             for tag, __ in hours_spent:
@@ -1112,38 +1112,38 @@ class EventStatsHandler(BaseHandler):
                     except IndexError:
                         # wow! run out of colours
                         color = generate_random_color()
-                    
+
                     _map[tag] = color
                 hours_colors.append(color)
                 #print tag, color
-                
+
             data['hours_colors'] = hours_colors
-            
+
             # This is commented out at the moment because the feature needs more
             # work. For example, when you switch between views you would have to
-            # to run this in the client side. 
+            # to run this in the client side.
             # Also, doing all the tag highlighting in Javascript might be slow.
-            # Perhaps it's better to do it as part of the 
+            # Perhaps it's better to do it as part of the
             # /events.json?with_colors=true or something more clever.
-            # That would also require that I create a standalone AJAX function 
+            # That would also require that I create a standalone AJAX function
             # or something that figures out which colours every tag should have.
             # Also more work is needed to support addition of new events.
             #data['tag_colors'] = _map
-            
+
         return data
-                     
-            
+
+
 @route('/user/settings(\.js|/)$')
 class UserSettingsHandler(BaseHandler):
     def get(self, format=None):
         # default initials
         default = dict()
         setting_keys = list()
-        
+
         for key in UserSettings.get_bool_keys():
             default[key] = False
             setting_keys.append(key)
-            
+
         user = self.get_current_user()
         if user:
             user_settings = self.get_current_user_settings(user)
@@ -1161,14 +1161,14 @@ class UserSettingsHandler(BaseHandler):
             self.write('var SETTINGS=%s;' % tornado.escape.json_encode(default))
         else:
             self.render("user/settings.html", **default)
-        
+
     def post(self, format=None):
         user = self.get_current_user()
         if not user:
             user = self.db.User()
             user.save()
             self.set_secure_cookie("guid", str(user.guid), expires_days=100)
-            
+
         user_settings = self.get_current_user_settings(user)
         if user_settings:
             hide_weekend = user_settings.hide_weekend
@@ -1179,11 +1179,11 @@ class UserSettingsHandler(BaseHandler):
             user_settings = self.db.UserSettings()
             user_settings.user = user
             user_settings.save()
-                
-        for key in ('monday_first', 'hide_weekend', 'disable_sound', 
+
+        for key in ('monday_first', 'hide_weekend', 'disable_sound',
                     'offline_mode', 'ampm_format'):
             user_settings[key] = bool(self.get_argument(key, None))
-            
+
         user_settings.save()
         url = "/"
         if self.get_argument('anchor', None):
@@ -1191,21 +1191,21 @@ class UserSettingsHandler(BaseHandler):
                 url += self.get_argument('anchor')
             else:
                 url += '#%s' % self.get_argument('anchor')
-            
+
         self.redirect(url)
-        
+
 @route('/share/$')
 class SharingHandler(BaseHandler):
-    
+
     def get(self):
         user = self.get_current_user()
         if not user:
             return self.write("You don't have anything in your calendar yet")
-        
+
         if not (user.email or user.first_name or user.last_name):
             self.render("sharing/cant-share-yet.html")
-            return 
-        
+            return
+
         shares = self.db.Share.find({'user.$id': user._id})
         count = shares.count()
         if count:
@@ -1219,38 +1219,38 @@ class SharingHandler(BaseHandler):
             # might up this number in the future
             share.key = Share.generate_new_key(self.db[Share.__collection__], min_length=7)
             share.save()
-            
+
         share_url = "/?share=%s" % share.key
-        full_share_url = '%s://%s%s' % (self.request.protocol, 
+        full_share_url = '%s://%s%s' % (self.request.protocol,
                                         self.request.host,
                                         share_url)
-                                        
+
         chosen_tags = sorted(share.tags)
         available_tags = sorted([x for x in self.get_all_available_tags(user)
                                      if x not in chosen_tags])
-        
-        self.render("sharing/share.html", 
+
+        self.render("sharing/share.html",
                     share_id=str(share._id),
-                    full_share_url=full_share_url, 
+                    full_share_url=full_share_url,
                     shares=shares,
                     available_tags=available_tags,
                     chosen_tags=chosen_tags,
                     )
-        
+
     def post(self):
         """toggle the hiding of a shared key"""
         key = self.get_argument('key')
         shares = self.get_secure_cookie('shares')
-        if not shares: 
+        if not shares:
             shares = ''
         keys = [x for x in shares.split(',') if x]
         if keys:
             keys = [x.key for x in self.db.Share.find({'key':{'$in':keys}})]
         if key not in keys:
             raise tornado.web.HTTPError(404, "Not a key that has been shared with you")
-        
+
         hidden_shares = self.get_secure_cookie('hidden_shares')
-        if not hidden_shares: 
+        if not hidden_shares:
             hidden_shares = ''
         hidden_keys = [x for x in hidden_shares.split(',') if x]
         if key in hidden_keys:
@@ -1258,7 +1258,7 @@ class SharingHandler(BaseHandler):
         else:
             hidden_keys.insert(0, key)
         self.set_secure_cookie('hidden_shares', ','.join(hidden_keys), expires_days=70)
-        
+
         self.write('Ok')
 
 @route('/share/edit/$')
@@ -1266,7 +1266,7 @@ class EditSharingHandler(SharingHandler):
     def post(self):
         _id = self.get_argument('id')
         tags = self.get_arguments('tags', [])
-        
+
         user = self.get_current_user()
         try:
             share = self.db.Share.one({'_id': ObjectId(_id), 'user.$id': user._id})
@@ -1274,15 +1274,15 @@ class EditSharingHandler(SharingHandler):
                 raise tornado.web.HTTPError(404, "Share not found")
         except Invalid:
             raise tornado.web.HTTPError(400, "Share ID not valid")
-        
+
         share.tags = tags
         share.save()
-        
+
         self.write("OK")
-        
-        
-        
-        
+
+
+
+
 @route('/user/account/$')
 class AccountHandler(BaseHandler):
     def get(self):
@@ -1295,23 +1295,23 @@ class AccountHandler(BaseHandler):
               first_name=user.first_name,
               last_name=user.last_name,
             )
-    
+
             self.render("user/change-account.html", **options)
         else:
             self.render("user/account.html")
-            
+
     @login_required
     def post(self):
         email = self.get_argument('email').strip()
         first_name = self.get_argument('first_name', u"").strip()
         last_name = self.get_argument('last_name', u"").strip()
-        
+
         if not valid_email(email):
             raise tornado.web.HTTPError(400, "Not a valid email address")
 
         guid = self.get_secure_cookie('user')
         user = self.db.User.one(dict(guid=guid))
-        
+
         existing_user = self.find_user(email)
         if existing_user and existing_user != user:
             raise tornado.web.HTTPError(400, "Email address already used by someone else")
@@ -1320,61 +1320,61 @@ class AccountHandler(BaseHandler):
         user.first_name = first_name
         user.last_name = last_name
         user.save()
-        
+
         self.redirect('/')
-    
+
 hex_to_int = lambda s: int(s, 16)
 int_to_hex = lambda i: hex(i).replace('0x', '')
 
 @route('/user/forgotten/$')
 class ForgottenPasswordHandler(BaseHandler):
-    
+
     def get(self, error=None, success=None):
         options = self.get_base_options()
         options['error'] = error
         options['success'] = success
         self.render("user/forgotten.html", **options)
-        
+
 #    @tornado.web.asynchronous
     def post(self):
         email = self.get_argument('email')
         if not valid_email(email):
             raise tornado.web.HTTPError(400, "Not a valid email address")
-        
+
         existing_user = self.find_user(email)
         if not existing_user:
             self.get(error="%s is a valid email address but no account exists matching this" % \
               email)
             return
-        
+
         from tornado.template import Loader
         loader = Loader(self.application.settings['template_path'])
-                      
+
         recover_url = self.lost_url_for_user(existing_user._id)
         recover_url = self.request.full_url() + recover_url
         email_body = loader.load('user/reset_password.txt')\
           .generate(recover_url=recover_url,
                     first_name=existing_user.first_name,
                     signature=self.application.settings['title'])
-                    
+
         #if not isinstance(email_body, unicode):
         #    email_body = unicode(email_body, 'utf-8')
-            
+
         if 1:#try:
             assert send_email(self.application.settings['email_backend'],
                       "Password reset for on %s" % self.application.settings['title'],
                       email_body,
                       self.application.settings['webmaster'],
                       [existing_user.email])
-            
+
         else:#finally:
             pass #self.finish()
-        
+
         return self.get(success="Password reset instructions sent to %s" % existing_user.email)
-        
+
     ORIGIN_DATE = datetime.date(2000, 1, 1)
-    
-    
+
+
     def lost_url_for_user(self, user_id):
         days = int_to_hex((datetime.date.today() - self.ORIGIN_DATE).days)
         secret_key = self.application.settings['cookie_secret']
@@ -1390,8 +1390,8 @@ class ForgottenPasswordHandler(BaseHandler):
         days_now = (datetime.date.today() - self.ORIGIN_DATE).days
         days_old = days_now - hex_to_int(days)
         return days_old < 7
-    
-    
+
+
 @route('/user/forgotten/recover/(\w+)/([a-f0-9]+)/([a-f0-9]{32})/$')
 class RecoverForgottenPasswordHandler(ForgottenPasswordHandler):
     def get(self, user_id, days, hash, error=None):
@@ -1400,32 +1400,32 @@ class RecoverForgottenPasswordHandler(ForgottenPasswordHandler):
         user = self.db.User.one({'_id': ObjectId(user_id)})
         if not user:
             return self.write("Error. Invalid user")
-        
+
         options = self.get_base_options()
         options['error'] = error
         self.render("user/recover_forgotten.html", **options)
-        
+
     def post(self, user_id, days, hash):
         if not self.hash_is_valid(user_id, days, hash):
             raise tornado.web.HTTPError(400, "invalid hash")
-        
+
         new_password = self.get_argument('password')
         if len(new_password) < 4:
             raise tornado.web.HTTPError(400, "password too short")
-        
+
         user = self.db.User.one({'_id': ObjectId(user_id)})
         if not user:
             raise tornado.web.HTTPError(400, "invalid hash")
-        
+
         user.set_password(new_password)
         user.save()
-        
+
         #self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
-        
+
         self.redirect("/")
-        
-        
+
+
 class BaseAuthHandler(BaseHandler):
 
     def get_next_url(self, default='/'):
@@ -1436,7 +1436,7 @@ class BaseAuthHandler(BaseHandler):
             next = self.get_cookie('next')
             self.clear_cookie('next')
         return next
-    
+
     def notify_about_new_user(self, user, extra_message=None):
         if self.application.settings['debug']:
             return
@@ -1446,7 +1446,7 @@ class BaseAuthHandler(BaseHandler):
             # I hate to have to do this but I don't want to make STMP errors
             # stand in the way of getting signed up
             logging.error("Unable to notify about new user", exc_info=True)
-        
+
     def _notify_about_new_user(self, user, extra_message=None):
         subject = "[DoneCal] New user!"
         email_body = "%s %s\n" % (user.first_name, user.last_name)
@@ -1463,7 +1463,7 @@ class BaseAuthHandler(BaseHandler):
                     yes_or_no = getattr(user_settings, key, False)
                     bits.append('%s: %s' % (key, yes_or_no and 'Yes' or 'No'))
             email_body += "User settings:\n\t%s\n" % ', '.join(bits)
-            
+
         send_email(self.application.settings['email_backend'],
                    subject,
                    email_body,
@@ -1471,16 +1471,16 @@ class BaseAuthHandler(BaseHandler):
                    self.application.settings['admin_emails'])
 
 
-                   
-        
+
+
 @route('/user/signup/')
 class SignupHandler(BaseAuthHandler):
-          
+
     def get(self):
         if self.get_argument('validate_email', None):
             # some delay to make brute-force testing boring
             sleep(0.5) # XXX This needs to be converted into an async call!
-            
+
             email = self.get_argument('validate_email').strip()
             if self.has_user(email):
                 result = dict(error='taken')
@@ -1489,26 +1489,26 @@ class SignupHandler(BaseAuthHandler):
             self.write_json(result)
         else:
             raise tornado.web.HTTPError(404, "Nothing to check")
-            
+
     def post(self):
         email = self.get_argument('email')
         password = self.get_argument('password')
         first_name = self.get_argument('first_name', u'')
         last_name = self.get_argument('last_name', u'')
-        
+
         if not email:
             return self.write("Error. No email provided")
         elif not valid_email(email):
             raise tornado.web.HTTPError(400, "Not a valid email address")
         if not password:
             return self.write("Error. No password provided")
-        
+
         if self.has_user(email):
             return self.write("Error. Email already taken")
-        
+
         if len(password) < 4:
             return self.write("Error. Password too short")
-        
+
         user = self.get_current_user()
         if not user:
             user = self.db.User()
@@ -1518,15 +1518,15 @@ class SignupHandler(BaseAuthHandler):
         user.first_name = first_name
         user.last_name = last_name
         user.save()
-        
+
         self.notify_about_new_user(user)
-        
+
         #self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
-            
+
         self.redirect('/')
 
-        
+
 #class FeedHandler(BaseHandler):
 #    def get(self):
 #        entries = self.db.query("SELECT * FROM entries ORDER BY published "
@@ -1535,30 +1535,30 @@ class SignupHandler(BaseAuthHandler):
 #        self.render("feed.xml", entries=entries)
 
 
-        
+
 
 class CredentialsError(Exception):
     pass
 
 @route('/auth/login/')
 class AuthLoginHandler(BaseAuthHandler):
-    
+
     def check_credentials(self, email, password):
         user = self.find_user(email)
         if not user:
             # The reason for this sleep is that if a hacker tries every single
-            # brute-force email address he can think of he would be able to 
+            # brute-force email address he can think of he would be able to
             # get quick responses and test many passwords. Try to put some break
-            # on that. 
+            # on that.
             sleep(0.5)
             raise CredentialsError("No user by that email address")
-        
+
         if not user.check_password(password):
             raise CredentialsError("Incorrect password")
-        
+
         return user
-        
-    
+
+
     def post(self):
         email = self.get_argument('email')
         password = self.get_argument('password')
@@ -1566,16 +1566,16 @@ class AuthLoginHandler(BaseAuthHandler):
             user = self.check_credentials(email, password)
         except CredentialsError, msg:
             return self.write("Error: %s" % msg)
-        
+
         #self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
-        
+
         self.redirect(self.get_next_url())
         #if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
         #    return str(user.guid)
         #else:
         #    self.redirect(self.get_next_url())
-            
+
 
 @route('/auth/openid/google/')
 class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
@@ -1589,7 +1589,7 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
             # stick it in a cookie
             self.set_cookie('next', self.get_argument('next'))
         self.authenticate_redirect()
-        
+
     def _on_auth(self, user):
         if not user:
             raise tornado.web.HTTPError(500, "Google auth failed")
@@ -1599,11 +1599,11 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
         first_name = user.get('first_name')
         last_name = user.get('last_name')
         email = user['email']
-        
+
         user = self.db.User.one(dict(email=email))
         if user is None:
             user = self.db.User.one(dict(email=re.compile(re.escape(email), re.I)))
-            
+
         if not user:
             # create a new account
             user = self.db.User()
@@ -1614,13 +1614,13 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
                 user.last_name = last_name
             user.set_password(random_string(20))
             user.save()
-            
+
             self.notify_about_new_user(user, extra_message="Used Google OpenID")
-            
+
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
-        
+
         self.redirect(self.get_next_url())
-        
+
 
 
 @route(r'/auth/logout/')
@@ -1636,7 +1636,7 @@ class AuthLogoutHandler(BaseAuthHandler):
 
 @route(r'/help/([\w-]*)')
 class HelpHandler(BaseHandler):
-    
+
     SEE_ALSO = (
       ['/', u"Help"],
       u"About",
@@ -1648,13 +1648,13 @@ class HelpHandler(BaseHandler):
       ['/Secure-passwords', u"Secure passwords"],
       ['/Internet-Explorer', u"Internet Explorer"],
     )
-    
+
     def get(self, page):
         options = self.get_base_options()
         self.application.settings['template_path']
         if page == '':
             page = 'index'
-        
+
         filename = "help/%s.html" % page.lower()
         if os.path.isfile(os.path.join(self.application.settings['template_path'],
                                        filename)):
@@ -1662,11 +1662,11 @@ class HelpHandler(BaseHandler):
                 self._extend_api_options(options)
             elif page.lower() == 'bookmarklet':
                 self._extend_bookmarklet_options(options)
-                
+
             return self.render(filename, **options)
-        
+
         raise tornado.web.HTTPError(404, "Unknown page")
-    
+
     def get_see_also_links(self):
         for each in self.SEE_ALSO:
             if isinstance(each, basestring):
@@ -1675,14 +1675,14 @@ class HelpHandler(BaseHandler):
             else:
                 link, label = each
             yield dict(link=link, label=label)
-            
+
     def _extend_bookmarklet_options(self, options):
         url = '/static/bookmarklet.js'
-        url = '%s://%s%s' % (self.request.protocol, 
+        url = '%s://%s%s' % (self.request.protocol,
                              self.request.host,
                              url)
         options['full_bookmarklet_url'] = url
-    
+
     def _extend_api_options(self, options):
         """get all the relevant extra variables for the API page"""
         user = self.get_current_user()
@@ -1690,7 +1690,7 @@ class HelpHandler(BaseHandler):
         protocol = 'http'
         if options['can_https']:
             protocol = 'https'
-        
+
         options['base_url'] = '%s://%s' % (protocol,
                                            self.request.host)
         options['sample_guid'] = '6a971ed0-7105-49a4-9deb-cf1e44d6c718'
@@ -1698,7 +1698,7 @@ class HelpHandler(BaseHandler):
         if user:
             options['guid'] = user.guid
             options['sample_guid'] = user.guid
-            
+
         t = datetime.date.today()
         first = datetime.date(t.year, t.month, 1)
         if t.month == 12:
@@ -1707,8 +1707,8 @@ class HelpHandler(BaseHandler):
             last = datetime.date(t.year, t.month + 1, 1)
         last -= datetime.timedelta(days=1)
         options['sample_start_timestamp'] = int(mktime(first.timetuple()))
-        options['sample_end_timestamp'] = int(mktime(last.timetuple()))        
-    
+        options['sample_end_timestamp'] = int(mktime(last.timetuple()))
+
         code = """
         >>> import datetime
         >>> from donecal import DoneCal
@@ -1732,25 +1732,25 @@ class HelpHandler(BaseHandler):
         """
         code = '\n'.join(x.lstrip() for x in code.splitlines())
         options['code_pythondonecal_1'] = code.strip()
-        
+
         options['minimum_day_minutes'] = MINIMUM_DAY_SECONDS / 60
 
 @route(r'/bookmarklet/')
 class Bookmarklet(EventsHandler):
-    
+
     def get(self):
         external_url = self.get_argument('external_url', u'')
-        
+
         user = self.get_current_user()
-        
+
         title = u""
         #doc_title = self.get_argument('doc_title', u'')
         if external_url and user:#doc_title:
             tags = self._suggest_tags(user, external_url)
             if tags:
                 title = ' '.join(tags) + ' '
-        self.render("bookmarklet/index.html", 
-                    external_url=external_url, 
+        self.render("bookmarklet/index.html",
+                    external_url=external_url,
                     title=title,
                     error_title=None)
 
@@ -1759,7 +1759,7 @@ class Bookmarklet(EventsHandler):
         tags that are in that string. Disregard English stopwords."""
         def wrap_tags(tags):
             return ['@%s' % x for x in tags]
-        
+
         # look at the last event with the same URL and copy the tags used in
         # that event
         search = {'user.$id': user._id,
@@ -1767,16 +1767,16 @@ class Bookmarklet(EventsHandler):
                   }
         for event in self.db[Event.__collection__].find(search):
             return wrap_tags(event['tags'])
-        
+
         # nothing found, try limiting the search
         parsed_url = urlparse(external_url)
-        search_url = parsed_url.scheme + '://' + parsed_url.netloc 
+        search_url = parsed_url.scheme + '://' + parsed_url.netloc
         search['external_url'] = re.compile(re.escape(search_url), re.I)
         for event in self.db[Event.__collection__].find(search):
             return wrap_tags(event['tags'])
-        
+
         return wrap_tags([])
-    
+
     def post(self):
         title = self.get_argument("title", u'').strip()
         external_url = self.get_argument("external_url", u'')
@@ -1784,7 +1784,7 @@ class Bookmarklet(EventsHandler):
         use_current_url = niceboolean(self.get_argument("use_current_url", False))
         if not use_current_url:
             external_url = u''
-            
+
         if not title and description and description.strip():
             description = description.strip()
             if len(description.splitlines()) > 1:
@@ -1798,13 +1798,13 @@ class Bookmarklet(EventsHandler):
                 else:
                     title = description
                     description = u''
-                
+
         if not self.get_argument('now', None):
             return self.write("'now' not sent. Javascript must be enabled")
-                
+
         start = parse_datetime(self.get_argument('now'))
         end = None
-        
+
         length = self.get_argument('length', 'all_day')
         try:
             length = float(length)
@@ -1813,14 +1813,14 @@ class Bookmarklet(EventsHandler):
         except ValueError:
             # then it's an all_day
             all_day = True
-        
+
         if title:
             user = self.get_current_user()
-        
+
             if not user:
                 user = self.db.User()
                 user.save()
-                
+
             event, created = self.create_event(user,
               title=title,
               description=description,
@@ -1829,51 +1829,51 @@ class Bookmarklet(EventsHandler):
               start=start,
               end=end,
             )
-            
+
             if created:
                 log_event(self.db, user, event,
                           actions.ACTION_ADD, contexts.CONTEXT_BOOKMARKLET)
-            
+
             if not self.get_secure_cookie('user'):
                 # if you're not logged in, set a cookie for the user so that
                 # this person can save the events without having a proper user
                 # account.
                 self.set_secure_cookie("guid", str(user.guid), expires_days=14)
-            
+
             self.render("bookmarklet/posted.html")
         else:
-            self.render("bookmarklet/index.html", 
+            self.render("bookmarklet/index.html",
                     external_url=external_url,
                     title=title,
                     error_title="No title entered")
-                    
-                    
-                    
-        
+
+
+
+
 @route(r'/report/$')
 class ReportHandler(BaseHandler):
-    
+
     def get(self):
         options = self.get_base_options()
         user = self.get_current_user()
         if not user:
             return self.write("Error. You need to be logged in to get the report")
-        
+
         search = {'user.$id': user._id}
         try:
             first_event = self.db[Event.__collection__].find(search).sort('start', 1).limit(1)[0]
             last_event = self.db[Event.__collection__].find(search).sort('start', -1).limit(1)[0]
         except IndexError:
             return self.write("Error. Sorry, can't use this until you have some events entered")
-        
+
         options['first_date'] = first_event['start']
         options['last_date'] = last_event['start']
-        
+
         self.render("report/index.html", **options)
 
 @route(r'/report/export(\.xls|\.csv)$')
 class ExportHandler(ReportHandler):
-    
+
     @tornado.web.asynchronous
     def get(self, format):
         out = StringIO()
@@ -1887,7 +1887,7 @@ class ExportHandler(ReportHandler):
             export_events(self.get_events(), out, user=self.get_current_user())
         self.write(out.getvalue())
         self.finish()
-        
+
     def get_events(self):
         user = self.get_current_user()
         start = parse_datetime(self.get_argument('start'))
@@ -1896,10 +1896,10 @@ class ExportHandler(ReportHandler):
         search['start'] = {'$gte': start}
         search['end'] = {'$lte': end}
         search['user.$id'] = user['_id']
-        
+
         return self.db[Event.__collection__].find(search).sort('start')
-        
-        
+
+
 @route(r'/report(\.xls|\.json|\.js|\.xml|\.txt)?')
 class ReportDataHandler(EventStatsHandler):
     def get(self, format=None):
@@ -1909,7 +1909,7 @@ class ReportDataHandler(EventStatsHandler):
               self.get_argument('interval'))
         else:
             stats = self.get_stats_data()
-        
+
         if format == '.xls':
             raise NotImplementedError
         elif format in ('.json', '.js'):
@@ -1920,14 +1920,14 @@ class ReportDataHandler(EventStatsHandler):
             out = StringIO()
             for key, values in stats.items():
                 out.write('%s:\n' % key.upper().replace('_', ' '))
-                
+
                 for tag, num in values:
                     tag = re.sub('</?em>', '*', tag)
                     out.write('  %s%s\n' % (tag.ljust(40), num))
                 out.write('\n')
-                
+
             self.write_txt(out.getvalue())
-            
+
     def get_lumped_stats_data(self, interval):
         """
         return a dict with two keys:
@@ -1942,7 +1942,7 @@ class ReportDataHandler(EventStatsHandler):
         search = {}
         search['user.$id'] = user._id
         search['all_day'] = niceboolean(self.get_argument('all_day', False))
-        
+
         #if self.get_argument('start', None):
         start = parse_datetime(self.get_argument('start'))
         start = datetime.datetime(start.year, start.month, start.day, 0,0,0)
@@ -1950,7 +1950,7 @@ class ReportDataHandler(EventStatsHandler):
         #if self.get_argument('end', None):
         end = parse_datetime(self.get_argument('end'))
         search['end'] = {'$lte': end}
-            
+
         last_date = end
         tags = {}
         date = start#first_date
@@ -1958,13 +1958,13 @@ class ReportDataHandler(EventStatsHandler):
             for tag in entry['tags']:
                 if tag not in tags:
                     tags[tag] = []
-                    
+
         tags[''] = []
         if 'start' in search:
             search.pop('start')
         if 'end' in search:
             search.pop('end')
-            
+
         if interval == '1 week':
             interval = datetime.timedelta(days=7)
         else:
@@ -1972,8 +1972,8 @@ class ReportDataHandler(EventStatsHandler):
         ticks = []
         tick = 1
         while date < last_date:
-            this_search = dict(search, 
-                               start={'$gte':date}, 
+            this_search = dict(search,
+                               start={'$gte':date},
                                end={'$lt': date + interval})
             _found = defaultdict(float)
             for entry in self.db[Event.__collection__].find(this_search):
@@ -1981,19 +1981,19 @@ class ReportDataHandler(EventStatsHandler):
                     d = (entry['end'] - entry['start']).days + 1
                 else:
                     d = (entry['end'] - entry['start']).seconds / 3600.0
-                
+
                 these_tags = entry['tags'] and entry['tags'] or ['']
-                
+
                 for tag in these_tags:
                     _found[tag] += d
-            
+
             for t in tags.keys():
                 tags[t].append(_found.get(t, 0))
-                    
+
             date += interval
             ticks.append(tick)
             tick += 1
-                
+
         all_tags = []
         all_data = []
         if '' in tags:
@@ -2001,35 +2001,35 @@ class ReportDataHandler(EventStatsHandler):
         for key in tags:
             all_tags.append(key)
             all_data.append(tags[key])
-        
+
         return dict(data=all_data, tags=all_tags, ticks=ticks)
-    
-    
+
+
 @route('/stats/$')
 class GeneralStatisticsHandler(BaseHandler): # pragma: no cover
-    
+
     def get(self):
         options = self.get_base_options()
         user = self.get_current_user()
 
         first_event = self.db[Event.__collection__].find().sort('add_date', 1).limit(1)[0]
         #last_event = self.db[Event.__collection__].find().sort('add_date', -1).limit(1)[0]
-        
+
         options['first_date'] = first_event['start']
         #options['last_date'] = last_event['start']
         today = datetime.datetime.today()
         options['last_date'] = today
-        
+
         self.render("stats/index.html", **options)
 
 @route('/stats/([\w-]+)\.json$')
 class StatisticsDataHandler(BaseHandler): # pragma: no cover
-    
+
     def get(self, report_name):
-        
+
         data = dict()
         search = dict()
-        
+
         start = parse_datetime(self.get_argument('start'))
         start = datetime.datetime(start.year, start.month, start.day, 0,0,0)
         #search['start'] = {'$gte': start}
@@ -2040,10 +2040,10 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
         interval = None
         if self.get_argument('interval', None):
             interval = self.get_argument('interval')
-            
+
         #cumulative = None
         #if self.get_argument('cumulative', None):
-        #    cumulative = self.get_argument('cumulative')            
+        #    cumulative = self.get_argument('cumulative')
 
         if not interval:
             interval = '1 month'
@@ -2056,14 +2056,14 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
             interval = datetime.timedelta(days=1)
         else:
             raise NotImplementedError(interval)
-            
+
         if report_name =='users':#in ('cum-users', 'new-users'):
-            
+
             cum_w_email = []
             new_w_email = []
             cum_wo_email = []
             new_wo_email = []
-            
+
             date = start
             cum_w_email_count = cum_wo_email_count = 0
             while date < end:
@@ -2071,30 +2071,30 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
                 date_serialized = date.strftime('%Y-%m-%d')#mktime(date.timetuple())
                 this_count = self.db[User.__collection__]\
                   .find(dict(this_search, email={'$ne':None})).count()
-                
+
                 new_w_email.append((date_serialized, this_count))
                 cum_w_email.append((date_serialized, this_count + cum_w_email_count))
                 cum_w_email_count += this_count
 
                 this_count = self.db[User.__collection__]\
                   .find(dict(this_search, email=None)).count()
-                  
+
                 new_wo_email.append((date_serialized, this_count))
                 cum_wo_email.append((date_serialized, this_count + cum_wo_email_count))
                 cum_wo_email_count += this_count
-                
+
                 date += interval
-                
+
             data = dict(cum_w_email=cum_w_email,
                         new_w_email=new_w_email,
                         cum_wo_email=cum_wo_email,
                         new_wo_email=new_wo_email,
                         )
         elif report_name == 'events':
-            
+
             cum = []
             new = []
-            
+
             date = start
             cum_count = 0
             while date < end:
@@ -2102,22 +2102,22 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
                 date_serialized = date.strftime('%Y-%m-%d')#mktime(date.timetuple())
                 this_count = self.db[Event.__collection__]\
                   .find(this_search).count()
-                
+
                 new.append((date_serialized, this_count))
                 cum.append((date_serialized, this_count + cum_count))
                 cum_count += this_count
 
                 date += interval
-                
+
             data = dict(cum=cum,
                         new=new,
                         )
-                    
+
         elif report_name == 'numbers':
             # misc numbers
             numbers = self._get_numbers(start, end)
             data['numbers'] = numbers
-            
+
         elif report_name == 'no_events':
             ranges = dict()
             _prev = 0
@@ -2135,7 +2135,7 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
                         if c > f and c <= t:
                             ranges[(f,t)] += 1
                             break
-                        
+
             data['numbers'] = []
             data['labels'] = []
             for (f, t) in sorted(ranges.keys()):
@@ -2147,14 +2147,14 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
                 else:
                     label = "0"
                 data['labels'].append(dict(label=label))
-                
-                    
+
+
         elif report_name == 'usersettings':
             #data['lines'] = list()
             trues = list()
             falses = list()
             data['labels'] = list()
-            
+
             counts = {}
             _translations = {
               'hash_tags': "Tag with #",
@@ -2175,23 +2175,23 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
                 data['labels'].append(label)
                 trues.append(p)
                 falses.append(100 - p)
-            
+
             data['lines'] = [trues, falses]
-            
+
         else:
             raise tornado.web.HTTPError(404, report_name)
-        
+
         self.write_json(data)
-        
+
     def _get_numbers(self, start, end):
         data = list()
-        
+
         # No. users
         _search = {'add_date': {'$gte':start, '$lt':end}}
         c = self.db[User.__collection__].find(_search).count()
         #data.append(dict(number=c,
         #                 label=u"sers"))
-                         
+
         # No. users without email address
         wo_search = dict(_search, email=None)
         c2 = self.db[User.__collection__].find(wo_search).count()
@@ -2199,13 +2199,13 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
                          label=u"Users with email address"))
         data.append(dict(number=c2,
                          label=u"Users without email address"))
-                         
+
         c = self.db[Event.__collection__].find(_search).count()
         data.append(dict(number=c,
                          label=u"Events"))
         diff = end - start
         days = diff.days
-        
+
         data.append(dict(number='%.1f' % (c/float(days)),
                          label=u"Events per day"))
         if days > 28:
@@ -2216,13 +2216,13 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
             months = days/ 30
             data.append(dict(number='%.1f' % (c/float(months)),
                              label=u"Events per month"))
-                             
+
         data.append(dict(number=self.db.EmailReminder.find(_search).count(),
                          label=u"Email reminders set up"))
 
         return data
-        
-    
+
+
 @route('/features/$')
 class FeatureRequestsHandler(BaseHandler):
 
@@ -2230,13 +2230,13 @@ class FeatureRequestsHandler(BaseHandler):
         if self.application.settings['debug']:
             return
         try:
-            self._notify_about_new_feature_request(feature_request, 
+            self._notify_about_new_feature_request(feature_request,
                                                    extra_message=extra_message)
         except:
             # I hate to have to do this but I don't want to make STMP errors
             # stand in the way
             logging.error("Unable to notify about new feature request", exc_info=True)
-        
+
     def _notify_about_new_feature_request(self, feature_request, extra_message=None):
         subject = "[DoneCal] New feature request!"
         user = feature_request.author
@@ -2258,7 +2258,7 @@ class FeatureRequestsHandler(BaseHandler):
                     yes_or_no = getattr(user_settings, key, False)
                     bits.append('%s: %s' % (key, yes_or_no and 'Yes' or 'No'))
             email_body += "User settings:\n\t%s\n" % ', '.join(bits)
-            
+
         send_email(self.application.settings['email_backend'],
                    subject,
                    email_body,
@@ -2266,19 +2266,19 @@ class FeatureRequestsHandler(BaseHandler):
                    self.application.settings['admin_emails'])
 
 
-    
+
     def get(self):
         options = self.get_base_options()
         user = self.get_current_user()
-        
+
         if self.get_secure_cookie('user'):
             options['can_add'] = True
         else:
             options['can_add'] = False
-        
+
         options['feature_requests'] = \
           self.db.FeatureRequest.find().sort('vote_weight', -1).limit(20)
-          
+
         # Compile a list of the features this user already has voted on
         options['have_voted_features'] = []
         if user:
@@ -2288,12 +2288,12 @@ class FeatureRequestsHandler(BaseHandler):
                 options['have_voted_features'].append(
                   'feature--%s' % feature_request_comment['feature_request'].id
                 )
-          
+
         return self.render("featurerequests/index.html", **options)
-    
+
     def find_feature_requests(self, title):
         return self.db.FeatureRequest.find({'title':re.compile(re.escape(title), re.I)})
-    
+
     def get_user_voting_weight(self, user):
         no_events = self.db[Event.__collection__].find({'user.$id': user._id}).count()
         if no_events > 100:
@@ -2304,18 +2304,18 @@ class FeatureRequestsHandler(BaseHandler):
             voting_weight = 2
         else:
             voting_weight = 1
-        
+
         if user.first_name and user.last_name:
             # boost for nice friends
             voting_weight *= 1.5
-            
+
         # XXX could perhaps give another boost to people who have many events
         # over a long period of time
-        
+
         if user.premium:
             # extra privilege
             voting_weight *= 2
-            
+
         return int(voting_weight)
 
     def post(self):
@@ -2323,52 +2323,52 @@ class FeatureRequestsHandler(BaseHandler):
         if title == 'Add your own new feature request':
             # placeholder text
             title = None
-            
+
         description = self.get_argument('description', u'').strip()
         if description == u'Longer description (optional)':
             # placeholder text
             description = u''
-            
+
         if not title:
             raise tornado.web.HTTPError(400, "Missing title")
-        
+
         if list(self.find_feature_requests(title)):
             raise tornado.web.HTTPError(400, "Duplicate title")
-        
+
         user = self.get_current_user()
         if not user:
             raise tornado.web.HTTPError(403, "Not logged in")
-        
+
         feature_request = self.db.FeatureRequest()
         feature_request.author = user
         feature_request.title = title
         if description:
             feature_request.description = description
             feature_request.description_format = u'plaintext'
-        
+
         # figure out what voting weight the logged in user has
         voting_weight = self.get_user_voting_weight(user)
-        
+
         # to start with the feature request gets as much voting weight
         # as the first comment
         feature_request.vote_weight = voting_weight
         feature_request.save()
-        
+
         feature_request_comment = self.db.FeatureRequestComment()
         feature_request_comment.feature_request = feature_request
         feature_request_comment.user = user
         feature_request_comment.comment = u''
         feature_request_comment.vote_weight = voting_weight
         feature_request_comment.save()
-        
+
         self.notify_about_new_feature_request(feature_request)
-        
+
         self.redirect('/features/#added-%s' % feature_request._id)
 
 @route('/features/feature\.(html|json)$')
 class FeatureRequestHandler(BaseHandler):
-    
-    
+
+
     def get(self, format):
         feature_request = self.get_feature(self.get_argument('id'))
         if format == 'html':
@@ -2377,8 +2377,8 @@ class FeatureRequestHandler(BaseHandler):
             self.write(m.render(feature_request))
         else:
             raise NotImplementedError
-        
-    
+
+
     def get_feature(self, _id):
         try:
             return self.db.FeatureRequest.one({'_id': ObjectId(_id)})
@@ -2386,26 +2386,26 @@ class FeatureRequestHandler(BaseHandler):
             raise tornado.web.HTTPError(404, "Invalid ID")
         if not feature_request:
             raise tornado.web.HTTPError(404, "Not found ID")
-        
-        
-        
+
+
+
 @route('/features/vote/(up|down)/$')
 class VoteUpFeatureRequestHandler(FeatureRequestsHandler, FeatureRequestHandler):
-    
+
     def post(self, direction):
         assert direction in ('up','down'), direction
         _id = self.get_argument('id')
         # because DOM IDs can't start with numbers I've prefixed them in HTML
         _id = _id.replace('feature--','')
         comment = self.get_argument('comment', u'').strip()
-        
+
         feature_request = self.get_feature(_id)
-        
+
         user = self.get_current_user()
         if not user:
             return self.write_json(dict(error="Error. Not logged in or user with saved events"))
         voting_weight = self.get_user_voting_weight(user)
-        
+
         # remove any previous comments
         _search = {'feature_request.$id': feature_request._id,
                    'user.$id': user._id}
@@ -2413,10 +2413,10 @@ class VoteUpFeatureRequestHandler(FeatureRequestsHandler, FeatureRequestHandler)
             # this applies indepdent of direction
             feature_request.vote_weight -= voting_weight
             feature_request.save()
-            
+
         for each in self.db.FeatureRequestComment.find(_search):
             each.delete()
-        
+
         if direction == 'up':
             fr_comment = self.db.FeatureRequestComment()
             fr_comment.comment = comment
@@ -2424,28 +2424,28 @@ class VoteUpFeatureRequestHandler(FeatureRequestsHandler, FeatureRequestHandler)
             fr_comment.feature_request = feature_request
             fr_comment.vote_weight = voting_weight
             fr_comment.save()
-            
+
             feature_request.vote_weight += voting_weight
             feature_request.save()
-            
+
         # now return some stats about all feature request
         vote_weights = self.get_all_feature_request_vote_weights()
-        
+
         self.write_json(dict(id=str(feature_request._id),
           vote_weights=\
           [{'id':'feature--%s' % k, 'weight':v} for (k,v) in vote_weights.items()]
         ))
-    
+
     def get_all_feature_request_vote_weights(self):
         data = dict()
         for feature_request in self.db[FeatureRequest.__collection__].find():
             data[str(feature_request['_id'])] = feature_request['vote_weight']
         return data
-        
-        
+
+
 @route('/features/find.json$')
 class FindFeatureRequestsHandler(FeatureRequestsHandler):
-    
+
     def get(self):
         title = self.get_argument('title').strip()
         data = dict(feature_requests=list())
@@ -2453,33 +2453,30 @@ class FindFeatureRequestsHandler(FeatureRequestsHandler):
             data['feature_requests'].append(dict(title=feature_request.title,
                                                  description=feature_request.description))
         self.write_json(data)
-        
+
 @route('/premium/')
 class PremiumHandler(BaseHandler):
-    
+
     def get_products(self):
         # prices are in USD
         products = [
-          dict(code='6-months', 
+          dict(code='6-months',
                description='6 months subscription to a Premium Account',
                price=50),
-          dict(code='1-year', 
+          dict(code='1-year',
                description='1 year subscription to a Premium Account',
                price=90,
                discount='10%'),
         ]
         return products
-    
+
     def get(self):
         options = self.get_base_options()
         user = self.get_current_user()
-        
+
         options['currency'] = 'USD'
-        
+
         options['products'] = self.get_products()
-        
-        
+
+
         return self.render('premium/index.html', **options)
-    
-    
-        
