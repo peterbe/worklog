@@ -1,3 +1,6 @@
+* (MEDIUM) Write a script that analyzes the timings of
+  /var/log/nginx/donecal.timed.access.log
+
 * (MEDIUM) Look into using CNAMES for cloudfront so I can
   cdn.donecal.com or something.
 
