@@ -3,7 +3,7 @@ function L() {
 }
 
 // Note: variables minDate and maxDate are prepared in the template
-// 
+//
 var slider;
 var startDate;
 var endDate;
@@ -26,12 +26,12 @@ function resync(values) {
    }
    startDate.datepicker('option', 'maxDate', endDate.datepicker('getDate') || maxDate);
    endDate.datepicker('option', 'minDate', startDate.datepicker('getDate') || minDate);
-   
-   
+
+
    $('a.download-export').each(function(i, e) {
       var href = $(this).attr('href');
       if (href.search(/start=/)==-1) {
-         href += '?start=' + startDate.datepicker('getDate').getTime() + 
+         href += '?start=' + startDate.datepicker('getDate').getTime() +
 	   '&end=' + endDate.datepicker('getDate').getTime();
       } else {
          href = href.replace(/start=(\d+)/, 'start=' + startDate.datepicker('getDate').getTime());
@@ -47,7 +47,7 @@ function daysDiff(d1, d2) {
 
 function get_automatic_interval_string() {
    var d = daysDiff(startDate.datepicker('getDate'), endDate.datepicker('getDate'));
-   if (d > 100) return '1 month';
+   if (d > 180) return '1 month';
    if (d > 30) return '1 week';
    return '1 day';
 }
@@ -72,13 +72,13 @@ function plot_users(cumulative, interval, date_format_string) {
       series = [
                 {label:'New (with email)', lineWidth:4},
                 {label:'New (no email)', lineWidth:4}
-               ];      
+               ];
    }
    $.getJSON('/stats/users.json', {
       interval: interval,
       cumulative: cumulative,
       start: startDate.datepicker('getDate').getTime(),
-	end: endDate.datepicker('getDate').getTime()}, 
+	end: endDate.datepicker('getDate').getTime()},
              function(response) {
                 var lines = new Array();
                 $.each(response_keys, function(i, e) {
@@ -89,7 +89,7 @@ function plot_users(cumulative, interval, date_format_string) {
                    title:'Users',
 			      legend:{show:true, location:'nw'},
                      series:series,
-                     
+
                      //gridPadding:{right:35},
               axes:{
                  yaxis:{
@@ -109,7 +109,7 @@ function plot_users(cumulative, interval, date_format_string) {
              });
 
 }
-   
+
 function plot_events(cumulative, interval, date_format_string) {
    $('#plot-events').html('');
    var response_keys, series;
@@ -122,7 +122,7 @@ function plot_events(cumulative, interval, date_format_string) {
       response_keys = ['new'];
       series = [
                 {label:'New', lineWidth:4}
-               ];      
+               ];
    }
    $.getJSON('/stats/events.json', {
       interval: interval,
@@ -139,8 +139,8 @@ function plot_events(cumulative, interval, date_format_string) {
                    title:'Events',
                      legend:{show:false},
                      series:series,
-                     
-                     
+
+
                      //gridPadding:{right:35},
               axes:{
                  yaxis:{
@@ -150,30 +150,30 @@ function plot_events(cumulative, interval, date_format_string) {
                     min: 0
                  },
                  xaxis:{
-                    renderer:$.jqplot.DateAxisRenderer, 
+                    renderer:$.jqplot.DateAxisRenderer,
                       tickOptions:{formatString:date_format_string},
                     min:startDate.datepicker('getDate'),
                       tickInterval:interval
                  }
               }
                 });
-             });   
+             });
 }
 
 function update_numbers() {
    $('#numbers td').remove();
    $.getJSON('/stats/numbers.json', {
       start: startDate.datepicker('getDate').getTime(),
-	end: endDate.datepicker('getDate').getTime()}, 
+	end: endDate.datepicker('getDate').getTime()},
              function(response) {
                 $.each(response.numbers, function(i, e) {
                    $('<tr></tr>').appendTo('#numbers')
                      .append($('<td></td>').text(e.label+':').addClass('label'))
                        .append($('<td></td>').text(e.number).addClass('number'));
-                                                              
+
                 });
              });
-   
+
 }
 
 
@@ -191,11 +191,11 @@ function plot_usersettings() {
             borderWidth: 0,
             shadow: false
         },
-        stackSeries: true, 
+        stackSeries: true,
         seriesColors: ["#82BC24","#ffffff"],
         seriesDefaults: {
             renderer: $.jqplot.BarRenderer,
-            rendererOptions:{barMargin: 25}, 
+            rendererOptions:{barMargin: 25},
             pointLabels:{stackedValue: true},
             yaxis:'y2axis',
             shadow: false
@@ -207,14 +207,14 @@ function plot_usersettings() {
         axes: {
             xaxis:{
                 ticks: response.labels,
-                renderer:$.jqplot.CategoryAxisRenderer, 
+                renderer:$.jqplot.CategoryAxisRenderer,
                 tickOptions:{
-                    showGridline:false, 
+                    showGridline:false,
                     markSize:0
                 }
             },
             y2axis:{
-                ticks:[0, 100], 
+                ticks:[0, 100],
                 tickOptions:{formatString:'%d\%'}
             }
         }
@@ -223,19 +223,28 @@ function plot_usersettings() {
    });
 }
 
-function plot_no_events() {
-   $('#plot-no_events').html('');
-   
-   $.getJSON('/stats/no_events.json', {
+function plot_no_events(anonymous) {
+   var report_id, title;
+   if (anonymous) {
+      report_id = 'no_events_anonymous';
+      title = "Average number of events for anonymous users";
+   } else {
+      report_id = 'no_events';
+      title = "Average number of events for registered users";
+   }
+
+   $('#plot-' + report_id).html('');
+
+   $.getJSON('/stats/' + report_id + '.json', {
       start: startDate.datepicker('getDate').getTime(),
       end: endDate.datepicker('getDate').getTime()
    }, function(response) {
       console.log(response);
-      $.jqplot('plot-no_events', response.numbers, {
+      $.jqplot('plot-' + report_id, response.numbers, {
          legend:{show:true, location:'ne'},
-         title: "Average number of events",
+         title: title,
          seriesDefaults:{
-              renderer:$.jqplot.BarRenderer, 
+              renderer:$.jqplot.BarRenderer,
               rendererOptions:{barPadding: 8, barMargin: 20}
          },
          series:response.labels,
@@ -245,7 +254,7 @@ function plot_no_events() {
          }
       });
    });
-             
+
 }
 
 function refresh_date_range() {
@@ -255,8 +264,9 @@ function refresh_date_range() {
    var cumulative = $('#cumulative:checked').size();
    plot_users(cumulative, interval, date_format_string);
    plot_events(cumulative, interval, date_format_string);
-   plot_no_events();
    plot_usersettings();
+   plot_no_events(false);
+   plot_no_events(true);
 }
 
 $(function() {
@@ -267,7 +277,7 @@ $(function() {
    if (!$('#to_date').val()) {
       $('#to_date').val($.datepicker.formatDate(dateformat, maxDate));
    }
-    
+
     slider = $('#slider').slider({range: true, max: daysDiff(minDate, maxDate),
             stop: function(event, ui) {
               still_sliding = false;
@@ -276,29 +286,29 @@ $(function() {
             slide: function(event, ui) { resync(ui.values); }});
     startDate = $('#from_date').datepicker({
         firstDay: SETTINGS.monday_first ? 1 : 0,
-        minDate: minDate, 
+        minDate: minDate,
         maxDate: maxDate,
         dateFormat: dateformat,
-        onSelect: function(dateStr) { 
+        onSelect: function(dateStr) {
           resync();
           refresh_date_range();
         }}).
         keyup(function() { resync(); });
     endDate = $('#to_date').datepicker({
         firstDay: SETTINGS.monday_first ? 1 : 0,
-            minDate: minDate, 
+            minDate: minDate,
             maxDate: maxDate,
             dateFormat: dateformat,
-            onSelect: function(dateStr) { 
+            onSelect: function(dateStr) {
               resync();
               refresh_date_range();
             }}).
         keyup(function() { resync(); });
-   
+
    $('input#cumulative, input#not_cumulative').change(function() {
       refresh_date_range();
    });
 
    resync();
-   refresh_date_range();   
+   refresh_date_range();
 });

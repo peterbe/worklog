@@ -2118,13 +2118,17 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
             numbers = self._get_numbers(start, end)
             data['numbers'] = numbers
 
-        elif report_name == 'no_events':
+        elif report_name in ('no_events','no_events_anonymous'):
             ranges = dict()
             _prev = 0
             for i in (0, 1, 5, 10, 25, 50, 100, 200, 400):
                 ranges[(_prev, i)] = 0
                 _prev = i
-            for user in self.db.User.find(dict(email={'$ne':None})):
+            if report_name == 'no_events_anonymous':
+                _search = dict(email=None)
+            else:
+                _search = dict(email={'$ne':None})
+            for user in self.db.User.find(_search):
                 c = self.db[Event.__collection__].find({'user.$id': user._id}).count()
                 if c == 0:
                     ranges[(0,0)] += 1
