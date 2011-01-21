@@ -2,26 +2,23 @@ from pprint import pprint
 import datetime
 from dateutil import relativedelta
 import tornado.web
-from utils.routes import route
+from utils.routes import route, route_redirect
 from apps.main.handlers import BaseHandler, AuthLoginHandler, CredentialsError
 from apps.main.models import Event
 
-@route('/(iphone|android)/$')
+route_redirect('/smartphone$', '/smartphone/')
+
+@route('/smartphone/$')
 class SmartphoneHandler(BaseHandler):
-    def get(self, device_name):
+    def get(self):
         options = self.get_base_options()
-
         template = 'smartphone/index.html'
-        #if options.get('user'):
-        #    options['available_tags'] = self.get_all_available_tags(options['user'])
-        #    template = 'smartphone/logged_in.html'
-
         self.render(template, **options)
 
 
-@route('/(iphone|android)/auth/login/$')
+@route('/smartphone/auth/login/$')
 class SmartphoneAuthLoginHandler(AuthLoginHandler):
-    def post(self, device_name):
+    def post(self):
         # if this works it will set a cookie. Is that needed???
         # if not, consider rewriting AuthLoginHandler so that it can
         # check but not set a cookie or something
@@ -52,7 +49,7 @@ class SmartphoneAPIMixin(object):
         return user
 
 
-@route('/(iphone|android)/checkguid/$')
+@route('/smartphone/checkguid/$')
 class CheckGUIDHandler(BaseHandler, SmartphoneAPIMixin):
 
     def get(self, __):

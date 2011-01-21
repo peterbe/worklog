@@ -31,20 +31,20 @@ define("dont_combine", default=False, help="Don't combine static resources", typ
 
 
 class Application(tornado.web.Application):
-    def __init__(self, 
-                 database_name=None, 
-                 xsrf_cookies=True, 
+    def __init__(self,
+                 database_name=None,
+                 xsrf_cookies=True,
                  optimize_static_content=None):
         ui_modules_map = {}
         for app_name in settings.APPS:
-            _ui_modules = __import__('apps.%s' % app_name, globals(), locals(), 
+            _ui_modules = __import__('apps.%s' % app_name, globals(), locals(),
                                      ['ui_modules'], -1)
             try:
                 ui_modules = _ui_modules.ui_modules
             except AttributeError:
                 # this app simply doesn't have a ui_modules.py file
-                continue 
-    
+                continue
+
             for name in [x for x in dir(ui_modules) if re.findall('[A-Z]\w+', x)]:
                 thing = getattr(ui_modules, name)
                 try:
@@ -53,23 +53,23 @@ class Application(tornado.web.Application):
                 except TypeError:
                     # most likely a builtin class or something
                     pass
-            
+
         if options.dont_combine:
             ui_modules_map['Static'] = ui_modules_map['PlainStatic']
             ui_modules_map['StaticURL'] = ui_modules_map['PlainStaticURL']
-            
+
         try:
             cdn_prefix = [x.strip() for x in file('cdn_prefix.conf')
                              if x.strip() and not x.strip().startswith('#')][0]
             #logging.info("Using %r as static URL prefix" % cdn_prefix)
         except (IOError, IndexError):
             cdn_prefix = None
-            
+
         # unless explicitly set, then if in debug mode, disable optimization
         # of static content
         if optimize_static_content is None:
             optimize_static_content = not options.debug
-            
+
         handlers = route.get_routes()
         app_settings = dict(
             title=settings.TITLE,
@@ -87,7 +87,7 @@ class Application(tornado.web.Application):
               or 'utils.send_mail.backends.smtp.EmailBackend',
             webmaster=settings.WEBMASTER,
             admin_emails=settings.ADMIN_EMAILS,
-            CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__), 
+            CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__),
                                       "static", "compiler.jar"),
             YUI_LOCATION=os.path.join(os.path.dirname(__file__),
                                       "static", "yuicompressor-2.4.2.jar"),
@@ -99,7 +99,7 @@ class Application(tornado.web.Application):
         # Have one global connection to the blog DB across all handlers
         self.database_name = database_name and database_name or options.database_name
         self.con = Connection()
-        
+
         model_classes = []
         for app_name in settings.APPS:
             _models = __import__('apps.%s' % app_name, globals(), locals(),
@@ -115,19 +115,19 @@ class Application(tornado.web.Application):
                     model_classes.append(thing)
 
         self.con.register(model_classes)
- 
+
 for app_name in settings.APPS:
     __import__('apps.%s' % app_name, globals(), locals(), ['handlers'], -1)
 
-        
-        
+
+
 def main(): # pragma: no cover
     tornado.options.parse_command_line()
     if options.showurls:
         for path, class_ in route.get_routes():
             print path
         return
-    
+
     http_server = tornado.httpserver.HTTPServer(Application())
     print "Starting tornado on port", options.port
     if options.prefork:
@@ -136,7 +136,7 @@ def main(): # pragma: no cover
         http_server.start()
     else:
         http_server.listen(options.port)
-    
+
     try:
         tornado.ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
@@ -145,5 +145,3 @@ def main(): # pragma: no cover
 
 if __name__ == "__main__":
     main()
-
-    

@@ -1,4 +1,12 @@
-	h2.fc-header-title {
+h1#calendar-h1 {
+  color: #292E35;
+  font-size: 30px;
+  font-weight:bolder;
+  margin-top: 10px;
+  margin-left: 49px;
+  font-family:"droid-sans-1","droid-sans-2",Arial,Verdana,sans-serif;
+}
+h2.fc-header-title {
 	  font-size: 130%;
 	  font-weight: bold;
 	}

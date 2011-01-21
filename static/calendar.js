@@ -19,17 +19,17 @@ function bind_esc_key() {
    function handleOnkeyup(e){
       var evtobj=window.event? event : e;
       var unicode=evtobj.charCode? evtobj.charCode : evtobj.keyCode;
-      
+
       // Close bookmarklet on Escape
       if (unicode == 27){
 	 close_current_tooltip();
 	 unbind_esc_key();
       }
    }
-   
+
    // Preserve original onkeyup handler
    g_origKeyUp = document.onkeyup;
-   
+
    // Substitute new onkeyup
    document.onkeyup = handleOnkeyup;
 }
@@ -218,13 +218,13 @@ function _event_clicked(event, jsEvent, view) {
                      this.set('content.text', '&nbsp;');
                      _prepare_edit_event(clone);
                      this.set('content.text', clone);
-                     
-                     // doing this after because a.more-editing is not visible until it's 
+
+                     // doing this after because a.more-editing is not visible until it's
                      // gone into the qtip
                      if (data.description || data.external_url) {
                         $('a.more-editing').click();
                      }
-                     
+
                   } else {
                      this.set('content.text', data);
                   }
@@ -279,10 +279,10 @@ function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc, jsEvent, u
          alert(response.error);
          revertFunc();
       }
-      
+
       if (date_before.getMonth() != event.start.getMonth()) {
-         // it can happen that the event is moved from one month 
-         // to another (e.g. 30th Nov to 1st Dec). If this happens re-render 
+         // it can happen that the event is moved from one month
+         // to another (e.g. 30th Nov to 1st Dec). If this happens re-render
          // the pie chart stats
          display_sidebar_stats_wrapped(view.start, view.end);
       }
@@ -373,14 +373,14 @@ function __inner_setup_ajaxsubmit(element, event_id) {
             }
             if (!event_id) {
                increment_total_no_events();
-         
+
                if ($('#introduction-video, #introduction-video-after').size()) {
                   $('#introduction-video:visible').hide('slow');
                   $('#introduction-video-after:visible').hide('slow');
                   if ($('#report-link:hidden').size()) {
                      $('#report-link').show('slow');
                   }
-               }               
+               }
             }
 
 	    // close any open qtip
@@ -514,7 +514,7 @@ function show_undo_delete(text, event_id) {
         });
         return false;
      }));
-   
+
    undo_delete_timer = setTimeout(function() {
       $('#undo-delete:visible').fadeOut(800);
    }, 5 * 1000);
@@ -531,11 +531,11 @@ var AVAILABLE_TAGS;
 
 $(function() {
    var defaultView = 'month';
-   
+
    // By default we assume that we should save this view in a cookie. The only
    // reason not to do it later is if we've just loaded it from a cookie.
    var save_view_cookie = true;
-   
+
    if (location.hash.search('#week') == 0)
      defaultView = 'agendaWeek';
    else if (location.hash.search('#day') == 0)
@@ -544,7 +544,7 @@ $(function() {
    var year = today.getFullYear();
    var month = today.getMonth();
    var day = undefined;
-   
+
    var _lastview_cookie = $.cookie('lastview');
    var hash_code_regex = /(\d{4}),(\d{1,2}),(\d{1,2})/;
    if (hash_code_regex.test(location.hash)) {
@@ -562,7 +562,7 @@ $(function() {
       year = parseInt(_match[1]);
       month = parseInt(_match[2]) - 1;
       day = parseInt(_match[3]);
-      // if we've just loaded it from the cookie we don't need to save the 
+      // if we've just loaded it from the cookie we don't need to save the
       // cookie again.
       save_view_cookie = false;
    }
@@ -603,10 +603,10 @@ $(function() {
             //     $('li.' + share.className, '#current-sharers').fadeTo(300, 0.4);
             //
             //  });
-            // 
+            //
          });
       },
-      
+
       header: {
            left: 'prev,next today',
            center: 'title',
@@ -663,8 +663,21 @@ $(function() {
          } else {
             $(this).addClass('placeholdervalue').val(placeholdervalue_text);
          }
-      });         
+      });
    });
+
+   if ($('h1#calendar-h1').size()) {
+      setTimeout(function() {
+	 $('<img>', {
+	    alt:"Click to close",
+	      src:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTM5jWRgMAAAAVdEVYdENyZWF0aW9uIFRpbWUAMi8xNy8wOCCcqlgAAAQRdEVYdFhNTDpjb20uYWRvYmUueG1wADw/eHBhY2tldCBiZWdpbj0iICAgIiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+Cjx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDQuMS1jMDM0IDQ2LjI3Mjk3NiwgU2F0IEphbiAyNyAyMDA3IDIyOjExOjQxICAgICAgICAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczp4YXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iPgogICAgICAgICA8eGFwOkNyZWF0b3JUb29sPkFkb2JlIEZpcmV3b3JrcyBDUzM8L3hhcDpDcmVhdG9yVG9vbD4KICAgICAgICAgPHhhcDpDcmVhdGVEYXRlPjIwMDgtMDItMTdUMDI6MzY6NDVaPC94YXA6Q3JlYXRlRGF0ZT4KICAgICAgICAgPHhhcDpNb2RpZnlEYXRlPjIwMDgtMDMtMjRUMTk6MDA6NDJaPC94YXA6TW9kaWZ5RGF0ZT4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgICAgIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiCiAgICAgICAgICAgIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyI+CiAgICAgICAgIDxkYzpmb3JtYXQ+aW1hZ2UvcG5nPC9kYzpmb3JtYXQ+CiAgICAgIDwvcmRmOkRlc2NyaXB0aW9uPgogICA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDUdUmQAAAB9SURBVDiN1VNBDoAgDCuGB+GL9hT2lb1IfzQvSgCZYPBiEw5raLM24FQVM1im1F8Y+Hxg5gBg62hWZt7TpKrpxBi1h/NO0jQjiMgQBxgdEFEhEBEQUdPAN9nKxBKbG7yBaXCtXccZMqgzP5mYJY5wwL3EUDySNkI+uP9/pgNQQGCwjv058wAAAABJRU5ErkJggg=='})
+	   .appendTo($('<a>', {href:'#', title:'Click to close'}).click(function() {
+	      $('h1#calendar-h1').fadeOut(500);
+              $.cookie('hide_h1', true);
+	      return false;
+	   }).appendTo('h1#calendar-h1'));
+      }, 3 * 1000);
+   }
 });
 
 

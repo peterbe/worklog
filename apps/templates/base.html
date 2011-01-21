@@ -2,8 +2,10 @@
 <html>
     <head>
         <!-- revision: {{ git_revision }} -->
-        <title>{% block title %}DoneCal - A timesheet/time tracker for remembering what you've done{% end %}</title>
+        <title>{% block title %}DoneCal - A timesheet/timetracker calendar{% end %}</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="description" content="Calendar for remembering what you've done">
+        <meta name="keywords" content="calendar,timesheet,timetracker,time tracker,time sheet,simple calendar,openid,email reminders">
 	<link rel="Shortcut Icon" href="{{ modules.StaticURL("images/favicon.ico") }}" type="image/x-icon">
         {{ modules.Static("css/style.css", "css/ext/jquery.fancybox-1.3.2.css") }}
 	<style type="text/css">
@@ -23,7 +25,7 @@
         {% block extra_head_outer %}
         {% block extra_head %}{% end %}
         {% end %}
-    
+
 {% block google_analytics %}
 {% if not debug %}
 <script type="text/javascript">
@@ -42,13 +44,15 @@
 
     </head>
     <body class="content-sidebar">
-    
+
+    {% block h1 %}{% end %}
+
     {% block home_nav %}
     <div id="home" class="topnav">
       <p><a href="/">Home/Calendar</a></p>
     </div>
     {% end %}
-    
+
     <div id="login" class="topnav">
       {% if user %}
       <p><a href="/user/account/" {% if user.premium %}title="You're a premium user!"{% end %} class="account">Hi {{ user_name }}</a>
@@ -57,17 +61,9 @@
       <p><a href="/user/account/" class="account">Login &amp; registration</a></p>
       {% end %}
     </div>
-    
+
     <div id="wrap">
-    
-      <!--
-      <div id="header">
-        <div class="wrap">
-	  <h1 id="title">DoneCal</h1>
-	</div>
-      </div>
-      -->
-      
+
       <div id="inner">
         <div id="content-sidebar-wrap">
 	  <div id="content">
@@ -83,8 +79,8 @@
 	  </div>
 	</div>
       </div>
-      
-      
+
+
       <div id="footer">
         <div class="wrap">
 	  <div class="creds">
@@ -95,8 +91,8 @@
 	  </div>
 	</div>
       </div>
-      
-      
+
+
     </div>
 
 

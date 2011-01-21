@@ -52,7 +52,6 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
     def _handle_request_exception(self, exception):
         if not isinstance(exception, tornado.web.HTTPError) and \
           not self.application.settings['debug']:
-            print "About to email"
             # ie. a 500 error
             try:
                 self._email_exception(exception)
@@ -434,6 +433,13 @@ class HomeHandler(BaseHandler):
                                       className=className))
 
         options['settings']['hidden_shares'] = hidden_shares
+
+        show_h1 = True
+        if options['user']:
+            show_h1 = False
+        elif self.get_cookie('hide_h1', False):
+            show_h1 = False
+        options['show_h1'] = show_h1
 
         self.render("calendar.html",
           #

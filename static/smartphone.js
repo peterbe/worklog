@@ -49,7 +49,6 @@ var authentication = (function() {
          return localStorage.getItem('guid');;
       },
       set_guid: function(guid) {
-         alert("Setting guid:" + guid);
          localStorage.setItem('guid', guid);
       },
       unset_guid: function() {

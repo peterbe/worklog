@@ -3,15 +3,21 @@
 {{ modules.Static("css/ext/fullcalendar.css", "css/ext/jquery.jqplot.min.css", "css/ext/jquery.autocomplete.css", "css/ext/jquery.qtip.css", "css/calendar.css") }}
 {% end %}
 
+    {% block h1 %}
+    {% if show_h1 %}
+    <h1 id="calendar-h1">DoneCal - A timesheet/timetracker calendar</h1>
+    {% end %}
+    {% end %}
+
 {% block home_nav %}{% end %}
 
 {% block content %}
             <div id="calendar"></div>
-{% end %}	    
-	  
+{% end %}
+
 {% block sidebar %}
 	    <div class="widget widget_text">
-              
+
               <div class="" id="settings-box">
 	        <p>
                   <a class="user-settings" href="/user/settings/">Change your settings</a>
@@ -19,18 +25,18 @@
                   <a class="share" href="/share/">Share your calendar</a>
                 </p>
               </div>
-              
+
               <div id="current-sharers" style="display:none">
                 <p><strong>Sharers</strong></p>
                 <ul>
                 </ul>
               </div>
-	      
+
               <div class="plot" id="days-plot">
               </div>
               <div class="plot" id="hours-plot">
               </div>
-              
+
               <div id="report-link" {% if not user %}style="display:none"{% end %}>
                 <p style="text-align:center"><a href="/report/" rel="nofollow">Get the full report</a>
               </div>
@@ -42,15 +48,15 @@
 	      <p id="introduction-video-after" style="display:none">
 	        <a href="/help/show_vimeo_video" class="vimeovideo">Watch video again</a><br>
 	        <strong>Note:</strong>
-		Since this video was made, it is now possible to tag with the <code>#</code> hash sign 
-		as well as the <code>@</code> sig. 
+		Since this video was made, it is now possible to tag with the <code>#</code> hash sign
+		as well as the <code>@</code> sig.
 	      </p>
               {% end %}
-	      
-	      
-	      
+
+
+
 	    </div>
-	    
+
 <div id="add-form-container" style="display:none">
 <form method="post" class="add-form">
   <div>
@@ -76,7 +82,7 @@
   </div>
   <div class="see-url" style="display:none">
   </div>
-  
+
   <div class="more-editing" style="display:none">
     <div class="edit-url">
       <input name="external_url" size="35">
@@ -90,21 +96,21 @@
   <p><a href="#" class="more-editing">More options?</a></p>
   <div class="delete">
     <p>
-      <a href="#" class="delete">Delete?</a>    
+      <a href="#" class="delete">Delete?</a>
       <span class="confirmation" style="display:none">Are you sure?
         <a href="#" class="delete-confirm">Yes</a>
         <a href="#" class="delete-cancel">No</a>
       </span>
     </p>
   </div>
-  
+
   {{ xsrf_form_html() }}
 </form>
 </div>
 
 <div id="undo-delete" style="display:none">
 </div>
-{% end %}	    
+{% end %}
 
 
 

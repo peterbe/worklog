@@ -2,7 +2,7 @@ class route(object):
     """
     decorates RequestHandlers and builds up a list of routables handlers
 
-    Tech Notes (or "What the *@# is really happening here?")
+    Tech Notes (or 'What the *@# is really happening here?')
     --------------------------------------------------------
 
     Everytime @route('...') is called, we instantiate a new route object which
@@ -38,3 +38,12 @@ class route(object):
     def get_routes(self):
         return self._routes
 
+import tornado.web
+def any_get_redirect(self, *a, **k):
+    self.redirect(self.redirect_to)
+
+def route_redirect(from_, to):
+    created_handler = type('CustomRedirectHandler', (tornado.web.RequestHandler,),
+                           dict(get=any_get_redirect))
+    created_handler.redirect_to = to
+    route._routes.append((from_, created_handler))
