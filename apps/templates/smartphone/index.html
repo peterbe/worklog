@@ -136,18 +136,33 @@
 					<input type="text" name="title" value="">
 
 				</div>
-				
 				<div data-role="fieldcontain">
-					<fieldset data-role="controlgroup" data-type="horizontal">
-						<legend>Type:</legend>
-						<input type="radio" name="all_day" id="radio-view-all_day" value="true" checked>
-						<label for="radio-view-all_day">All day</label>
-						<input type="radio" name="all_day" id="radio-view-not_all_day" value="false">
-						<label for="radio-view-not_all_day">Specific time</label>
-					</fieldset>
+				    <fieldset data-role="controlgroup">
+				    	<!--<legend>Duration:</legend>-->
+						<input type="radio" name="duration" id="duration-all_day" value="all_day" checked>
+						<label for="duration-all_day">All day</label>
+
+						<input type="radio" name="duration" id="duration-15min" value="0.25">
+						<label for="duration-15min">15 minutes</label>
+
+						<input type="radio" name="duration" id="duration-30min" value="0.5">
+						<label for="duration-30min">30 minutes</label>
+
+						<input type="radio" name="duration" id="duration-1h" value="1">
+						<label for="duration-1h">1 hour</label>
+
+						<input type="radio" name="duration" id="duration-other" value="other">
+						<label for="duration-other">Other</label>
+				    </fieldset>
 				</div>
-			
-			
+
+
+				<div data-role="fieldcontain" id="field-duration-other" style="display:none">
+					<label for="title">Hours:</label>
+					<input type="text" name="duration_other" value="">
+
+				</div>
+
 
 				<!--<div data-role="fieldcontain">
 					<label for="textarea">Description:</label>
@@ -156,22 +171,18 @@
 				</div>-->
 				<fieldset class="ui-grid-a">
 						<div class="ui-block-a"><button type="submit" data-theme="c">Cancel</button></div>
-						<div class="ui-block-b"><button type="submit" data-theme="b">Save</button></div>	   
+						<div class="ui-block-b"><button type="submit" data-theme="b">Save</button></div>
 			    </fieldset>
 
 			</form>
 		</div><!-- /section 3 -->
-		
+
 	<p>&nbsp;</p>
         <ul data-role="listview" data-inset="false" id="calendar-day-events">
         </ul>
 
-	<!--<form action="#calendar-add-event" method="get">
-	<fieldset>
-		<button type="submit" data-theme="a">Add a new event</button>
-	</fieldset>
-        </form>-->
-	
+        <dl id="calendar-days-totals" title="Totals">
+        </dl>
         </div><!-- /content -->
 </div>
 

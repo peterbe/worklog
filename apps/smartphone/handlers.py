@@ -3,9 +3,10 @@ import datetime
 from dateutil import relativedelta
 import tornado.web
 from utils.routes import route, route_redirect
-from apps.main.handlers import BaseHandler, AuthLoginHandler, CredentialsError
+from apps.main.handlers import BaseHandler, AuthLoginHandler, \
+  CredentialsError, EventsHandler
 from apps.main.models import Event
-
+from apps.eventlog import log_event, actions, contexts
 route_redirect('/smartphone$', '/smartphone/')
 
 @route('/smartphone/$')
@@ -150,7 +151,7 @@ class APIMonthHandler(BaseHandler, SmartphoneAPIMixin):
 
 
 @route('/smartphone/api/day\.json$')
-class APIDayHandler(BaseHandler, SmartphoneAPIMixin):
+class APIDayHandler(EventsHandler, SmartphoneAPIMixin):
 
     def get(self):
         user = self.must_get_user()
@@ -161,9 +162,13 @@ class APIDayHandler(BaseHandler, SmartphoneAPIMixin):
         date = datetime.datetime(year, month, day, 0, 0, 0)
 
         events = []
+        days_spent = hours_spent = None
         for each in self.db[Event.__collection__]\
               .find(dict(_search,
                          start={'$gte': date, '$lt':date + datetime.timedelta(days=1)})):
+            if days_spent is None:
+                days_spent = hours_spent = 0.0
+
             #print each
             event = dict(id=str(each['_id']),
                          all_day=each['all_day'],
@@ -176,8 +181,22 @@ class APIDayHandler(BaseHandler, SmartphoneAPIMixin):
             event['length'] = self._describe_length(each)
             events.append(event)
 
+            if each['all_day']:
+                days_spent += 1 + (each['end'] - each['start']).days
+            else:
+                hours_spent += (each['end'] - each['start']).seconds / 60.0 / 60
+
+        data = dict(events=events)
+        if days_spent or hours_spent:
+            data['totals'] = dict()
+            # there were some events at least
+            if days_spent:
+                data['totals']['days_spent'] = days_spent
+            if hours_spent:
+                data['totals']['hours_spent'] = '%.1f' % round(hours_spent, 1)
+
         #pprint(events)
-        self.write_json(dict(events=events))
+        self.write_json(data)
 
     def _describe_length(self, item):
         if item['all_day']:
@@ -203,3 +222,41 @@ class APIDayHandler(BaseHandler, SmartphoneAPIMixin):
                         return "%s hours" % hours
             else:
                 return "%s minutes" % minutes
+
+    def post(self):
+        user = self.must_get_user()
+        title = self.get_argument('title').strip()
+        duration = self.get_argument('duration')
+        duration_other = self.get_argument('duration_other', '')
+
+        year = int(self.get_argument('year'))
+        month = int(self.get_argument('month'))
+        day = int(self.get_argument('day'))
+
+        if duration == 'all_day':
+            all_day = True
+            start = datetime.datetime(year, month, day, 0, 0, 0)
+            end = start
+        else:
+            all_day = False
+            now = datetime.datetime.now()
+            start = datetime.datetime(year, month, day, now.hour, now.minute, now.second)
+            try:
+                if duration == 'other':
+                    duration = float(duration_other)
+                else:
+                    duration = float(duration)
+            except ValueError:
+                return self.write_json(dict(error="Error! Not a valid other number"))
+            if (duration <= 0):
+                return self.write_json(dict(error="Error! Duration must be more than zero"))
+            end = start + datetime.timedelta(minutes=float(duration) * 60)
+        event, created = self.create_event(user, all_day=all_day, start=start, end=end)
+
+        if created:
+            log_event(self.db, user, event, actions.ACTION_ADD, contexts.CONTEXT_SMARTPHONE)
+
+        event_json = dict(title=event['title'],
+                          id=str(event['_id']),
+                          length=self._describe_length(event))
+        self.write_json(dict(event=event_json))
