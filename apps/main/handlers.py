@@ -18,7 +18,7 @@ import tornado.auth
 import tornado.web
 
 # app
-from utils.routes import route
+from utils.routes import route, route_redirect
 from models import *
 from utils.datatoxml import dict_to_xml
 from utils.send_mail import send_email
@@ -2011,6 +2011,7 @@ class ReportDataHandler(EventStatsHandler):
         return dict(data=all_data, tags=all_tags, ticks=ticks)
 
 
+route_redirect('/stats$', '/stats/')
 @route('/stats/$')
 class GeneralStatisticsHandler(BaseHandler): # pragma: no cover
 

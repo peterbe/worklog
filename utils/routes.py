@@ -39,11 +39,5 @@ class route(object):
         return self._routes
 
 import tornado.web
-def any_get_redirect(self, *a, **k):
-    self.redirect(self.redirect_to)
-
 def route_redirect(from_, to):
-    created_handler = type('CustomRedirectHandler', (tornado.web.RequestHandler,),
-                           dict(get=any_get_redirect))
-    created_handler.redirect_to = to
-    route._routes.append((from_, created_handler))
+    route._routes.append((from_, tornado.web.RedirectHandler, dict(url=to)))
