@@ -622,7 +622,7 @@ $(function() {
       slotMinutes: 30, // setting?
       defaultView: defaultView,
       editable: true,
-      aspectRatio: 1.25, // 1.35 is default
+      aspectRatio: 1.35, // 1.35 is default
       firstDay: SETTINGS.monday_first ? 1 : 0,
       weekends: !SETTINGS.hide_weekend,
       weekMode: 'variable',
