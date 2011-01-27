@@ -617,9 +617,12 @@ $(function() {
       date: day,
       //timeFormat: 'h(:mm)tt',
       timeFormat: SETTINGS.ampm_format ? 'h(:mm)tt' : 'H:mm',
+      axisFormat: SETTINGS.ampm_format ? 'h(:mm)tt' : 'H:mm',
+      firstHour: SETTINGS.first_hour,
+      slotMinutes: 30, // setting?
       defaultView: defaultView,
       editable: true,
-      aspectRatio: 1.65, // 1.35 is default
+      aspectRatio: 1.25, // 1.35 is default
       firstDay: SETTINGS.monday_first ? 1 : 0,
       weekends: !SETTINGS.hide_weekend,
       weekMode: 'variable',

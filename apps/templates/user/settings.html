@@ -2,7 +2,7 @@
 label { text-align:left; width:230px; }
 </style>
 
-<h2>User settings</h2>    
+<h2>User settings</h2>
 <form action="/user/settings/" method="post" class="user-settings">
 
       <label for="id_monday_first">Monday first day of the week?</label>
@@ -17,14 +17,23 @@ label { text-align:left; width:230px; }
       <label for="id_ampm_format">AM/PM format?</label>
       <input type="checkbox" id="id_ampm_format" name="ampm_format" {% if ampm_format %}checked{% end %}>
       <br>
-    <!--    
+      {% if user %}
+      <label for="id_first_hour">Work day start hour?</label>
+      <select name="first_hour">
+        {% for i in range(24) %}
+	  <option value="{{ i }}" {% if first_hour == i %}selected{% end %}>{{ i }}</option>
+	{% end %}
+      </select>
+      <br>
+      {% end %}
+    <!--
       <label for="id_offline_mode">Offline mode?</label>
       <input type="checkbox" id="id_offline_mode" name="offline_mode" {% if offline_mode %}checked{% end %}>
     -->
-    
-    
+
+
     <label>&nbsp;</label>
     <input type="submit" value="Save">
-  
+
 {{ xsrf_form_html() }}
 </form>

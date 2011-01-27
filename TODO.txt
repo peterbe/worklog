@@ -1,4 +1,9 @@
-* (MEDIUM) Write a script that analyzes the timings of
+* (HIGH) When using Bookmarklet, say something about being or not
+  being logged in.
+
+* (LOW) Build a PDF report based on Timesheet.doc
+
+* (LOW) Write a script that analyzes the timings of
   /var/log/nginx/donecal.timed.access.log
 
 * (MEDIUM) Look into using CNAMES for cloudfront so I can

@@ -281,7 +281,8 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                         monday_first=False,
                         disable_sound=False,
                         offline_mode=False,
-                        ampm_format=False)
+                        ampm_format=False,
+                        first_hour=8)
 
         user = self.get_current_user()
         user_name = None
@@ -305,6 +306,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                 settings['disable_sound'] = user_settings.disable_sound
                 settings['offline_mode'] = getattr(user_settings, 'offline_mode', False)
                 settings['ampm_format'] = user_settings.ampm_format
+                settings['first_hour'] = user_settings.first_hour
 
         options['settings'] = settings
 
@@ -1149,6 +1151,7 @@ class UserSettingsHandler(BaseHandler):
         for key in UserSettings.get_bool_keys():
             default[key] = False
             setting_keys.append(key)
+        default['first_hour'] = 8
 
         user = self.get_current_user()
         if user:
@@ -1156,6 +1159,7 @@ class UserSettingsHandler(BaseHandler):
             if user_settings:
                 for key in setting_keys:
                     default[key] = getattr(user_settings, key, False)
+                default['first_hour'] = getattr(user_settings, 'first_hour', 8)
             else:
                 user_settings = self.db.UserSettings()
                 user_settings.user = user
@@ -1166,7 +1170,7 @@ class UserSettingsHandler(BaseHandler):
             self.set_header("Cache-Control", "public,max-age=0")
             self.write('var SETTINGS=%s;' % tornado.escape.json_encode(default))
         else:
-            self.render("user/settings.html", **default)
+            self.render("user/settings.html", **dict(default, user=user))
 
     def post(self, format=None):
         user = self.get_current_user()
@@ -1189,6 +1193,10 @@ class UserSettingsHandler(BaseHandler):
         for key in ('monday_first', 'hide_weekend', 'disable_sound',
                     'offline_mode', 'ampm_format'):
             user_settings[key] = bool(self.get_argument(key, None))
+
+        if self.get_argument('first_hour', None) is not None:
+            first_hour = int(self.get_argument('first_hour'))
+            user_settings['first_hour'] = first_hour
 
         user_settings.save()
         url = "/"
