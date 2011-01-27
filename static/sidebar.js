@@ -9,7 +9,7 @@ function display_sidebar_stats(start, end) {
       $('#days-plot').html('');
       if (response.days_spent && response.days_spent.length) {
          $('#days-plot:hidden').show();
-         var days_plot = 
+         var days_plot =
            $.jqplot('days-plot', [response.days_spent], {
               seriesColors: response.days_colors,
              title: 'Days spent',
@@ -21,12 +21,12 @@ function display_sidebar_stats(start, end) {
       } else {
          $('#days-plot:visible').hide();
       }
-      
+
      $('#hours-plot').html('');
       if (response.hours_spent && response.hours_spent.length) {
          $('#hours-plot:hidden').show();
-         
-         var hours_plot = 
+
+         var hours_plot =
            $.jqplot('hours-plot', [response.hours_spent], {
               seriesColors: response.hours_colors,
              title: 'Hours spent',
@@ -37,14 +37,14 @@ function display_sidebar_stats(start, end) {
       } else {
          $('#hours-plot:visible').hide();
       }
-                
-            
+
+
       if (response.tag_colors) {
          $('span.fc-event-title').each(function() {
             $(this).html(_tag_highlight(response.tag_colors, $(this).text()));
          });
       }
-      
+
    });
 }
 
@@ -84,7 +84,7 @@ $(function() {
          }
       }
    });
-   
+
    $('a.vimeovideo').fancybox({
       'width': '60%',
       'height': '65%',
@@ -98,7 +98,7 @@ $(function() {
 	 }
       }
    });
-      
+
    $('a.share').fancybox({
       'width': '75%',
       'height': '75%',

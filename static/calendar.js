@@ -529,127 +529,137 @@ function close_current_tooltip(parent) {
 
 var AVAILABLE_TAGS;
 
-$(function() {
-   var defaultView = 'month';
+var Calendar = (function() {
+   // private
+   function _load_calendar() {
 
-   // By default we assume that we should save this view in a cookie. The only
-   // reason not to do it later is if we've just loaded it from a cookie.
-   var save_view_cookie = true;
 
-   if (location.hash.search('#week') == 0)
-     defaultView = 'agendaWeek';
-   else if (location.hash.search('#day') == 0)
-     defaultView = 'agendaDay';
-   var today = new Date();
-   var year = today.getFullYear();
-   var month = today.getMonth();
-   var day = undefined;
+      var defaultView = 'month';
 
-   var _lastview_cookie = $.cookie('lastview');
-   var hash_code_regex = /(\d{4}),(\d{1,2}),(\d{1,2})/;
-   if (hash_code_regex.test(location.hash)) {
-      var _match = location.hash.match(hash_code_regex);
-      year = parseInt(_match[1]);
-      month = parseInt(_match[2]) - 1;
-      day = parseInt(_match[3]);
-   } else if (_lastview_cookie && hash_code_regex.test(_lastview_cookie)) {
-      if (_lastview_cookie.search('#week') == 0) {
-	 defaultView = 'agendaWeek';
-      } else if (_lastview_cookie.search('#day') == 0) {
-	 defaultView = 'agendaDay';
+      // By default we assume that we should save this view in a cookie. The only
+      // reason not to do it later is if we've just loaded it from a cookie.
+      var save_view_cookie = true;
+
+      if (location.hash.search('#week') == 0) {
+        defaultView = 'agendaWeek';
+      } else if (location.hash.search('#day') == 0) {
+         defaultView = 'agendaDay';
       }
-      var _match = _lastview_cookie.match(hash_code_regex);
-      year = parseInt(_match[1]);
-      month = parseInt(_match[2]) - 1;
-      day = parseInt(_match[3]);
-      // if we've just loaded it from the cookie we don't need to save the
-      // cookie again.
-      save_view_cookie = false;
-   }
+      var today = new Date();
+      var year = today.getFullYear();
+      var month = today.getMonth();
+      var day = undefined;
 
-   $('#calendar').fullCalendar({
-      events: function(start, end, callback) {
-         var url = '/events.json';//?start=' + start.getTime() + '&end=' + end.getTime();
-         var ops = {start: start.getTime(), end: end.getTime()};
-         if ('undefined' === typeof AVAILABLE_TAGS) {
-            ops.include_tags = 'all';
-            AVAILABLE_TAGS = [];
-         } else {
-            // we've already downloaded all tags
-            ops.include_tags = 'none';
+      var _lastview_cookie = $.cookie('lastview');
+      var hash_code_regex = /(\d{4}),(\d{1,2}),(\d{1,2})/;
+      if (hash_code_regex.test(location.hash)) {
+         var _match = location.hash.match(hash_code_regex);
+         year = parseInt(_match[1]);
+         month = parseInt(_match[2]) - 1;
+         day = parseInt(_match[3]);
+      } else if (_lastview_cookie && hash_code_regex.test(_lastview_cookie)) {
+         if (_lastview_cookie.search('#week') == 0) {
+            defaultView = 'agendaWeek';
+         } else if (_lastview_cookie.search('#day') == 0) {
+            defaultView = 'agendaDay';
          }
-         $.getJSON(url, ops, function(response) {
-            callback(response.events);
-            if (response.sharers) {
-               __display_current_sharers(response.sharers);
+         var _match = _lastview_cookie.match(hash_code_regex);
+         year = parseInt(_match[1]);
+         month = parseInt(_match[2]) - 1;
+         day = parseInt(_match[3]);
+         // if we've just loaded it from the cookie we don't need to save the
+         // cookie again.
+         save_view_cookie = false;
+      }
+
+      $('#calendar').fullCalendar({
+         events: function(start, end, callback) {
+            var url = '/events.json';//?start=' + start.getTime() + '&end=' + end.getTime();
+            var ops = {start: start.getTime(), end: end.getTime()};
+            if ('undefined' === typeof AVAILABLE_TAGS) {
+               ops.include_tags = 'all';
+               AVAILABLE_TAGS = [];
+            } else {
+               // we've already downloaded all tags
+               ops.include_tags = 'none';
             }
-            if (response.tags) {
-              $.each(response.tags, function(i, tag) {
-                 if ($.inArray(tag, AVAILABLE_TAGS) == -1)
-                   AVAILABLE_TAGS.push(tag);
-              });
-            }
-            if (response.events.length) {
-               if ($('#introduction-video').size()) {
-                  $('#introduction-video').hide('slow');
-                  if ($('#report-link:hidden').size()) {
-                     $('#report-link').show('slow');
+            $.getJSON(url, ops, function(response) {
+               callback(response.events);
+               if (response.sharers) {
+                  __display_current_sharers(response.sharers);
+               }
+               if (response.tags) {
+                  $.each(response.tags, function(i, tag) {
+                     if ($.inArray(tag, AVAILABLE_TAGS) == -1)
+                       AVAILABLE_TAGS.push(tag);
+                  });
+               }
+               if (response.events.length) {
+                  if ($('#introduction-video').size()) {
+                     $('#introduction-video').hide('slow');
+                     if ($('#report-link:hidden').size()) {
+                        $('#report-link').show('slow');
+                     }
                   }
                }
+            });
+         },
+
+         header: {
+            left: 'prev,next today',
+              center: 'title',
+              right: 'month,agendaWeek,agendaDay'
+         },
+         year: year,
+         month: month,
+         date: day,
+         //timeFormat: 'h(:mm)tt',
+         timeFormat: SETTINGS.ampm_format ? 'h(:mm)tt' : 'H:mm',
+         axisFormat: SETTINGS.ampm_format ? 'h(:mm)tt' : 'H:mm',
+         firstHour: SETTINGS.first_hour,
+         slotMinutes: 30, // setting?
+         defaultView: defaultView,
+         editable: true,
+         aspectRatio: 1.35, // 1.35 is default
+         firstDay: SETTINGS.monday_first ? 1 : 0,
+         weekends: !SETTINGS.hide_weekend,
+         weekMode: 'variable',
+         eventClick: _event_clicked,
+         dayClick: _day_clicked,
+         eventResize: _event_resized,
+         eventDrop: _event_dropped,
+         viewDisplay: function(view) {
+            close_current_tooltip(); // if any open
+            display_sidebar_stats_wrapped(view.start, view.end);
+            if (save_view_cookie) {
+               var href = '#' + view.name.replace('agenda', '').toLowerCase();
+               href += ',' + view.start.getFullYear();
+               href += ',' + (view.start.getMonth() + 1);
+               href += ',' + view.start.getDate();
+               $.cookie('lastview', href, {expires: 30});
+            } else {
+               save_view_cookie = true;
             }
-            //if (response.hidden_shares)
-            //  $.each(response.hidden_shares, function(i, share) {
-            //     _share_toggles[share.className] = true;
-            //     $('li.' + share.className, '#current-sharers').fadeTo(300, 0.4);
-            //
-            //  });
-            //
-         });
-      },
 
-      header: {
-           left: 'prev,next today',
-           center: 'title',
-           right: 'month,agendaWeek,agendaDay'
-      },
-      year: year,
-      month: month,
-      date: day,
-      //timeFormat: 'h(:mm)tt',
-      timeFormat: SETTINGS.ampm_format ? 'h(:mm)tt' : 'H:mm',
-      axisFormat: SETTINGS.ampm_format ? 'h(:mm)tt' : 'H:mm',
-      firstHour: SETTINGS.first_hour,
-      slotMinutes: 30, // setting?
-      defaultView: defaultView,
-      editable: true,
-      aspectRatio: 1.35, // 1.35 is default
-      firstDay: SETTINGS.monday_first ? 1 : 0,
-      weekends: !SETTINGS.hide_weekend,
-      weekMode: 'variable',
-      eventClick: _event_clicked,
-      dayClick: _day_clicked,
-      eventResize: _event_resized,
-      eventDrop: _event_dropped,
-      viewDisplay: function(view) {
-         close_current_tooltip(); // if any open
-	 display_sidebar_stats_wrapped(view.start, view.end);
-	 if (save_view_cookie) {
-	    var href = '#' + view.name.replace('agenda', '').toLowerCase();
-	    href += ',' + view.start.getFullYear();
-	    href += ',' + (view.start.getMonth() + 1);
-	    href += ',' + view.start.getDate();
-	    $.cookie('lastview', href, {expires: 30});
-	 } else {
-	    save_view_cookie = true;
-	 }
+         },
+         windowResize: function(view) {
+            __update_described_colors();
+         }
+      });
+   }
 
-      },
-      windowResize: function(view) {
-         __update_described_colors();
+   // public
+   return {
+      load: function() {
+         _load_calendar();
+         console.log('created fullCalendar!!!');
       }
-   });
-   $.getScript(JS_URLS.qtip);
+   }
+})();
 
+$(function() {
+   console.log('inside $(function()) of calendar.js');
+   //$.getScript(JS_URLS.qtip);
    $('input.cancel').live('click', function() {
       close_current_tooltip(this);
    });

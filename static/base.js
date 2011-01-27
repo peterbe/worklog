@@ -14,15 +14,6 @@ function decrement_total_no_events(new_no) {
   $('#total_no_events').text(total_no_events);
 }
 
-$(function() {
-   $('a.account').fancybox({
-         'autoDimensions': false,
-         'width'         : 550,
-         'height'        : 400,
-         'transitionIn': 'none',
-         'transitionOut': 'none',
-         onComplete: function(array, index, opts) {
-            $.getScript(JS_URLS.account);
-         }
-   });
-});      
+/*
+
+*/
