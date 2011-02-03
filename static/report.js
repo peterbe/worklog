@@ -49,8 +49,6 @@ function daysDiff(d1, d2) {
 
 function refresh_date_range() {
    $('#report').fadeTo(0, 0.2);
-   //console.log(startDate.datepicker('getDate').getTime());
-   //console.log(endDate.datepicker('getDate').getTime());
    $.getJSON('/report.json', {
       start: startDate.datepicker('getDate').getTime(),
 	end: endDate.datepicker('getDate').getTime()}, function(response) {

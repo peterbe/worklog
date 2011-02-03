@@ -1,16 +1,6 @@
 <!DOCTYPE html>
 <html>
     <head>
-	<script>
-		// calculate difference between zero and window.onload
-		var now = new Date();
-		window.onload = function() {
-			document.getElementById("ms-outer").style.display = "block";
-			document.getElementById("ms").innerHTML = (new Date()).getTime() - now.getTime();
-                        console.log((new Date()).getTime() - now.getTime() + 'ms');
-		}
-	</script>
-
         <!-- revision: {{ git_revision }} -->
         <title>{% block title %}DoneCal - A timesheet/timetracker calendar{% end %}</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">

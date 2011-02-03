@@ -123,14 +123,12 @@ head.js(JS_URLS.jquery,
         JS_URLS.cookie,
         JS_URLS.base,
         JS_URLS.calendar, function() {
-   console.log('loaded jquery,fullcalendar,cookie,base,calendar');
    Calendar.load();
    head.js(JS_URLS.qtip, function() {
-     console.log('qtip loaded');
+   
    });
 });
 
-console.log('after first head.js');
 head.js(JS_URLS.fancybox, JS_URLS.jquery_ui_draggable_resizable, JS_URLS.jquery_autocomplete, JS_URLS.soundmanager, JS_URLS.sidebar);
 head.ready(function() {
     $('a.account').fancybox({
@@ -143,7 +141,6 @@ head.ready(function() {
             $.getScript(JS_URLS.account);
          }
     });
-    console.log('sidebar + junk loaded');
     soundManager.onready(function(status) {
       if (status.success) {
         soundManager.createSound('pling', '{{ modules.StaticURL("sounds/glass.mp3") }}');

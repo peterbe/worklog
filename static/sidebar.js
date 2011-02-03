@@ -16,7 +16,7 @@ function display_sidebar_stats(start, end) {
              grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
              highlighter: {sizeAdjust: 7.5},
              seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:3, padding:7, border:false}},
-           legend:{show:true}
+	      legend:{show:true, border:'0px solid white'}
            });
       } else {
          $('#days-plot:visible').hide();
@@ -32,7 +32,7 @@ function display_sidebar_stats(start, end) {
              title: 'Hours spent',
              grid: { drawGridLines: false, gridLineColor: '#fff', background: '#fff',  borderColor: '#fff', borderWidth: 1, shadow: false },
              seriesDefaults:{renderer:$.jqplot.PieRenderer, rendererOptions:{sliceMargin:3, padding:7, border:false}},
-           legend:{show:true}
+           legend:{show:true, border:'0px solid white'}
         });
       } else {
          $('#hours-plot:visible').hide();

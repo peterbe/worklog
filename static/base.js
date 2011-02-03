@@ -1,7 +1,5 @@
 function L() {
-   if (window.console && window.console.log)
-   for (var i = 0, l = arguments.length; i < l; i++)
-     console.log(arguments[i]);
+   console.log.apply(console, arguments);
 }
 
 function increment_total_no_events(new_no) {

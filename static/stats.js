@@ -239,7 +239,6 @@ function plot_no_events(anonymous) {
       start: startDate.datepicker('getDate').getTime(),
       end: endDate.datepicker('getDate').getTime()
    }, function(response) {
-      console.log(response);
       $.jqplot('plot-' + report_id, response.numbers, {
          legend:{show:true, location:'ne'},
          title: title,
