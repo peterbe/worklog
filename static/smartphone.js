@@ -357,6 +357,7 @@ $(document).ready(function() {
    });
 
    $('#calendar').bind('pageshow', function() {
+      L("Showing calendar page");
       calendar.init_months();
    });
 
@@ -367,7 +368,8 @@ $(document).ready(function() {
       if (year && month) {
 	 calendar.init_month(year, month);
       } else {
-	 alert("need to redirect out");
+         $.mobile.changePage($('#calendar'), 'none', false, true); // why doesn't this work!?
+//	 $.mobile.changePage('#calendar');
       }
    });
 
@@ -378,7 +380,7 @@ $(document).ready(function() {
       if (year && month && day) {
 	 calendar.init_day(year, month, day);
       } else {
-	 alert("need to redirect out");
+	 $.mobile.changePage($('#calendar'));
       }
    });
 });

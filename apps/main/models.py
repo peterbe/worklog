@@ -67,6 +67,7 @@ class UserSettings(BaseDocument):
       'hash_tags': bool, # whether to use #tagg instead of @tagg
       'ampm_format': bool,
       'first_hour': int,
+      'newsletter_opt_out': bool,
     }
     use_autorefs = True
 
@@ -77,6 +78,7 @@ class UserSettings(BaseDocument):
       'disable_sound': False,
       'offline_mode': False,
       'hash_tags': False,
+      'newsletter_opt_out': False,
       'first_hour': 8,
     }
 
