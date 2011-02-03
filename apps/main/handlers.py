@@ -1452,6 +1452,7 @@ class BaseAuthHandler(BaseHandler):
         return next
 
     def notify_about_new_user(self, user, extra_message=None):
+        return # temporarily commented out
         if self.application.settings['debug']:
             return
         try:
