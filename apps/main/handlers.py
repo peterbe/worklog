@@ -25,8 +25,9 @@ from utils.send_mail import send_email
 from utils.decorators import login_required
 from utils import parse_datetime, niceboolean, \
   DatetimeParseError, valid_email, random_string, \
-  all_hash_tags, all_atsign_tags, generate_random_color
-
+  all_hash_tags, all_atsign_tags, generate_random_color, \
+  stats
+from utils.timesince import smartertimesince
 from ui_modules import EventPreview
 from config import *
 from apps.eventlog import log_event, actions, contexts
@@ -2500,3 +2501,61 @@ class PremiumHandler(BaseHandler):
 
 
         return self.render('premium/index.html', **options)
+
+route_redirect('/powerusers$', '/powerusers/')
+@route('/powerusers/')
+class PowerusersHandler(BaseHandler): #pragma: no cover
+
+    @login_required
+    def get(self):
+        options = self.get_base_options()
+        user = self.get_current_user()
+        if user.email not in self.application.settings['admin_emails']:
+            raise tornado.web.HTTPError(403, "Not available to you")
+
+        counts = defaultdict(int)
+        days_since = int(self.get_argument('days_since', 20))
+        options['days_since'] = days_since
+        since = datetime.datetime.now() - datetime.timedelta(days=days_since)
+
+        for event in self.db[Event.__collection__].find({'start':{'$gte': since}}):
+            counts[event['user'].id] += 1
+
+        keeps = []
+        for key, count in counts.iteritems():
+            if count > 10:
+                user = self.db.User.one({'_id': key})
+                if user.email and user.email != 'peterbe@gmail.com':
+                    keeps.append((count, user))
+
+        keeps.sort()
+        keeps.reverse()
+        keeps = keeps[:10]
+        options['power_users'] = []
+        _today = datetime.datetime.now()
+        index = 0
+        for count, user in keeps:
+            index += 1
+            options['power_users'].append(dict(count=count,
+                                               index=index,
+                                               user=user,
+                                               stats=self._get_usage_stats(user, since),
+                                               member_since=user.add_date.strftime('%d %b %Y'),
+                                               age=smartertimesince(user.add_date, _today)
+                                               ))
+
+        return self.render('powerusers/index.html', **options)
+
+    def _get_usage_stats(self, user, since):
+        date = datetime.datetime(since.year, since.month, since.day, 0,0,0)
+        today = datetime.datetime.now()
+        counts = []
+        while date < today:
+            count = self.db[Event.__collection__].find(
+              {'user.$id': user._id,
+               'start':{'$gte':date, '$lt':date + datetime.timedelta(days=1)}}
+               ).count()
+            counts.append(count)
+            date += datetime.timedelta(days=1)
+
+        return dict(stats([float(x) for x in counts]), counts=counts)

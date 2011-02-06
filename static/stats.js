@@ -47,7 +47,7 @@ function daysDiff(d1, d2) {
 
 function get_automatic_interval_string() {
    var d = daysDiff(startDate.datepicker('getDate'), endDate.datepicker('getDate'));
-   if (d > 180) return '1 month';
+   if (d > 150) return '1 month';
    if (d > 30) return '1 week';
    return '1 day';
 }
