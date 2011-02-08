@@ -40,5 +40,10 @@
   <dt>Total number of hours:</dt>
   <dd>{{ total_hours }} hours</dd>
   {% end %}
+
+  {% if no_tags > 10 %}
+  <dt>Number of different tags:</dt>
+  <dd>{{ no_tags }}</dd>
+  {% end %}
 </dl>
 {% end %}

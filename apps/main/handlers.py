@@ -2623,6 +2623,7 @@ class PoweruserHandler(PowerusersHandler): #pragma: no cover
 
         total_days = total_hours = 0.0
         count_all_day = count_in_day = 0
+        tags = set()
         for entry in self.db[Event.__collection__].find({'user.$id': user._id}):
             if entry['all_day']:
                 total_days += 1 + (entry['end'] - entry['start']).days
@@ -2630,7 +2631,9 @@ class PoweruserHandler(PowerusersHandler): #pragma: no cover
             else:
                 total_hours += (entry['end'] - entry['start']).seconds / 60.0 / 60
                 count_in_day += 1
+            tags.update([x.lower() for x in entry['tags']])
 
+        stats['no_tags'] = len(tags)
         stats['total_hours'] = '%.1f' % total_hours
         stats['total_days'] = int(total_days)
         stats['prefers_all_day_events'] = count_all_day > count_in_day

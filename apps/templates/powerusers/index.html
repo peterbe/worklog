@@ -20,7 +20,6 @@
 </p>
 {% else %}
   <!-- later move this outside the if statement -->
-
   <p>Check out these power users:</p>
   {% for entry in power_users %}
     <p><a style="font-weight:bold" href="{{ entry['url'] }}">{{ entry['name'] }}</a></p>
