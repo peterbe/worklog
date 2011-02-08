@@ -38,6 +38,6 @@ function display_sidebar_stats() {
    });
 }
 
-$(function() {
+head.ready(function() {
    display_sidebar_stats();
 });

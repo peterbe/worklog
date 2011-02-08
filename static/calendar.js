@@ -656,7 +656,7 @@ var Calendar = (function() {
    }
 })();
 
-$(function() {
+head.ready(function() {
    //$.getScript(JS_URLS.qtip);
    $('input.cancel').live('click', function() {
       close_current_tooltip(this);

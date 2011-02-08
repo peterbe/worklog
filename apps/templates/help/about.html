@@ -4,7 +4,7 @@
 
 <h1>About</h1>
 
-<p>This app is a simple calendar. You can either use it to keep track of 
+<p>This app is a simple calendar. You can either use it to keep track of
 future events or you can use it to record past events. A good use case
 is to use it as an calendar-based alternative to
 <strong>timesheets</strong>. It's
@@ -44,7 +44,7 @@ My email address is <a href="mailto:p" id="my-email-address">p</a>
 
 {% block extrajs %}
 <script type="text/javascript">
-$(function() {
+head.ready(function() {
   var e = "mail" + "@" + "peterbe.com";
   $('#my-email-address').attr('href', 'mailto:' + e).text(e);
 });

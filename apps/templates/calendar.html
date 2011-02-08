@@ -124,12 +124,9 @@ head.js(JS_URLS.jquery,
         JS_URLS.base,
         JS_URLS.calendar, function() {
    Calendar.load();
-   head.js(JS_URLS.qtip, function() {
-   
-   });
 });
 
-head.js(JS_URLS.fancybox, JS_URLS.jquery_ui_draggable_resizable, JS_URLS.jquery_autocomplete, JS_URLS.soundmanager, JS_URLS.sidebar);
+head.js(JS_URLS.qtip, JS_URLS.fancybox, JS_URLS.jquery_ui_draggable_resizable, JS_URLS.jquery_autocomplete, JS_URLS.soundmanager, JS_URLS.sidebar);
 head.ready(function() {
     $('a.account').fancybox({
          'autoDimensions': false,

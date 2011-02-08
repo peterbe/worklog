@@ -61,13 +61,11 @@ function _tag_highlight(colors, text) {
 }
 
 var jqplot_loaded = false;
-$(function() {
-   $.getScript(JS_URLS.jqplot, function() {
-      $.getScript(JS_URLS.jqplot_pierenderer, function() {
-         var view = $('#calendar').fullCalendar('getView');
-         jqplot_loaded = true;
-         display_sidebar_stats(view.start, view.end);
-      });
+head.ready(function() {
+   head.js(JS_URLS.jqplot, JS_URLS.jqplot_pierenderer, function() {
+      var view = $('#calendar').fullCalendar('getView');
+      jqplot_loaded = true;
+      display_sidebar_stats(view.start, view.end);
    });
 
    $('a.user-settings').fancybox({

@@ -1,7 +1,7 @@
-$(function() {
-   $.getScript(JS_URLS.validate, function() {
+head.ready(function() {
+   head.js(JS_URLS.validate, function() {
       var validated_emails = {};
-      
+
       $('form.recover').validate({
          rules: {
             password: {
@@ -11,7 +11,6 @@ $(function() {
          }
       });
    });
-   
+
    $('input[name="password"]').focus();
 });
-

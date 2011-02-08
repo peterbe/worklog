@@ -1,7 +1,7 @@
-$(function() {
-   $.getScript(JS_URLS.validate, function() {
+head.ready(function() {
+   head.js(JS_URLS.validate, function() {
       var validated_emails = {};
-      
+
       $('form.forgotten').validate({
          rules: {
             email: {
@@ -12,7 +12,6 @@ $(function() {
          onkeyup: false
       });
    });
-   
+
    $('input[name="email"]').focus();
 });
-

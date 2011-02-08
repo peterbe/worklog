@@ -3,7 +3,7 @@ function L() {
 }
 
 // Note: variables minDate and maxDate are prepared in the template
-// 
+//
 var slider;
 var startDate;
 var endDate;
@@ -28,12 +28,12 @@ function resync(values) {
    }
    startDate.datepicker('option', 'maxDate', endDate.datepicker('getDate') || maxDate);
    endDate.datepicker('option', 'minDate', startDate.datepicker('getDate') || minDate);
-   
-   
+
+
    $('a.download-export').each(function(i, e) {
       var href = $(this).attr('href');
       if (href.search(/start=/)==-1) {
-         href += '?start=' + startDate.datepicker('getDate').getTime() + 
+         href += '?start=' + startDate.datepicker('getDate').getTime() +
 	   '&end=' + endDate.datepicker('getDate').getTime();
       } else {
          href = href.replace(/start=(\d+)/, 'start=' + startDate.datepicker('getDate').getTime());
@@ -60,13 +60,13 @@ function refresh_date_range() {
                $('<tr></tr>').append(
                  $('<td></td>').html(e[0]).addClass('label')
                 ).append($('<td></td>').text(e[1])));
-             total += e[1];                                      
+             total += e[1];
           });
           $('tbody#days_spent').append(
              $('<tr></tr>').addClass('total').append(
                $('<td></td>').text('Total').addClass('label')
                 ).append($('<td></td>').text(total)));
-	  
+
 	  /*
 	  $.jqplot('days-plot', [response.days_spent], {
              title: '',
@@ -77,9 +77,9 @@ function refresh_date_range() {
              legend:{show:true}
 	  });
 	   */
-	  
+
        }
-       
+
        $('tbody#hours_spent tr').remove();
        if (response.hours_spent && response.hours_spent.length) {
           var total = 0.0;
@@ -88,13 +88,13 @@ function refresh_date_range() {
                $('<tr></tr>').append(
                  $('<td></td>').html(e[0]).addClass('label')
                 ).append($('<td></td>').text(e[1])));
-             total += e[1];                                      
+             total += e[1];
           });
           $('tbody#hours_spent').append(
              $('<tr></tr>').addClass('total').append(
                $('<td></td>').text('Total').addClass('label')
                 ).append($('<td></td>').text(total)));
-          
+
 	  /*
           $.jqplot('hours-plot', [response.hours_spent], {
              title: '',
@@ -107,8 +107,8 @@ function refresh_date_range() {
        }
        $('#report').fadeTo(200, 1.0);
     });
-   
-   
+
+
    $.getJSON('/report.json', {
       interval:'1 week',
         all_day: true,
@@ -129,7 +129,7 @@ function refresh_date_range() {
          }
       });
    });
-   
+
    $.getJSON('/report.json', {
       interval:'1 week',
       start: startDate.datepicker('getDate').getTime(),
@@ -149,13 +149,13 @@ function refresh_date_range() {
          }
       });
    });
-   
+
 }
 
 
-$(function() {
+head.ready(function() {
    $.jqplot.config.enablePlugins = true;
-   
+
    var hash_code_regex = /(\d{4}),(\d{1,2}),(\d{1,2})/;
    if (hash_code_regex.test(location.hash)) {
       var _match = location.hash.match(hash_code_regex);
@@ -170,18 +170,18 @@ $(function() {
          var d2 = new Date(year, month+1, 1);
       }
       d2 = new Date(d2.getTime() - 1000 * 3600 * 24);
-      if (d2 > maxDate) 
+      if (d2 > maxDate)
         d2 = maxDate;
       $('#to_date').val($.datepicker.formatDate(dateformat, d2));
    }
-   
+
    if (!$('#from_date').val()) {
       $('#from_date').val($.datepicker.formatDate(dateformat, minDate));
    }
    if (!$('#to_date').val()) {
       $('#to_date').val($.datepicker.formatDate(dateformat, maxDate));
    }
-    
+
     slider = $('#slider').slider({range: true, max: daysDiff(minDate, maxDate),
             stop: function(event, ui) {
               still_sliding = false;
@@ -190,25 +190,25 @@ $(function() {
             slide: function(event, ui) { resync(ui.values); }});
     startDate = $('#from_date').datepicker({
         firstDay: SETTINGS.monday_first ? 1 : 0,
-        minDate: minDate, 
+        minDate: minDate,
         maxDate: maxDate,
         dateFormat: dateformat,
-        onSelect: function(dateStr) { 
+        onSelect: function(dateStr) {
           resync();
           refresh_date_range();
         }}).
         keyup(function() { resync(); });
     endDate = $('#to_date').datepicker({
         firstDay: SETTINGS.monday_first ? 1 : 0,
-            minDate: minDate, 
+            minDate: minDate,
             maxDate: maxDate,
             dateFormat: dateformat,
-            onSelect: function(dateStr) { 
+            onSelect: function(dateStr) {
               resync();
               refresh_date_range();
             }}).
         keyup(function() { resync(); });
-   
+
 
    resync();
    refresh_date_range();

@@ -7,17 +7,17 @@ function bind_esc_key() {
    function handleOnkeyup(e){
       var evtobj=window.event? event : e;
       var unicode=evtobj.charCode? evtobj.charCode : evtobj.keyCode;
-      
+
       // Close bookmarklet on Escape
       if (unicode == 27){
 	 close_current_tooltip();
 	 unbind_esc_key();
       }
    }
-   
+
    // Preserve original onkeyup handler
    g_origKeyUp = document.onkeyup;
-   
+
    // Substitute new onkeyup
    document.onkeyup = handleOnkeyup;
 }
@@ -50,7 +50,7 @@ function __inner_setup_ajaxsubmit(element) {
       }
    });
 }
-                                  
+
 function close_current_tooltip() {
    if (current_tooltip) {
       current_tooltip.qtip().destroy();
@@ -99,20 +99,20 @@ function _setup_qtip(element) {
    };
    current_tooltip = $(element);
    current_tooltip.qtip(qtip_options);
-   bind_esc_key();  
+   bind_esc_key();
 }
 
-$(function() {
+head.ready(function() {
    $.each(HAVE_VOTED, function(i, e) {
       $('p.voteup a', '#' + e).fadeTo(0, 0.3).attr('title', "You have already voted on this one");
    });
-   
+
    var form = $('form[method="post"]');
    form.validate({
       rules: {
          title: {
             required: true,
-            maxlength: 250, 
+            maxlength: 250,
             messages: {
                required: "Required input"
             }
@@ -122,7 +122,7 @@ $(function() {
       success: function(label_) {
          if (label_.attr('for') == 'title') {
             var title = $('input[name="title"]').val();
-            
+
             if (title.length && title != $('input[name="title"]').attr('title')) {
                $.getJSON('/features/find.json', {title:title}, function(response) {
                   if (response.feature_requests && response.feature_requests.length) {
@@ -148,7 +148,7 @@ $(function() {
       }
       return true;
    });
-   
+
    $('input[name="title"], textarea', form).focus(function() {
       if ($(this).val() == $(this).attr('title')) {
          $(this).val('').removeClass('placeholdervalue');
@@ -158,7 +158,7 @@ $(function() {
          $(this).val($(this).attr('title')).addClass('placeholdervalue');
       }
    });
-   
+
    var _keys = ['input[name="title"]', 'textarea']
    for (i in _keys) {
       var k = _keys[i];
@@ -166,14 +166,14 @@ $(function() {
          $(k, form).val($(k, form).attr('title')).addClass('placeholdervalue');
       }
    }
-   
+
    $('.voteup a').click(function() {
       _setup_qtip(this);
       return false;
    });
-   
+
    $('input.cancel').live('click', function() {
       close_current_tooltip(this);
    });
-   
+
 });

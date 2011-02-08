@@ -60,7 +60,7 @@ or
 <script type="text/javascript">
 var minDate = new Date({{ first_date.year }}, {{ first_date.month }}-1, {{ first_date.day }});
 var maxDate = new Date({{ last_date.year }}, {{ last_date.month }}-1, {{ last_date.day }});
-$(function() {
+head.ready(function() {
   var href = $('a.excel-export').unbind('click').click(function() {
     var start = startDate.datepicker('getDate');
     var end = endDate.datepicker('getDate');

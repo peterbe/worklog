@@ -268,7 +268,7 @@ function refresh_date_range() {
    plot_no_events(true);
 }
 
-$(function() {
+head.ready(function() {
    $.jqplot.config.enablePlugins = true;
    if (!$('#from_date').val()) {
       $('#from_date').val($.datepicker.formatDate(dateformat, minDate));
