@@ -130,6 +130,7 @@ dt {
 }
 dd {
 	margin-bottom: 1.5em;
+        /*padding-left: 1em;*/
 }
 strong {
 	font-weight: bold;
@@ -248,9 +249,9 @@ body {
 
 /*
 Genesis child themes need to accomodate multiple
-layout structures selected by the user from 
+layout structures selected by the user from
 "Genesis > Theme Settings" in the dashboard
-and the "Genesis Layout Options" module in 
+and the "Genesis Layout Options" module in
 the Post and Page Edit screens.
 */
 
@@ -928,7 +929,7 @@ p.taxonomy-people {
   padding:2px 6px;
   width:80%;
   -moz-border-radius: 3px;
-  
+
 }
 #current-sharers li a {
   color:white;
@@ -970,13 +971,13 @@ span.tag {
   padding:0px 5px;
   -moz-border-radius:4px;
   -webkit-border-radius:4px;
-    
+
 
 }
 
 #undo-delete {
   position:fixed;
-  top:0; 
+  top:0;
   /*width:200px;*/
   left:250px;
   z-index:99999;
@@ -998,7 +999,7 @@ input {
 }
 input:focus {
   color:#000;
-}	
+}
 form.standard label {
   display: block;
   width: 150px;

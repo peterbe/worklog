@@ -1,0 +1,26 @@
+{% extends "power_user_base.html" %}
+
+{% block content_inner %}
+
+<h1>Power User: {{ user.first_name }} {{ user.last_name }}</h1>
+
+
+<div id="interview">
+
+<p class="question"><strong class="label">DoneCal:</strong> Hi Jerome, what do you use DoneCal for?</p>
+
+<p class="answer"><strong class="label">Jerome:</strong>
+I use DoneCal as a timesheeting tool for my work here at eBay.
+I enter my time into blocks based on projects which is why I find the @ functionality
+very useful. I then export a monthly timesheet into excel and provide it along with my
+invoice. The best feature of DoneCal is its simplicity by providing basic core
+features which is a rarity these days in software where the standard is to provide a
+laundry list of features that haven't been thought through effectively. It also took me
+all of 10 mins to work out how to use it. The tutorial video is simple and effective.
+My life's work has been around UI and usability so saying that DoneCal is easy to use
+comes with 12 years of UX experience behind me.
+</p>
+
+</div>
+
+{% end %}

@@ -1,0 +1,33 @@
+{% extends "power_user_base.html" %}
+
+{% block content_inner %}
+
+<h1>Power User: {{ user.first_name }} {{ user.last_name }}</h1>
+
+
+<div id="interview">
+
+<p class="question"><strong class="label">DoneCal:</strong> Hi Bill, what do you use DoneCal for</p>
+
+<p class="answer"><strong class="label">Bill:</strong>
+I use it for project management for my own commercial endeavors, I put tentative dates on start and
+finish of selected projects and I mark down when our start up company has conferences or meetings
+that I want to schedule.</p>
+
+
+<!--2. *How do you enter your events into DoneCal?*
+
+I click into an empty date and just type in the information pertaining to the project or meeting scheduled, I am not sure what you mean specifically with this particular question.  I am not trying to deliberately come across a smart ass, I am just not understanding the question if you are looking for a different type of answer.
+-->
+
+
+<p class="question"><strong class="label">DoneCal:</strong> What in particular do you like about DoneCal?</p>
+
+<p class="answer"><strong class="label">Bill:</strong>
+I like the clean user interface, not tool cluttered very straight forward and doesn't insult the intelligence.
+I also like the ability to place more than one task or memo on a selected date and love the ability to share the calendar quickly with others.
+</p>
+
+</div>
+
+{% end %}

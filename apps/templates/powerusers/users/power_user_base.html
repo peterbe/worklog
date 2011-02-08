@@ -1,0 +1,44 @@
+{% extends "../../base.html" %}
+
+{% block title %}Power User: {{ user.first_name }} {{ user.last_name }}{% end %}
+
+{% block extra_head %}
+<style type="text/css">
+#interview p.question {
+    font-weight:bold;
+}
+#interview p.answer {
+    font-style:italic;
+}
+#interview .label {
+    font-style:normal;
+}
+</style>
+{% end %}
+
+{% block sidebar %}
+<h3>Numbers</h3>
+<dl>
+  {% if member_no < 10 %}
+  <dt>Member number:</dt>
+  <dd>{{ member_no }}</dd>
+  {% end %}
+
+  <dt>Days of membership:</dt>
+  <dd>{{ membership_length }}</dd>
+
+  <dt>Total number of events:</dt>
+  <dd>{{ no_events }}</dd>
+
+  <dt>Average number of events per week:</dt>
+  <dd>{{ events_per_week }}</dd>
+
+  {% if prefers_all_day_events %}
+  <dt>Total number of days:</dt>
+  <dd>{{ total_days }} days</dd>
+  {% else %}
+  <dt>Total number of hours:</dt>
+  <dd>{{ total_hours }} hours</dd>
+  {% end %}
+</dl>
+{% end %}

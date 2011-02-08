@@ -2505,6 +2505,27 @@ class PremiumHandler(BaseHandler):
 route_redirect('/powerusers$', '/powerusers/')
 @route('/powerusers/')
 class PowerusersHandler(BaseHandler): #pragma: no cover
+    NAME_TO_EMAILS = {
+      'peter-bengtsson':'peterbe@gmail.com',
+      'bill-mitchell':'billmitchell@3burst.com',
+      'jerome-ferdinands':'jeromef@hotmail.com',
+    }
+
+    def get(self):
+        options = self.get_base_options()
+        power_users = []
+        for email in self.NAME_TO_EMAILS.values():
+
+            user = self.db.User.one({'email':email})
+            name = "%s %s" % (user.first_name, user.last_name)
+            power_users.append(dict(url=name.replace(' ','-'),
+                                    name=name))
+        options['power_users'] = power_users
+        return self.render('powerusers/index.html', **options)
+
+
+@route('/powerusers/top-10')
+class PowerusersTop10Handler(PowerusersHandler): #pragma: no cover
 
     @login_required
     def get(self):
@@ -2525,7 +2546,7 @@ class PowerusersHandler(BaseHandler): #pragma: no cover
         for key, count in counts.iteritems():
             if count > 10:
                 user = self.db.User.one({'_id': key})
-                if user.email and user.email != 'peterbe@gmail.com':
+                if user.email:# and user.email != 'peterbe@gmail.com':
                     keeps.append((count, user))
 
         keeps.sort()
@@ -2544,7 +2565,7 @@ class PowerusersHandler(BaseHandler): #pragma: no cover
                                                age=smartertimesince(user.add_date, _today)
                                                ))
 
-        return self.render('powerusers/index.html', **options)
+        return self.render('powerusers/top-10.html', **options)
 
     def _get_usage_stats(self, user, since):
         date = datetime.datetime(since.year, since.month, since.day, 0,0,0)
@@ -2559,3 +2580,61 @@ class PowerusersHandler(BaseHandler): #pragma: no cover
             date += datetime.timedelta(days=1)
 
         return dict(stats([float(x) for x in counts]), counts=counts)
+
+@route('/powerusers/(.*?)')
+class PoweruserHandler(PowerusersHandler): #pragma: no cover
+
+
+    def get(self, full_name):
+        options = self.get_base_options()
+        self.application.settings['template_path']
+
+        full_name = full_name.replace(' ','-').lower()
+        filename = "powerusers/users/%s.html" % full_name
+
+        if os.path.isfile(os.path.join(self.application.settings['template_path'],
+                                       filename)):
+            email = self.NAME_TO_EMAILS.get(full_name)
+            assert email, "%r missing" % full_name
+            user = self.db.User.one({'email': email})
+            options['user'] = user
+            options.update(self._extend_user_stats(user))
+
+            return self.render(filename, **options)
+
+        raise tornado.web.HTTPError(404, "Unknown page")
+
+    def _extend_user_stats(self, user):
+        stats = {}
+        #stats['no_events'] = self.db.Event.find({'user.$id': user._id}).count()
+
+        days = (datetime.datetime.today() - user.add_date).days
+        if days > 90:
+            stats['membership_length'] = "about %s months" % (days/30)
+        else:
+            stats['membership_length'] = "%s days" % days
+
+        index = 0
+        for m in self.db[User.__collection__].find().sort('add_date', 1):
+            index += 1
+            if m['_id'] == user._id:
+                break
+        stats['member_no'] = index
+
+        total_days = total_hours = 0.0
+        count_all_day = count_in_day = 0
+        for entry in self.db[Event.__collection__].find({'user.$id': user._id}):
+            if entry['all_day']:
+                total_days += 1 + (entry['end'] - entry['start']).days
+                count_all_day += 1
+            else:
+                total_hours += (entry['end'] - entry['start']).seconds / 60.0 / 60
+                count_in_day += 1
+
+        stats['total_hours'] = '%.1f' % total_hours
+        stats['total_days'] = int(total_days)
+        stats['prefers_all_day_events'] = count_all_day > count_in_day
+        stats['no_events'] = count_all_day + count_in_day
+        stats['events_per_week'] = '%.1f' % (stats['no_events'] / (days/7.0))
+
+        return stats

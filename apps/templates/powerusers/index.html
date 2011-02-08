@@ -4,75 +4,27 @@
 
 {% block extra_head %}
 <style type="text/css">
-#logs thead td {
-  font-weight:bold;
-}
-#logs thead {
-  background-color:#ccc;
-}
-#logs td {
-  vertical-align:top;
-  padding:1px 4px;
-}
-table.stats td { font-size:80%; }
 </style>
 {% end %}
 
 {% block sidebar %}
-  <!--<h3>Power users</h3>-->
-
 {% end %}
 
 {% block content_inner %}
 
-<h1>Top 10 Power Users</h1>
+<h1>Power Users</h1>
 
+{% if user %}
+<p>Think you're a power user? If so please contact
+<a href="mailto:mail@peterbe.com" id="my-email-address">mail@peterbe.com</a>
+</p>
+{% else %}
+  <!-- later move this outside the if statement -->
 
-<table id="logs">
-  <thead>
-    <tr>
-      <td>&nbsp;</td>
-      <td>Events</td>
-      <td>Name</td>
-      <td>Email</td>
-      <td>Member since</td>
-      <td colspan="2">Usage</td>
-    </tr>
-  </thead>
+  <p>Check out these power users:</p>
   {% for entry in power_users %}
-  <tr>
-      <td style="font-weight:bold">{{ entry['index'] }}</td>
-      <td>{{ entry['count'] }}</td>
-      <td>{{ entry['user'].first_name }} {{ entry['user'].last_name }}</td>
-      <td>{{ entry['user'].email }}</td>
-      <td>{{ entry['member_since'] }} <!--({{ entry['age'] }})--></td>
-      <td>
-        <table class="stats">
-          <tr>
-            <td>Median:</td>
-            <td>{{ '%.1f' % entry['stats']['median'] }}</td>
-          </tr>
-          <tr>
-            <td>Average:</td>
-            <td>{{ '%.1f' % entry['stats']['average'] }}</td>
-          </tr>
-        </table>
-      </td>
-      <td>
-        <span class="inlinesparkline">{{ ','.join([str(x) for x in entry['stats']['counts']]) }}</span>
-      </td>
-  </tr>
-{% end %}
-</table>
-
-
-<form action=".">
-<p>In the last <input name="days_since" size="3" value="{{ days_since }}"> days <input type="submit" value="Reload"></p>
-</form>
-
+    <p><a style="font-weight:bold" href="{{ entry['url'] }}">{{ entry['name'] }}</a></p>
+  {% end %}
 {% end %}
 
-
-{% block extrajs %}
-{{ modules.Static("ext/jquery.sparkline.min.js","powerusers.js") }}
 {% end %}
