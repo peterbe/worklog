@@ -138,51 +138,17 @@ function _event_clicked(event, jsEvent, view) {
       });
 
       $('a.delete', container).click(function() {
-            close_current_tooltip();
-            $.post('/event/delete/', {id: event.id}, function() {
-               decrement_total_no_events();
-               $('#calendar').fullCalendar('removeEvents', event.id);
-	       var view = $('#calendar').fullCalendar('getView');
-	       display_sidebar_stats_wrapped(view.start, view.end);
-	       __update_described_colors();
-               show_undo_delete("UNDO last delete", event.id);
-            });
-            return false;
-      });
-      /*
-      $('a.delete', container).click(function() {
-         var parent = $(this).parents('div.delete');
-         $('.confirmation', parent).show();
-         $('a.delete', parent).hide();
-
-         $('a.delete-confirm', parent).unbind('click');
-         $('a.delete-confirm', parent).click(function() {
-            close_current_tooltip();
-            $.post('/event/delete/', {id: event.id}, function() {
-               decrement_total_no_events();
-               $('#calendar').fullCalendar('removeEvents', event.id);
-	       //__update_described_colors();
-	       var view = $('#calendar').fullCalendar('getView');
-	       display_sidebar_stats_wrapped(view.start, view.end);
-	       __update_described_colors();
-               show_undo_delete("UNDO last delete", event.id);
-               //$('#calendar').fullCalendar('refetchEvents');
-               //$('#calendar').fullCalendar('render');
-
-            });
-            return false;
-         });
-
-         $('a.delete-cancel', parent).unbind('click');
-         $('a.delete-cancel', parent).click(function() {
-            //var this_parent = $(this).parents('div.delete');
-            $('a.delete', parent).show();
-            $('.confirmation', parent).hide();
-	    return false;
+         close_current_tooltip();
+         $.post('/event/delete/', {_xsrf:XSRF, id: event.id}, function() {
+            decrement_total_no_events();
+            $('#calendar').fullCalendar('removeEvents', event.id);
+            var view = $('#calendar').fullCalendar('getView');
+            display_sidebar_stats_wrapped(view.start, view.end);
+            __update_described_colors();
+            show_undo_delete("UNDO last delete", event.id);
          });
          return false;
       });
-      */
    }
 
    /* This function is called when the qtip has opened for previewing */
@@ -261,7 +227,7 @@ function _event_clicked(event, jsEvent, view) {
 
 function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view) {
    __update_described_colors();
-   $.post('/event/resize/', {days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
+   $.post('/event/resize/', {_xsrf:XSRF, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
@@ -274,7 +240,7 @@ function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view
 function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc, jsEvent, ui, view) {
    __update_described_colors();
    var date_before = new Date(event.start.getTime() - dayDelta*24*3600*1000);
-   $.post('/event/move/', {all_day: allDay, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
+   $.post('/event/move/', {_xsrf:XSRF, all_day: allDay, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
@@ -420,7 +386,7 @@ function __hide_share(share) {
       });
 
    }
-   $.post('/share/', {key: share.key});
+   $.post('/share/', {_xsrf:XSRF, key: share.key});
    return _share_toggles[share.className];
 }
 
@@ -501,7 +467,7 @@ function show_undo_delete(text, event_id) {
    $('#undo-delete:hidden').show();
    $('#undo-delete')
      .append($('<a href="#"></a>').text(text).click(function() {
-        $.post('/event/undodelete/', {id:event_id}, function(response) {
+        $.post('/event/undodelete/', {_xsrf:XSRF, id:event_id}, function(response) {
            if (!SETTINGS.disable_sound && soundManager.enabled) {
               soundManager.play('pling');
            }
@@ -652,9 +618,14 @@ var Calendar = (function() {
    return {
       load: function() {
          _load_calendar();
+         $.getJSON('/xsrf.json', function(r) {
+            XSRF = r.xsrf;
+         });
       }
    }
 })();
+
+var XSRF;
 
 head.ready(function() {
    //$.getScript(JS_URLS.qtip);
@@ -677,6 +648,7 @@ head.ready(function() {
       });
    });
 
+   /*
    if ($('h1#calendar-h1').size()) {
       setTimeout(function() {
 	 $('<img>', {
@@ -689,6 +661,8 @@ head.ready(function() {
 	   }).appendTo('h1#calendar-h1'));
       }, 3 * 1000);
    }
+    */
+
 });
 
 

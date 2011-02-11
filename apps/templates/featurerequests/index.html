@@ -1,5 +1,7 @@
 {% extends "../base.html" %}
 
+{% block title %}Feature requests - DoneCal{% end %}
+
 {% block extra_head %}
 {{ modules.Static("css/ext/jquery.qtip.css", "css/featurerequests.css") }}
 {% end %}
@@ -31,7 +33,7 @@
   <!--<label>Longer description (optional):</label>-->
   <textarea name="description" rows="4" cols="60" title="Longer description (optional)"></textarea>
   <br>
-  
+
   <input type="submit" value="Submit">
   </div>
 
@@ -52,7 +54,7 @@
   <input id="comment" name="comment" value="" size="30"></label>
   <input type="submit" value="Vote up">
   <input type="button" class="cancel" value="Cancel">
-  
+
   </div>
   {{ xsrf_form_html() }}
 </form>

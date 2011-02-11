@@ -9,18 +9,10 @@
 	<link rel="Shortcut Icon" href="{{ modules.StaticURL("images/favicon.ico") }}" type="image/x-icon">
         {{ modules.Static("css/style.css", "css/ext/jquery.fancybox-1.3.2.css") }}
 	<style type="text/css">
-        #home { background-image:url('{{ modules.Static64("images/calendar_home.png") }}'); }
-        #login {
-          {% if user %}
-            {% if user.premium %}
-              background-image:url('{{ modules.Static64("images/premium.png") }}');
-            {% else %}
-              background-image:url('{{ modules.Static64("images/locked.gif") }}');
-            {% end %}
-          {% else %}
-	  background-image:url('{{ modules.Static64("images/key.gif") }}');
-          {% end %}
-        }
+        #home { background-image:url('{{ modules.Static64("images/calendar_home.png") }}') }
+	.login_premium { background-image:url('{{ modules.Static64("images/premium.png") }}') }
+	.login_user { background-image:url('{{ modules.Static64("images/locked.gif") }}') }
+	.login_not { background-image:url('{{ modules.Static64("images/key.gif") }}') }
 	</style>
         {% block extra_head_outer %}
         {% block extra_head %}{% end %}
@@ -45,21 +37,23 @@
     </head>
     <body class="content-sidebar">
 
-    {% block h1 %}{% end %}
-
     {% block home_nav %}
     <div id="home" class="topnav">
       <p><a href="/">Home/Calendar</a></p>
     </div>
     {% end %}
 
-    <div id="login" class="topnav">
+    <div id="login" class="topnav login_not">
+      <p><a href="/user/account/" class="account">Login &amp; Sign up</a></p>
+
+    {% if 0 %}
       {% if user %}
       <p><a href="/user/account/" {% if user.premium %}title="You're a premium user!"{% end %} class="account">Hi {{ user_name }}</a>
       <a href="/auth/logout/" class="log-out">log out</a></p>
       {% else %}
       <p><a href="/user/account/" class="account">Login &amp; Sign up</a></p>
       {% end %}
+    {% end %}
     </div>
 
     <div id="wrap">
@@ -84,7 +78,6 @@
       <div id="footer">
         <div class="wrap">
 	  <div class="creds">
-            <div id="ms-outer" style="display:none">time to load: <strong id="ms"></strong>ms</div>
             <p class="footer-stats">
               Current total of events across all accounts: <span id="total_no_events">{{ total_no_events }}</span>
             </p>
@@ -104,8 +97,8 @@
 {{ modules.Static("ext/head.load.min.js") }}
 <script type="text/javascript">
 var total_no_events = {{ total_no_events }};
-head.js(JS_URLS.jquery, JS_URLS.fancybox, JS_URLS.base);
-head.ready(function() {
+head.js(JS_URLS.jquery, JS_URLS.base);
+head.ready(JS_URLS.fancybox, function() {
    $('a.account').fancybox({
          'autoDimensions': false,
          'width'         : 550,

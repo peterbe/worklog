@@ -1,3 +1,5 @@
+* (MEDIUM) Rewrite log_request() method (over ride)
+
 * (HIGH) When using Bookmarklet, say something about being or not
   being logged in.
 

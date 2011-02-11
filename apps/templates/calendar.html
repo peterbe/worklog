@@ -3,12 +3,6 @@
 {{ modules.Static("css/ext/fullcalendar.css", "css/ext/jquery.jqplot.min.css", "css/ext/jquery.autocomplete.css", "css/ext/jquery.qtip.css", "css/calendar.css") }}
 {% end %}
 
-    {% block h1 %}
-    {% if show_h1 %}
-    <h1 id="calendar-h1">DoneCal - A timesheet/timetracker calendar</h1>
-    {% end %}
-    {% end %}
-
 {% block home_nav %}{% end %}
 
 {% block content %}
@@ -37,23 +31,22 @@
               <div class="plot" id="hours-plot">
               </div>
 
-              <div id="report-link" {% if not user %}style="display:none"{% end %}>
+              <div id="report-link" style="display:none">
                 <p style="text-align:center"><a href="/report/" rel="nofollow">Get the full report</a>
               </div>
-              {% if not user %}
-	      <p id="introduction-video"><strong>What on earth <em>is</em> this?</strong><br>
-	      <a href="/help/show_vimeo_video" class="vimeovideo"><img src="{{ modules.StaticURL("images/vimeovideo.png") }}" alt="Introduction to DoneCal.com on Vimeo"></a><br>
-	      <a href="/help/show_vimeo_video" class="vimeovideo">Watch an introduction video</a>
-	      </p>
-	      <p id="introduction-video-after" style="display:none">
-	        <a href="/help/show_vimeo_video" class="vimeovideo">Watch video again</a><br>
-	        <strong>Note:</strong>
-		Since this video was made, it is now possible to tag with the <code>#</code> hash sign
-		as well as the <code>@</code> sig.
-	      </p>
-              {% end %}
 
-
+              <div id="introduction" style="display:none">
+    	        <p id="introduction-video"><strong>What on earth <em>is</em> this?</strong><br>
+	          <a href="/help/show_vimeo_video" class="vimeovideo"><img src="{{ modules.StaticURL("images/vimeovideo.png") }}" alt="Introduction to DoneCal.com on Vimeo"></a><br>
+	          <a href="/help/show_vimeo_video" class="vimeovideo">Watch an introduction video</a>
+	        </p>
+	        <p id="introduction-video-after" style="display:none">
+	          <a href="/help/show_vimeo_video" class="vimeovideo">Watch video again</a><br>
+  	          <strong>Note:</strong>
+		  Since this video was made, it is now possible to tag with the <code>#</code> hash sign
+		  as well as the <code>@</code> sig.
+	        </p>
+              </div>
 
 	    </div>
 
@@ -117,11 +110,9 @@
 {{ modules.Static("ext/head.load.min.js") }}
 <script type="text/javascript">
 var total_no_events = {{ total_no_events }};
-
-head.js(JS_URLS.jquery,
-        JS_URLS.fullcalendar,
+head.js(JS_URLS.jquery, JS_URLS.base);
+head.js(JS_URLS.fullcalendar,
         JS_URLS.cookie,
-        JS_URLS.base,
         JS_URLS.calendar, function() {
    Calendar.load();
 });

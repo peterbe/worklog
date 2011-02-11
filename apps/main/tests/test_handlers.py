@@ -1050,9 +1050,44 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(user.guid, guid)
         cookie = 'user=%s;' % user_cookie
 
-        response = self.get('/', headers={'Cookie': cookie})
+        response = self.get('/auth/logged_in.json', headers={'Cookie': cookie})
+        self.assertEqual(response.code, 200)
         self.assertTrue("Peter" in response.body)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['user_name'], 'Peter')
 
+    def test_auth_logged_in_json(self):
+        response = self.get('/auth/logged_in.json')
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct, {})
+
+        data = dict(email="peterbe@gmail.com",
+                    password="secret",
+                    first_name="Peter",
+                    last_name="Bengtsson")
+        response = self.post('/user/signup/', data, follow_redirects=False)
+        self.assertEqual(response.code, 302)
+
+        data.pop('password')
+        user = self.get_db().users.User.one(data)
+        self.assertTrue(user)
+
+        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
+        cookie = 'user=%s;' % user_cookie
+
+        response = self.get('/auth/logged_in.json', headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct, {'user_name':'Peter'})
+        user.premium = True
+        user.save()
+
+        response = self.get('/auth/logged_in.json', headers={'Cookie':cookie})
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['user_name'], 'Peter')
+        self.assertEqual(struct['premium'], True)
 
 
     def test_undo_delete_event(self):

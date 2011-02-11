@@ -348,7 +348,10 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
             undoer.save()
         return undoer
 
-
+@route('/xsrf.json$')
+class XSRFHandler(BaseHandler):
+    def get(self):
+        self.write_json(dict(xsrf=self.xsrf_token))
 
 
 class APIHandlerMixin(object):
@@ -1542,16 +1545,16 @@ class SignupHandler(BaseAuthHandler):
 
         self.redirect('/')
 
-
-#class FeedHandler(BaseHandler):
-#    def get(self):
-#        entries = self.db.query("SELECT * FROM entries ORDER BY published "
-#                                "DESC LIMIT 10")
-#        self.set_header("Content-Type", "application/atom+xml")
-#        self.render("feed.xml", entries=entries)
-
-
-
+@route('/auth/logged_in.json$')
+class AuthLoginHandler(BaseAuthHandler):
+    def get(self):
+        info = dict()
+        user = self.get_current_user()
+        if user:
+            info['user_name'] = user.first_name
+            if user['premium']:
+                info['premium'] = True
+        self.write_json(info)
 
 class CredentialsError(Exception):
     pass
@@ -2243,7 +2246,7 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
 
         return data
 
-
+route_redirect('/features$', '/features/')
 @route('/features/$')
 class FeatureRequestsHandler(BaseHandler):
 
