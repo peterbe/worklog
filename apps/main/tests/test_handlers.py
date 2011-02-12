@@ -1497,11 +1497,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(struct['tags'], ["@tag1", "@tag2", "@tag3"])
 
     def test_rendering_with_or_without_https(self):
-        print "TODO FIX THIS TEST"
-        return #
-        response = self.get('/', headers={'X-Scheme':'https'}, follow_redirects=False)
-        self.assertEqual(response.code, 302)
-        self.assertTrue(response.headers['Location'].startswith('http://'))
+        response = self.get('/auth/logged_in.json', headers={'X-Scheme':'https'},
+                            follow_redirects=False)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertTrue(struct['redirect_to'])
+        self.assertTrue(struct['redirect_to'].startswith('http://'))
+        #self.assertTrue(response.headers['Location'].startswith('http://'))
 
         db = self.get_db()
         user = db.User()
@@ -1519,13 +1521,15 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user = db.User.one({'guid':guid})
         assert user.premium
 
-        response = self.get('/', headers={'Cookie':cookie, 'X-Scheme':'https'}, follow_redirects=False)
+        response = self.get('/auth/logged_in.json', headers={'Cookie':cookie, 'X-Scheme':'https'},
+                            follow_redirects=False)
         self.assertEqual(response.code, 200)
 
-        response = self.get('/', headers={'Cookie':cookie}, follow_redirects=False)
-        self.assertEqual(response.code, 302)
-        self.assertTrue(response.headers['Location'].startswith('https://'))
-
+        response = self.get('/auth/logged_in.json', headers={'Cookie':cookie}, follow_redirects=False)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertTrue(struct['redirect_to'])
+        self.assertTrue(struct['redirect_to'].startswith('https://'))
 
     def test_getting_events_with_bad_parameters(self):
         # this is based on an actual error that happened
