@@ -42,11 +42,21 @@ class HTTPSMixin(object):
         # XXX is this really the best/only way?
         return self.request.headers.get('X-Scheme') == 'https'
 
-    def httpify_url(self):
-        return self.request.full_url().replace('https://', 'http://')
+    def httpify_url(self, url=None):
+        url = url if url else self.request.full_url()
+        if url.startswith('/'):
+            parsed = urlparse(self.request.full_url())
+            return 'http://%s%s' % (parsed.netloc, url)
+        else:
+            return url.replace('http://', 'https://')
 
-    def httpsify_url(self):
-        return self.request.full_url().replace('http://', 'https://')
+    def httpsify_url(self, url=None):
+        url = url if url else self.request.full_url()
+        if url.startswith('/'):
+            parsed = urlparse(self.request.full_url())
+            return 'https://%s%s' % (parsed.netloc, url)
+        else:
+            return url.replace('http://', 'https://')
 
 
 class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
@@ -417,6 +427,7 @@ class HomeHandler(BaseHandler):
 
         # default settings
         options = self.get_base_options()
+        """
         user = options['user']
         if self.is_secure():
             # but are you allowed to use secure URLs?
@@ -438,15 +449,8 @@ class HomeHandler(BaseHandler):
             hidden_shares.append(dict(key=share['key'],
                                       className=className))
 
-        options['settings']['hidden_shares'] = hidden_shares
-
-        show_h1 = True
-        if options['user']:
-            show_h1 = False
-        elif self.get_cookie('hide_h1', False):
-            show_h1 = False
-        options['show_h1'] = show_h1
-
+        #options['settings']['hidden_shares'] = hidden_shares
+        """
         self.render("calendar.html",
           #
           **options
@@ -462,11 +466,14 @@ class EventsHandler(BaseHandler):
         shares = self.get_secure_cookie('shares')
 
         data = self.get_events_data(user, shares,
-                           include_tags=self.get_argument('include_tags', None))
+                           include_tags=self.get_argument('include_tags', None),
+                           include_hidden_shares=\
+                             self.get_argument('include_hidden_shares', None))
         self.write_events_data(data, format)
 
 
-    def get_events_data(self, user, shares, include_tags=False):
+    def get_events_data(self, user, shares, include_tags=False,
+                        include_hidden_shares=False):
         events = list()
         sharers = list()
         data = dict()
@@ -479,6 +486,17 @@ class EventsHandler(BaseHandler):
         else:
             include_tags = niceboolean(include_tags)
             tags = set()
+
+        if include_hidden_shares:
+            hidden_shares = self.get_secure_cookie('hidden_shares')
+            if not hidden_shares:
+                hidden_shares = ''
+            hidden_keys = [x for x in hidden_shares.split(',') if x]
+            hidden_shares = []
+            for share in self.db[Share.__collection__].find({'key':{'$in':hidden_keys}}):
+                className = 'share-%s' % share['user'].id
+                hidden_shares.append(dict(key=share['key'],
+                                          className=className))
 
         try:
             start = parse_datetime(self.get_argument('start'))
@@ -535,6 +553,9 @@ class EventsHandler(BaseHandler):
                 else:
                     tags = ['@%s' % x for x in tags]
             data['tags'] = tags
+
+        if include_hidden_shares:
+            data['hidden_shares'] = hidden_shares
 
         if sharers:
             sharers.sort(lambda x,y: cmp(x['full_name'], y['full_name']))
@@ -1554,6 +1575,17 @@ class AuthLoginHandler(BaseAuthHandler):
             info['user_name'] = user.first_name
             if user['premium']:
                 info['premium'] = True
+
+        if self.is_secure():
+            # but are you allowed to use secure URLs?
+            if not user or (user and not user['premium']):
+                # not allowed!
+                info['redirect_to'] = self.httpify_url('/')
+        else:
+            if user and user['premium']:
+                # allowed but not using it
+                info['redirect_to'] = self.httpsify_url('/')
+
         self.write_json(info)
 
 class CredentialsError(Exception):

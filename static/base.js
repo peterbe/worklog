@@ -17,6 +17,10 @@ function decrement_total_no_events(new_no) {
 */
 
 $.getJSON('/auth/logged_in.json', function(r) {
+   if (r.redirect_to) {
+      window.location.href = r.redirect_to;
+      return;
+   }
    if (r.user_name) {
       $('#login').removeClass('login_not');
       if (r.premium) {

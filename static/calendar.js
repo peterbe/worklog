@@ -542,6 +542,14 @@ var Calendar = (function() {
          events: function(start, end, callback) {
             var url = '/events.json';//?start=' + start.getTime() + '&end=' + end.getTime();
             var ops = {start: start.getTime(), end: end.getTime()};
+            if (SETTINGS.hidden_shares == undefined) {
+               ops.include_hidden_shares = 'true';
+               SETTINGS.hidden_shares = [];
+            } else {
+               // we've already downloaded all tags
+               ops.include_hidden_shares = '';
+            }
+
             if ('undefined' === typeof AVAILABLE_TAGS) {
                ops.include_tags = 'all';
                AVAILABLE_TAGS = [];
@@ -551,6 +559,9 @@ var Calendar = (function() {
             }
             $.getJSON(url, ops, function(response) {
                callback(response.events);
+               if (response.hidden_shares) {
+                  SETTINGS.hidden_shares = response.hidden_shares;
+               }
                if (response.sharers) {
                   __display_current_sharers(response.sharers);
                }
