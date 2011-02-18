@@ -1,4 +1,8 @@
 {% extends "bookmarklet_base.html" %}
 {% block content %}
 <h1>Thanks! Saved on DoneCal</h1>
+<p style="padding:20px 5px">
+To edit the posted event click here:
+<a href="{{ event_url }}" onclick="window.open('{{ event_url }}');return false">{{ event.title }}</a>
+</p>
 {% end %}

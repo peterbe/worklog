@@ -1,7 +1,6 @@
-* (MEDIUM) Rewrite log_request() method (over ride)
+* (MEDIUM) Upgrade to latest jquery-mobile
 
-* (HIGH) When using Bookmarklet, say something about being or not
-  being logged in.
+* (MEDIUM) Rewrite log_request() method (over ride)
 
 * (LOW) Build a PDF report based on Timesheet.doc
 

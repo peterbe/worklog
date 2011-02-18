@@ -1,7 +1,18 @@
 {% extends "bookmarklet_base.html" %}
 
 {% block content %}
+
 <h1>Quickly save something on DoneCal</h1>
+<div id="loggedin">
+{% if user %}
+<p>Currently logged in as <strong>{{ user.first_name }}</strong>
+on
+<a href="{{ home_full_url }}" onclick="window.open('{{ home_full_url }}');return false">DoneCal</a>
+</p>
+{% else %}
+<p>Currently <a href="{{ home_full_url }}" onclick="window.open('{{ home_full_url }}');return false">not logged in to DoneCal</a></p>
+{% end %}
+</div>
 <form action="." method="post">
 <div class="title_input">
 {% if error_title %}
@@ -17,19 +28,21 @@
   <em>{{ modules.TruncateString(external_url, 35) }}</em>
   </label>
   <input type="hidden" name="external_url" value="{{ external_url }}">
-</p>  
+</p>
 {% end %}
+
+  <p><label for="length" class="bold">Length:</label><br>
+  &nbsp;  &nbsp;
+  <label for="id_all_day"><input type="radio" name="length" id="id_all_day" value="all_day" {% if length=='all_day' %}checked{% end %}> all day</label>
+  <label for="id_05h"><input type="radio" name="length" id="id_05h" value="0.5" {% if length=='0.5' %}checked{% end %}>half hour </label>
+  <label for="id_1h"><input type="radio" name="length" id="id_1h" value="1" {% if length=='1' %}checked{% end %}>one hour</label>
+  </p>
+
 
 <p class="options" id="open-more-options"><a href="#" onclick="more_options()">more options</a></p>
 
 <div id="more-options" style="display:none">
   <p class="options"><a href="#" onclick="less_options()">less options</a></p>
-  <p><label for="length" class="bold">Length:</label><br>
-  &nbsp;  &nbsp;
-  <label for="id_all_day"><input type="radio" name="length" id="id_all_day" value="all_day" checked> all day</label>
-  <label for="id_05h"><input type="radio" name="length" id="id_05h" value="0.5">half hour </label>
-  <label for="id_1h"><input type="radio" name="length" id="id_1h" value="1">one hour</label>
-  </p>
   <p><label for="description" class="bold">Description:</label>
   <textarea name="description" cols="40" rows="4"></textarea>
   </p>

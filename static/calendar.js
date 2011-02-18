@@ -95,15 +95,15 @@ function _event_clicked(event, jsEvent, view) {
    // by default events don't have the 'editable' attribute. It's usually only
    // set when the event is explcitely *not* editable.
    var is_editable = true;
-   if (typeof event.editable != 'undefined')
-     is_editable = event.editable;
+   if (typeof event.editable != 'undefined') {
+      is_editable = event.editable;
+   }
 
    if (is_editable) {
       var url = '/event.json?id=' + event.id;
    } else {
       var url = '/event.html?id=' + event.id;
    }
-
    function _prepare_edit_event(container) {
       $('form', container).submit(function() {
          _setup_ajaxsubmit(this, event.id);
@@ -218,7 +218,6 @@ function _event_clicked(event, jsEvent, view) {
           }
       }
    };
-
    //qtip_options = $.extend(qtip_options, __standard_qtip_options());
    current_tooltip = $(this);
    current_tooltip.qtip(qtip_options);
@@ -498,14 +497,10 @@ var AVAILABLE_TAGS;
 var Calendar = (function() {
    // private
    function _load_calendar() {
-
-
       var defaultView = 'month';
-
       // By default we assume that we should save this view in a cookie. The only
       // reason not to do it later is if we've just loaded it from a cookie.
       var save_view_cookie = true;
-
       if (location.hash.search('#week') == 0) {
         defaultView = 'agendaWeek';
       } else if (location.hash.search('#day') == 0) {
@@ -579,6 +574,17 @@ var Calendar = (function() {
                      }
                   }
                }
+               /*
+                * Doesnt work becuase qtip doesn't work when I try to set up the options.
+               if (location.hash) {
+                  var _match = location.hash.match(/[a-f0-9]{24}/);
+                  L(_match[0]);
+                  var _events = $('#calendar').fullCalendar('clientEvents', _match[0]);
+                  if (1 == _events.length) {
+                     _event_clicked(_events[0], null, $('#calendar').fullCalendar('getView'));
+                  }
+               }*/
+
             });
          },
 
@@ -613,7 +619,7 @@ var Calendar = (function() {
                href += ',' + view.start.getFullYear();
                href += ',' + (view.start.getMonth() + 1);
                href += ',' + view.start.getDate();
-               $.cookie('lastview', href, {expires: 30});
+               $.cookie('lastview', href, {expires: 5});
             } else {
                save_view_cookie = true;
             }
@@ -629,14 +635,14 @@ var Calendar = (function() {
    return {
       load: function() {
          _load_calendar();
-         $.getJSON('/xsrf.json', function(r) {
+         /*$.getJSON('/xsrf.json', function(r) {
             XSRF = r.xsrf;
-         });
+         });*/
       }
    }
 })();
 
-var XSRF;
+
 
 head.ready(function() {
    //$.getScript(JS_URLS.qtip);

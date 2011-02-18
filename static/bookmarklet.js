@@ -3,7 +3,7 @@
     // http://www.adequatelygood.com/2010/3/JavaScript-Module-Pattern-In-Depth
     
     var gc_base_url = "http://donecal.com/";
-   //var gc_base_url = "http://worklog/";
+    var gc_base_url = "http://worklog/";
    
     // Get first 3 characters of path
     var conversationPath = location.pathname.substring(0,3);

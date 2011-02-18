@@ -580,6 +580,16 @@ class EventsHandler(BaseHandler):
                 out.write("\n")
             self.write_txt(out.getvalue())
 
+    def get_event_url(self, event):
+        url = '/#'
+        if event.all_day:
+            url += event.start.strftime('month,%Y,%m,%d')
+        else:
+            url += event.start.strftime('week,%Y,%m,%d')
+        # this is commented out because I don't know how to click on an
+        # event programmatically
+        #url += ',%s' % event._id
+        return url
 
     def post(self, format=None):#, *args, **kwargs):
         user = self.get_current_user()
@@ -1569,7 +1579,7 @@ class SignupHandler(BaseAuthHandler):
 @route('/auth/logged_in.json$')
 class AuthLoginHandler(BaseAuthHandler):
     def get(self):
-        info = dict()
+        info = dict(xsrf=self.xsrf_token)
         user = self.get_current_user()
         if user:
             info['user_name'] = user.first_name
@@ -1791,42 +1801,78 @@ class Bookmarklet(EventsHandler):
 
     def get(self):
         external_url = self.get_argument('external_url', u'')
-
         user = self.get_current_user()
 
         title = u""
-        #doc_title = self.get_argument('doc_title', u'')
-        if external_url and user:#doc_title:
-            tags = self._suggest_tags(user, external_url)
+        length = ''
+        if external_url and user:
+            suggestions = self._suggest_by_external_url(user, external_url)
+            tags = suggestions.get('tags')
             if tags:
                 title = ' '.join(tags) + ' '
+            if suggestions.get('length'):
+                if suggestions.get('length').get('all_day'):
+                    length = 'all_day'
+                elif suggestions.get('length').get('all_day') <= 0.5:
+                    length = '0.5'
+                elif suggestions.get('length').get('all_day') <= 1:
+                    length = '1'
+        if not length:
+            length = 'all_day' # the default
+
+        if user and user['premium']:
+            protocol = 'https'
+        else:
+            protocol = self.request.protocol
+
+        home_full_url = "%s://%s/" % (protocol, self.request.host)
         self.render("bookmarklet/index.html",
                     external_url=external_url,
                     title=title,
-                    error_title=None)
+                    error_title=None,
+                    user=user,
+                    length=length,
+                    home_full_url=home_full_url)
 
-    def _suggest_tags(self, user, external_url):
-        """given a user and a title (e.g. 'Tra the la [Foo]') return a list of
-        tags that are in that string. Disregard English stopwords."""
+    def _suggest_by_external_url(self, user, external_url):
+        """given a user and a title (e.g. 'Tra the la [Foo]') return a dict with
+        suggestions such as tags and time.
+        """
+        user_settings = self.get_user_settings(user, fast=True)
+        hash_tags = user_settings.get('hash_tags', False)
         def wrap_tags(tags):
-            return ['@%s' % x for x in tags]
+            p = hash_tags and '#' or '@'
+            return ['%s%s' % (p, x) for x in tags]
 
+        tags = []
+        length = None
         # look at the last event with the same URL and copy the tags used in
         # that event
         search = {'user.$id': user._id,
                   'external_url': external_url
                   }
         for event in self.db[Event.__collection__].find(search):
-            return wrap_tags(event['tags'])
-
+            tags = wrap_tags(event['tags'])
+            if event['all_day']:
+                length = dict(all_day=True)
+            else:
+                seconds = (event['end'] - event['start']).seconds
+                length = dict(all_day=False, hours=seconds/60/60.0)
+            break
         # nothing found, try limiting the search
         parsed_url = urlparse(external_url)
         search_url = parsed_url.scheme + '://' + parsed_url.netloc
         search['external_url'] = re.compile(re.escape(search_url), re.I)
         for event in self.db[Event.__collection__].find(search):
-            return wrap_tags(event['tags'])
+            tags = event['tags']
+            if event['all_day']:
+                length = dict(all_day=True)
+            else:
+                seconds = (event['end'] - event['start']).seconds
+                length = dict(all_day=False, hours=seconds/60/60.0)
+            break
 
-        return wrap_tags([])
+        return dict(tags=wrap_tags(tags), length=length)
 
     def post(self):
         title = self.get_argument("title", u'').strip()
@@ -1891,14 +1937,18 @@ class Bookmarklet(EventsHandler):
                 # account.
                 self.set_secure_cookie("guid", str(user.guid), expires_days=14)
 
-            self.render("bookmarklet/posted.html")
+            event_url = self.get_event_url(event)
+            if event.user.premium:
+                protocol = 'https'
+            else:
+                protocol = self.request.protocol
+            event_url = '%s://%s%s' % (protocol, self.request.host, event_url)
+            self.render("bookmarklet/posted.html", event=event, event_url=event_url)
         else:
             self.render("bookmarklet/index.html",
                     external_url=external_url,
                     title=title,
                     error_title="No title entered")
-
-
 
 
 @route(r'/report/$')

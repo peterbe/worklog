@@ -12,14 +12,15 @@ function decrement_total_no_events(new_no) {
   $('#total_no_events').text(total_no_events);
 }
 
-/*
-
-*/
+var XSRF;
 
 $.getJSON('/auth/logged_in.json', function(r) {
    if (r.redirect_to) {
       window.location.href = r.redirect_to;
       return;
+   }
+   if (r.xsrf) {
+      XSRF = r.xsrf;
    }
    if (r.user_name) {
       $('#login').removeClass('login_not');
