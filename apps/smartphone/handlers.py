@@ -7,8 +7,13 @@ from apps.main.handlers import BaseHandler, AuthLoginHandler, \
   CredentialsError, EventsHandler
 from apps.main.models import Event
 from apps.eventlog import log_event, actions, contexts
-route_redirect('/smartphone$', '/smartphone/')
 
+class XSRFIgnore(object):
+    def check_xsrf_cookie(self):
+        print "Ignoring XSRF"
+        return
+
+route_redirect('/smartphone$', '/smartphone/')
 @route('/smartphone/$')
 class SmartphoneHandler(BaseHandler):
     def get(self):
@@ -18,7 +23,7 @@ class SmartphoneHandler(BaseHandler):
 
 
 @route('/smartphone/auth/login/$')
-class SmartphoneAuthLoginHandler(AuthLoginHandler):
+class SmartphoneAuthLoginHandler(XSRFIgnore, AuthLoginHandler):
     def post(self):
         # if this works it will set a cookie. Is that needed???
         # if not, consider rewriting AuthLoginHandler so that it can
@@ -28,8 +33,6 @@ class SmartphoneAuthLoginHandler(AuthLoginHandler):
                                           self.get_argument('password'))
         except CredentialsError, msg:
             return self.write_json(dict(error="Error: %s" % msg))
-
-        print "SIGNED", repr(self.create_signed_value('guid', user.guid))
         self.write_json(dict(guid=self.create_signed_value('guid', user.guid)))
 
 
@@ -49,17 +52,19 @@ class SmartphoneAPIMixin(object):
             raise tornado.web.HTTPError(403, "guid not valid")
         return user
 
+class APIBaseHandler(XSRFIgnore, BaseHandler):
+    pass
 
 @route('/smartphone/checkguid/$')
-class CheckGUIDHandler(BaseHandler, SmartphoneAPIMixin):
+class CheckGUIDHandler(APIBaseHandler, SmartphoneAPIMixin):
 
-    def get(self, __):
+    def get(self):
         user = self.get_user()
         self.write_json(dict(ok=bool(user)))
 
 
 @route('/smartphone/api/months.json$')
-class APIMonthsHandler(BaseHandler, SmartphoneAPIMixin):
+class APIMonthsHandler(APIBaseHandler, SmartphoneAPIMixin):
 
     def get(self):
         user = self.must_get_user()
@@ -90,9 +95,6 @@ class APIMonthsHandler(BaseHandler, SmartphoneAPIMixin):
               date.year, date.month, 1, 0, 0, 0)
 
             next_date = first_of_date + relativedelta.relativedelta(months=1)
-            #print first_of_date
-            #print next_date
-            #print
 
             # becomes 28 for February for example
             # Haven't tested for all years :)
@@ -115,15 +117,14 @@ class APIMonthsHandler(BaseHandler, SmartphoneAPIMixin):
                                ))
 
             date = next_date
+        #print first_date
+        #print last_date
+        #pprint(months)
 
-        print first_date
-        print last_date
-
-        pprint(months)
         self.write_json(dict(months=months))
 
 @route('/smartphone/api/month\.json$')
-class APIMonthHandler(BaseHandler, SmartphoneAPIMixin):
+class APIMonthHandler(APIBaseHandler, SmartphoneAPIMixin):
 
     def get(self):
         user = self.must_get_user()
@@ -147,11 +148,12 @@ class APIMonthHandler(BaseHandler, SmartphoneAPIMixin):
 
         #print "No_days", no_days
         self.write_json(dict(month_name=first_day.strftime('%B'),
-                             day_counts=day_counts))
+                             day_counts=day_counts,
+                             first_day=first_day.strftime('%A')))
 
 
 @route('/smartphone/api/day\.json$')
-class APIDayHandler(EventsHandler, SmartphoneAPIMixin):
+class APIDayHandler(XSRFIgnore, EventsHandler, SmartphoneAPIMixin):
 
     def get(self):
         user = self.must_get_user()

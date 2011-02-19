@@ -46,7 +46,7 @@ var utils = (function() {
    }
 })();
 
-var authentication = (function() {
+var Auth = (function() {
    //$.storage = new $.store();
    //var guid = localStorage.getItem('guid');
    var login_initialized=false;
@@ -68,31 +68,39 @@ var authentication = (function() {
 	 //if ($.storage.get('guid')) {
          L("is_logged_in()");
          if (this.get_guid()) {
-	    if (false && update_settings) {
-	       $.getJSON('usersettings/', {guid:this.get_guid()}, function(response) {
-                  L(response);
-                  return;
-		  if (!response.ok) {
-                     this.unset_guid();
-		     //$.storage.del('guid');
-		     $.mobile.changePage($('#login'), 'pop');
-		     // consider a flash message
-		  }
-	       });
-	    } else {
-               //user_settings.update($.storage.get('guid'));
+            if (update_settings) { // also reason to double check the GUID
+               $.getJSON('/smartphone/checkguid/', {guid:this.get_guid()}, function(response) {
+                  if (response && response.ok) {
+                     if (false && update_settings) {
+                        $.getJSON('usersettings/', {guid:this.get_guid()}, function(response) {
+                           L(response);
+                           return;
+                           if (!response.ok) {
+                              this.unset_guid();
+                              //$.storage.del('guid');
+                              $.mobile.changePage($('#login'), 'pop');
+                              // consider a flash message
+                           }
+                        });
+                     } else {
+                        //user_settings.update($.storage.get('guid'));
+                     }
+                  } else {
+                     $.mobile.changePage($('#login'), 'pop');
+                  }
+               });
             }
-            L("is logged in");
+            //L("is logged in");
 	    return true;
 	 }
-         L("not logged in");
+         //L("not logged in");
          return false;
       },
 
       redirect_login: function() {
-         L("redirect_login()");
+         //L("redirect_login()");
          if (!login_initialized) {
-            authentication.init_login();
+            Auth.init_login();
          }
          L("  change to #login");
          // THIS DOESN'T WORK :(
@@ -106,9 +114,9 @@ var authentication = (function() {
             data:{email:email, password:password},
             success:function(response) {
                if (response.error) {
-                  alert(response);
+                  alert(response.error);
                } else if (response.guid) {
-                  authentication.set_guid(response.guid);
+                  Auth.set_guid(response.guid);
                   $.mobile.changePage($('#start'), 'pop');
                }
             }
@@ -122,8 +130,11 @@ var authentication = (function() {
 
 
 
-var calendar = (function() {
-   //var months_loaded = null;
+var Calendar = (function() {
+   var months_loaded = {}
+     , years_loaded = []
+     , days_loaded = {}
+     , _online;
    //var current_year;
 
    return {
@@ -151,12 +162,18 @@ var calendar = (function() {
          return sessionStorage.getItem('current_day');
       },
       init_months: function() {
-	 this.load_months();
-	 months_loaded = {};
+         if (years_loaded && years_loaded.length) {
+            // here it might be worth reloading the months
+         } else {
+            this.load_months();
+         }
       },
       init_month: function(year, month) {
-         var key = year + '-' + month;
-	 this.load_month(year, month);
+         if (months_loaded[year] == undefined || -1 == months_loaded[year].indexOf(month)) {
+            this.load_month(year, month);
+         } else {
+            // consider reloading the month
+         }
       },
       load_month: function(year, month) {
          $('#calendar-month-days li').remove();
@@ -164,10 +181,20 @@ var calendar = (function() {
 	 var self = this
            , today = new Date()
            , this_month = today.getFullYear() == year && today.getMonth() == month - 1;
+
+         if (months_loaded[year] == undefined) {
+            months_loaded[year] = [];
+         }
+
+
          $.getJSON('/smartphone/api/month.json',
-                   {guid:authentication.get_guid(), year:year, month:month},
+                   {guid:Auth.get_guid(), year:year, month:month},
                    function(response) {
                       var container = $('#calendar-month-days');
+                      var first_day = response.first_day;
+                      var day_names = ['Monday','Tuesday','Wednesday','Thursday',
+                                       'Friday','Saturday','Sunday'];
+                      var i2 = day_names.indexOf(first_day);
                       $.each(response.day_counts, function(i, e) {
                          var inner_container = $('<li>').appendTo(container);
                          var text = i + 1;
@@ -176,7 +203,13 @@ var calendar = (function() {
                                text += ' Today';
                             }
                          }
-                         $('<a>', {text:text, href:'#calendar-day'})
+                         i2 = i2 % 7;
+                         //text += ' ' + day_names[i2];
+                         $('<a>', {href:'#calendar-day'})
+                           .append($('<span>', {text:text}))
+                           .append($('<span>', {text:day_names[i2]})
+                                   .addClass('dayname')
+                                   .addClass('dayname_' + (i2+1)))
                            .click(function() {
 			      self.set_current_day(i + 1);
                               //self.init_day(year, month, i + 1);
@@ -185,13 +218,15 @@ var calendar = (function() {
                          $('<span>', {text:e})
                            .addClass('ui-li-count')
                              .appendTo(inner_container);
+                         i2++;
                       });
 		      $('#calendar-month-days').listview('refresh');
+                      months_loaded[year].push(month);
                    });
       },
       load_months: function() {
          var self = this;
-	 $.getJSON('/smartphone/api/months.json', {guid:authentication.get_guid()} ,
+	 $.getJSON('/smartphone/api/months.json', {guid:Auth.get_guid()} ,
 		   function(response) {
 		      var container = $('#calendar-months');
 		      $.grep(response.months, function(e, i) {
@@ -207,21 +242,38 @@ var calendar = (function() {
                          $('<span>', {text:e.count})
                            .addClass('ui-li-count')
                              .appendTo(inner_container);
-
+                         if (-1 == years_loaded.indexOf(e.year)) {
+                            years_loaded.push(e.year);
+                         }
 		      });
-
 		      $('#calendar-months').listview('refresh');
 		   });
       },
       init_day: function(year, month, day) {
+         if (undefined == days_loaded[year]
+             || undefined == days_loaded[year][month]
+             || -1 == days_loaded[year][month].indexOf(day)) {
+            this.load_day(year, month, day);
+         } else {
+            // consider reloading the day
+         }
+      },
+      load_day: function(year, month, day) {
          this.set_current_year(year);
          this.set_current_month(month);
          this.set_current_day(day);
 	 var self = this;
          $('#calendar-day-events li').remove();
          $('#calendar-day h1').text(utils.ordinalize(day) + ' ' + utils.month_name(month));
+         if (undefined == days_loaded[year]) {
+            days_loaded[year] = {};
+         }
+         if (undefined == days_loaded[year][month]) {
+            days_loaded[year][month] = [];
+         }
+
 	 $.getJSON('/smartphone/api/day.json',
-		   {guid:authentication.get_guid(), year:year, month:month, day:day},
+		   {guid:Auth.get_guid(), year:year, month:month, day:day},
 		   function(response) {
                       var container = $('#calendar-day-events');
                       $.each(response.events, function(i, e) {
@@ -238,7 +290,6 @@ var calendar = (function() {
 		      $('#calendar-day-events').listview('refresh');
                       $('#calendar-days-totals').html('');
                       if (response.totals) {
-                         L(response.totals);
                          var container = $('#calendar-days-totals');
                          if (response.totals.days_spents) {
                             //var container = $('<p>').css('text-align', 'right');
@@ -253,7 +304,14 @@ var calendar = (function() {
                             //container.appendTo($('#calendar-days-totals'));
                          }
                       }
+                      days_loaded[year][month].push(day);
 		   });
+      },
+      isOnline: function() {
+         _isOnline = true;
+      },
+      isOffline: function() {
+         _online = false;
       }
    }
 
@@ -261,13 +319,13 @@ var calendar = (function() {
 
 $(document).ready(function() {
    $('#start').bind('pagecreate', function() {
-      if (!authentication.is_logged_in(true)) {
-         L("active page", $.mobile.activePage);
-         authentication.redirect_login();
+      if (!Auth.is_logged_in(true)) {
+         Auth.redirect_login();
       }
    });
 
    $('#login').bind('pagecreate', function() {
+      L('Creating #login');
       $('#login form').submit(function() {
          if (!$('input[name="email"]', this).val()) {
             return false;
@@ -276,10 +334,14 @@ $(document).ready(function() {
             return false;
          }
 
-         authentication.ajax_login($('input[name="email"]', this).val(),
+         Auth.ajax_login($('input[name="email"]', this).val(),
                                    $('input[name="password"]', this).val());
          return false;
       });
+   });
+
+   $('#login').bind('pageshow', function() {
+      L('Showing #login');
    });
 
    $('#calendar-day').bind('pagecreate', function() {
@@ -303,13 +365,13 @@ $(document).ready(function() {
             }
          }
 
-         data = {guid:authentication.get_guid(),
+         data = {guid:Auth.get_guid(),
             title: $('input[name="title"]', form).val(),
             duration: $('input[name="duration"]:checked', form).val(),
             duration_other: $('input[name="duration_other"]', form).val(),
-            year: calendar.get_current_year(),
-            month: calendar.get_current_month(),
-            day: calendar.get_current_day()
+            year: Calendar.get_current_year(),
+            month: Calendar.get_current_month(),
+            day: Calendar.get_current_day()
          };
 
          $.post('/smartphone/api/day.json', data, function(response) {
@@ -331,6 +393,7 @@ $(document).ready(function() {
             $('input[name="title"]', form).val('');
             $('#calendar-day-add-collapse').trigger('collapse');
             //alert("awesome!");
+
          });
          return false;
       });
@@ -349,38 +412,51 @@ $(document).ready(function() {
    });
 
    $('#calendar-page').bind('pageshow', function() {
-      calendar.create_calendar();
+      Calendar.create_calendar();
    });
 
    $('#logout').bind('pageshow', function() {
-      authentication.logout();
+      Auth.logout();
    });
 
    $('#calendar').bind('pageshow', function() {
-      L("Showing calendar page");
-      calendar.init_months();
+      L("Showing calendar page", $.mobile.activePage);
+      if (Auth.is_logged_in()) {
+         Calendar.init_months();
+      } else {
+         $.mobile.changePage('#login');
+      }
    });
 
    $('#calendar-month').bind('pageshow', function() {
-      //L(calendar.get_current_year(), calendar.get_current_month());
-      var year = calendar.get_current_year();
-      var month = calendar.get_current_month();
+      var year = Calendar.get_current_year();
+      var month = Calendar.get_current_month();
       if (year && month) {
-	 calendar.init_month(year, month);
+	 Calendar.init_month(year, month);
       } else {
-         $.mobile.changePage($('#calendar'), 'none', false, true); // why doesn't this work!?
-//	 $.mobile.changePage('#calendar');
+         if (Auth.is_logged_in()) {
+            $.mobile.changePage($('#calendar'));
+         } else {
+            $.mobile.changePage($('#login'));
+         }
       }
    });
 
    $('#calendar-day').bind('pageshow', function() {
-      var year = calendar.get_current_year();
-      var month = calendar.get_current_month();
-      var day = calendar.get_current_day();
+      var year = Calendar.get_current_year();
+      var month = Calendar.get_current_month();
+      var day = Calendar.get_current_day();
       if (year && month && day) {
-	 calendar.init_day(year, month, day);
+	 Calendar.init_day(year, month, day);
       } else {
-	 $.mobile.changePage($('#calendar'));
+         if (Auth.is_logged_in()) {
+            $.mobile.changePage($('#calendar'));
+         } else {
+            $.mobile.changePage($('#login'));
+         }
       }
    });
+
+   window.addEventListener("online", Calendar.isOnline, false);
+   window.addEventListener("offline", Calendar.isOffline, false);
 });

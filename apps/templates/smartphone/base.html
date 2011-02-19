@@ -30,24 +30,25 @@
 
 
 	<!--<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.css" />-->
-        {{ modules.Static("css/ext/jquery.mobile/jquery.mobile-1.0a2.css") }}
+        {{ modules.Static("css/ext/jquery.mobile/jquery.mobile-1.0a3.min.css") }}
         <style type="text/css">
         dt { font-weight: bold; margin: 2em 0 .5em; }
+        span.dayname { font-weight:normal; padding-left:10px; }
+        span.dayname_7 { color:red; }
         /*dt code, dd code { font-size:1.3em; line-height:150%; }*/
         </style>
 
         {% if debug %}
-        {{ modules.Static("ext/jquery-1.4.4.js") }}
+        {{ modules.Static("ext/jquery-1.5.min.js") }}
         {% else %}
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js" type="text/javascript"></script>
         {% end %}
 
 	{{ modules.Static("ext/json2.js") }}
 	{{ modules.Static("ext/jquery.store.js") }}
 
         {{ modules.Static("smartphone.js") }}
-        {{ modules.Static("ext/jquery.mobile-1.0a2.js") }}
-	<!--<script src="http://code.jquery.com/mobile/1.0a2/jquery.mobile-1.0a2.min.js"></script>-->
+        {{ modules.Static("ext/jquery.mobile-1.0a3.js") }}
 
 </head>
 <body>
