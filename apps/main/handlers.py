@@ -1820,8 +1820,10 @@ class Bookmarklet(EventsHandler):
         if not length:
             length = 'all_day' # the default
 
+        form_action_url = self.request.full_url().split('?')[0]
         if user and user['premium']:
             protocol = 'https'
+            form_action_url = form_action_url.replace('http://','https://')
         else:
             protocol = self.request.protocol
 
@@ -1832,7 +1834,8 @@ class Bookmarklet(EventsHandler):
                     error_title=None,
                     user=user,
                     length=length,
-                    home_full_url=home_full_url)
+                    home_full_url=home_full_url,
+                    form_action_url=form_action_url)
 
     def _suggest_by_external_url(self, user, external_url):
         """given a user and a title (e.g. 'Tra the la [Foo]') return a dict with

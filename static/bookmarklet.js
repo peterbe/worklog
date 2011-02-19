@@ -3,7 +3,7 @@
     // http://www.adequatelygood.com/2010/3/JavaScript-Module-Pattern-In-Depth
     
     var gc_base_url = "http://donecal.com/";
-    var gc_base_url = "http://worklog/";
+    //var gc_base_url = "http://worklog/";
    
     // Get first 3 characters of path
     var conversationPath = location.pathname.substring(0,3);
@@ -239,7 +239,9 @@
         //insertSizeDiv("bigt__halfWinDiv","bigt__halfWinImg",halfWin, "Half size bookmarklet window",2,"half_win.png",9);
         //insertSizeDiv("bigt__fullWinDiv","bigt__fullWinImg",windowActive, "Full size bookmarklet window",1,"full_win_selected.png",18);
         
-        insertSizeDiv("bigt__closeWinDiv","bigt__closeWinImg",closeFrame, "Close bookmarklet window",0,"static/css/ext/fancybox/fancy_close.png",18);
+       var closer= insertSizeDiv("bigt__closeWinDiv","bigt__closeWinImg",closeFrame, "Close bookmarklet window",0,"static/css/ext/fancybox/fancy_close.png",18);
+       closer.style.top = "45px";
+       closer.style.right = "10px";
         
         document.body.appendChild(container);
 
@@ -307,7 +309,7 @@
             img_link_div.id = divId;
             //img_link_div.onmouseover = highlightDiv;
             //img_link_div.onmouseout = unhighlightDiv;
-            img_link_div.style.backgroundColor = "#FFFFFF";
+            //img_link_div.style.backgroundColor = "#FFFFFF";
             img_link_div.onclick = func;
             img_link_div.style.width = "25px";
             img_link_div.style.height = "24px";

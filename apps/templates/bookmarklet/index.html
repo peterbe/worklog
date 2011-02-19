@@ -13,7 +13,7 @@ on
 <p>Currently <a href="{{ home_full_url }}" onclick="window.open('{{ home_full_url }}');return false">not logged in to DoneCal</a></p>
 {% end %}
 </div>
-<form action="." method="post">
+<form action="{{ form_action_url }}" method="post">
 <div class="title_input">
 {% if error_title %}
 <span class="error">Error: {{ error_title }}</span><br/>
