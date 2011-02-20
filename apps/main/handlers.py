@@ -1799,7 +1799,7 @@ class HelpHandler(BaseHandler):
 @route(r'/bookmarklet/')
 class Bookmarklet(EventsHandler):
 
-    def get(self):
+    def get(self, error_title=None):
         external_url = self.get_argument('external_url', u'')
         user = self.get_current_user()
 
@@ -1831,7 +1831,7 @@ class Bookmarklet(EventsHandler):
         self.render("bookmarklet/index.html",
                     external_url=external_url,
                     title=title,
-                    error_title=None,
+                    error_title=error_title,
                     user=user,
                     length=length,
                     home_full_url=home_full_url,
@@ -1842,7 +1842,7 @@ class Bookmarklet(EventsHandler):
         suggestions such as tags and time.
         """
         user_settings = self.get_user_settings(user, fast=True)
-        hash_tags = user_settings.get('hash_tags', False)
+        hash_tags = user_settings and user_settings.get('hash_tags', False) or False
         def wrap_tags(tags):
             p = hash_tags and '#' or '@'
             return ['%s%s' % (p, x) for x in tags]
@@ -1914,9 +1914,8 @@ class Bookmarklet(EventsHandler):
             # then it's an all_day
             all_day = True
 
+        user = self.get_current_user()
         if title:
-            user = self.get_current_user()
-
             if not user:
                 user = self.db.User()
                 user.save()
@@ -1948,10 +1947,12 @@ class Bookmarklet(EventsHandler):
             event_url = '%s://%s%s' % (protocol, self.request.host, event_url)
             self.render("bookmarklet/posted.html", event=event, event_url=event_url)
         else:
-            self.render("bookmarklet/index.html",
-                    external_url=external_url,
-                    title=title,
-                    error_title="No title entered")
+            self.get(error_title="No title entered")
+            #self.render("bookmarklet/index.html",
+            #        external_url=external_url,
+            #        title=title,
+            #        error_title="No title entered",
+            #        )
 
 
 @route(r'/report/$')

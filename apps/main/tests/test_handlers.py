@@ -1061,7 +1061,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/auth/logged_in.json')
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
-        self.assertEqual(struct, {})
+        self.assertEqual(struct.keys(), ['xsrf'])
 
         data = dict(email="peterbe@gmail.com",
                     password="secret",
@@ -1080,7 +1080,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.get('/auth/logged_in.json', headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
-        self.assertEqual(struct, {'user_name':'Peter'})
+        self.assertEqual(struct['user_name'], 'Peter')
         user.premium = True
         user.save()
 
