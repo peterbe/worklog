@@ -457,6 +457,11 @@ $(document).ready(function() {
       }
    });
 
-   window.addEventListener("online", Calendar.isOnline, false);
-   window.addEventListener("offline", Calendar.isOffline, false);
+   if (window.addEventListener) {
+      window.addEventListener("online", Calendar.isOnline, false);
+      window.addEventListener("offline", Calendar.isOffline, false);
+   } else {
+      document.body.ononline = Calendar.isOnline;
+      document.body.onoffline = Calendar.isOffline;
+   }
 });

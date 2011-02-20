@@ -1,4 +1,6 @@
-* (MEDIUM) Upgrade to latest jquery-mobile
+* (MEDIUM) If you email 3 things in (e.g. 2h this, 1h that, 3h those),
+  the first one should be user_settings.first_hour and the stacked
+  from there.
 
 * (MEDIUM) Rewrite log_request() method (over ride)
 
@@ -12,27 +14,27 @@
 
 * (LOW) Possibly look into this to make things work in IE7 too
   http://code.google.com/p/ie7-js/
-  
+
 * (MEDIUM) Try changing to use head.js
 
 * (LOW) When you need memcaching, consider
   https://github.com/gmr/Tinman/blob/master/tinman/cache.py
-  
+
 * (LOW) spell correct tags
 
 * (MEDIUM) Replace with Tipped
   http://projects.nickstakenburg.com/tipped/
-  
+
 * (MEDIUM) render the shared classes in calendar.html on page load (and
   see if that helps with the reloading etc)
-  
+
 * (HIGH) Find out why all CSS is lost when an event is added
 
 * (HIGH) moving an event resets colour on shared calendars
 
 * (MEDIUM) Consider changing from using .json in AJAX to .js which is
-  also JSON but much lighter since it doesn't have keys. 
-  
+  also JSON but much lighter since it doesn't have keys.
+
 * (MEDIUM) Help page about playing sounds
   http://www.schillmania.com/projects/soundmanager2/demo/flashblock/
 
@@ -44,14 +46,12 @@
 
 * (LOW) Whoosh and Carrot
   http://github.com/ask/carrot
-  
+
 * (MEDIUM) Look at this for ideas on how to use a log file
   http://groups.google.com/group/python-tornado/browse_thread/thread/6d62aec54eb47015
 
 * (LOW) Experiment with http://vis.stanford.edu/protovis/ to write
   some nice stats
-  
+
 * (LOW) Experiment with running mongodb in RAM for faster unit tests
   http://www.phpmoadmin.com/mongodb-in-memory-database
-  
-  
