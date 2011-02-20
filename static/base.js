@@ -1,5 +1,6 @@
 function L() {
-   console.log.apply(console, arguments);
+   if (window.console && window.console.log)
+     console.log.apply(console, arguments);
 }
 
 function increment_total_no_events(new_no) {

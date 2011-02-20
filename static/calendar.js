@@ -688,7 +688,8 @@ head.ready(function() {
 // have been created. So until then we will use a function to avoid a
 // 'display_sidebar_stats is not defined' error
 display_sidebar_stats_wrapped = function(start, end) {
-   if (typeof jqplot_loaded != 'undefined' && jqplot_loaded)
-     display_sidebar_stats(start, end);
-
+   if (typeof jqplot_loaded != 'undefined' && jqplot_loaded) {
+      L($(window).width());
+      display_sidebar_stats(start, end);
+   }
 };

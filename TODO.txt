@@ -1,3 +1,7 @@
+* (MEDIUM) Look into
+  https://github.com/wycats/jquery-offline when doing Smartphone
+  offline stuff.
+  
 * (MEDIUM) If you email 3 things in (e.g. 2h this, 1h that, 3h those),
   the first one should be user_settings.first_hour and the stacked
   from there.

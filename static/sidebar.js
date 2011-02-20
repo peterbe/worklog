@@ -60,12 +60,65 @@ function _tag_highlight(colors, text) {
    return text.replace(/\B[#@]([\w-]+)/ig, f);
 }
 
+//------------------------------------------------------------------------------
+// By default, the CSS is loaded for the big display
+var sidebar_hidden = false;
+function _big_display() {
+   //L("BIG");
+   if (sidebar_hidden) {
+      //L("    show sidebar");
+      $('#sidebar:hidden').show();
+      $('#wrap').css('width','95%');
+      $('#content').css('width','70%');
+      $('.footer-stats:hidden','#footer').show();
+      $('#calendar').fullCalendar('render');
+      sidebar_hidden = false;
+   } else {
+      //L("    do nothing");
+   }
+   var view = $('#calendar').fullCalendar('getView');
+   display_sidebar_stats(view.start, view.end);
+}
+
+function _small_dislay() {
+   //L("SMALL");
+   if (!sidebar_hidden) {
+      $('#sidebar').hide();
+      $('#wrap').css('width','100%');
+      $('#content').css('width','100%');
+      $('#calendar').fullCalendar('render');
+      $('.footer-stats:visible','#footer').hide();
+      big_display_loaded = false;
+      sidebar_hidden = true;
+   }
+}
+
 var jqplot_loaded = false;
 head.ready(function() {
    head.js(JS_URLS.jqplot, JS_URLS.jqplot_pierenderer, function() {
-      var view = $('#calendar').fullCalendar('getView');
+      $.jqplot.config.enablePlugins = true;
+      
       jqplot_loaded = true;
-      display_sidebar_stats(view.start, view.end);
+      var resize_timer;
+      $(window).resize(function() {
+	 //L($(window).width());
+	 clearTimeout(resize_timer);
+	 resize_timer = setTimeout(function() {
+	    L($(window).width());
+	    if ($(window).width() > 1200) {
+	       _big_display();
+	    } else {
+	       _small_dislay();
+	    }
+	 }, 1000);
+      });
+      if ($(window).width() > 1100) {
+	 var view = $('#calendar').fullCalendar('getView');
+	 display_sidebar_stats(view.start, view.end);
+	 _big_display();
+      } else {
+	 _small_dislay();
+      }
    });
 
    $('a.user-settings').fancybox({
