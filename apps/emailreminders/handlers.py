@@ -314,8 +314,11 @@ class ReceiveEmailReminder(EventsHandler):
                 if each:
                     character_set = each
                     break
-            if not character_set:
+            if character_set:
+                message_body = unicode(message_body, character_set)
+            else:
                 message_body = unicode(message_body, 'utf-8')
+
 
         if not from_user:
             # only bother to reply if the email appears to be sent from

@@ -8,14 +8,16 @@ route_redirect('/log$', '/log/')
 class EventLogHandler(BaseHandler):
     DEFAULT_BATCH_SIZE = 100
 
-    #@login_required
+    @login_required
     def get(self):
         options = self.get_base_options()
         user = self.get_current_user()
         superuser = user.email == 'peterbe@gmail.com'
+
         search = {'user.$id': user._id}
         if superuser:
             search = dict()
+
         event_logs = self.db.EventLog.find(search)
         options['count_event_logs'] = event_logs.count()
         options['superuser'] = superuser

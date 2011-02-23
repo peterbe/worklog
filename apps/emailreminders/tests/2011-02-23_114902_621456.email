@@ -1,0 +1,64 @@
+From peterbe@gmail.com  Wed Feb 23 11:49:02 2011
+Return-Path: <peterbe@gmail.com>
+Received: from mail-ww0-f50.google.com (mail-ww0-f50.google.com [74.125.82.50])
+	by donecal.fry-it.com (Postfix) with ESMTPS id 89C6720BFE622
+	for <reminder+4d11e7b674a1f8361200006c@donecal.com>; Wed, 23 Feb 2011 11:49:02 +0000 (UTC)
+Received: by wwf26 with SMTP id 26so7794958wwf.7
+        for <reminder+4d11e7b674a1f8361200006c@donecal.com>; Wed, 23 Feb 2011 03:49:02 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:reply-to:in-reply-to:references
+         :from:date:message-id:subject:to:content-type
+         :content-transfer-encoding;
+        bh=vRQUNVUvBRYSyOn2aCYfgK2SNkfGvZPNFsEp0QH5JGA=;
+        b=N7LNoHXkGj/B+4r11lNPAf3Tix4XYlLkgMifP0DhwEJSZHaYALJ0lCArZEo1Cx7dO/
+         tF9LRuj422KBaWK07utgILIRYzQJ1dArASbiMbvNT1M+9YL5FxbacGUJybJNpHP7R/SW
+         pczDgzLWcO/53brAU/Rabp6pU/lHvDJTRMtFE=
+DomainKey-Signature: a=rsa-sha1; c=nofws;
+        d=gmail.com; s=gamma;
+        h=mime-version:reply-to:in-reply-to:references:from:date:message-id
+         :subject:to:content-type:content-transfer-encoding;
+        b=ZsIQwwNvwBqqMVU4TtJ7pAC/arxe41D8iji29mV/S2wTnrXmamj87LUXMViJYzrE0a
+         KfKMdGAUQ576lGnbMNyELxvOqM0Lfd8krz+gxloqLAwCOg5N3e1RazvhzB3K42Ezphmi
+         LqzSaMTVhAY6CBLA640DnY6R/oQ/6ddXi+yp8=
+Received: by 10.216.19.139 with SMTP id n11mr3223969wen.78.1298461742160; Wed,
+ 23 Feb 2011 03:49:02 -0800 (PST)
+MIME-Version: 1.0
+Received: by 10.216.221.224 with HTTP; Wed, 23 Feb 2011 03:48:42 -0800 (PST)
+Reply-To: peter@fry-it.com
+In-Reply-To: <20110221184501.16161.38157@donecal>
+References: <20110221184501.16161.38157@donecal>
+From: Peter Bengtsson <peterbe@gmail.com>
+Date: Wed, 23 Feb 2011 11:48:42 +0000
+Message-ID: <AANLkTin02RPeiS5BzNmivY=NGqjHj=M-SF-OzXvKWQvZ@mail.gmail.com>
+Subject: Re: [DoneCal] What did you do today?
+To: DoneCal <reminder+4d11e7b674a1f8361200006c@donecal.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+1h =C4r du p=E5 plats i Libyen? SM
+
+30 minutes #=C4r du @p=E5
+
+On 21 February 2011 18:45, DoneCal
+<reminder+4d11e7b674a1f8361200006c@donecal.com> wrote:
+> Hi Peter,
+> What did you do *today*?
+>
+>
+>
+>
+> SETTINGS:
+> If you want to change your email reminders simply go to this page:
+> https://donecal.com/emailreminders/?edit=3D4d11e7b674a1f8361200006c
+>
+>
+
+
+
+--=20
+Peter Bengtsson,
+work www.fry-it.com
+home www.peterbe.com
+hobby www.issuetrackerproduct.com
+fun crosstips.org

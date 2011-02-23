@@ -1,3 +1,11 @@
+* (HIGH) Sometimes the CDN contains blank files. I think suspect it's
+  because of the slowness of generating the static files.
+  First figure out a way to not use the CDN until after all static
+  files have been fully created.
+  
+  Figure out a way to NOT slim (Closure, YUI) on-the-fly but to
+  instead do this in a fire-and-forget.
+
 * (HIGH) Logged_in.json redirects to the home page!
   need to do $.getJSON('/logged_in.json', {url:location.href}) or
 something
