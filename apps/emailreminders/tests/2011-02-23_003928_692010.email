@@ -1,0 +1,122 @@
+From denghui.cn@gmail.com  Wed Feb 23 00:39:28 2011
+Return-Path: <denghui.cn@gmail.com>
+Received: from mail-iw0-f172.google.com (mail-iw0-f172.google.com [209.85.214.172])
+	by donecal.fry-it.com (Postfix) with ESMTPS id 4772020BFE653
+	for <reminder+4d32343474a1f87fa2000000@donecal.com>; Wed, 23 Feb 2011 00:39:28 +0000 (UTC)
+Received: by iwl42 with SMTP id 42so4824070iwl.31
+        for <reminder+4d32343474a1f87fa2000000@donecal.com>; Tue, 22 Feb 2011 16:39:26 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:in-reply-to:references:date
+         :message-id:subject:from:to:content-type;
+        bh=TNHsp6yUlC8PCeOx6c97iM2jIHFIJ9gPHPSWG582zEQ=;
+        b=ZO33/PeEpm8LI/s/qnpdenFr1OMTguwz6vb5cgLu0MQF0RLFbjPRfHQe91g0LKYBvj
+         Ts9OKEOPIr4ULyQRqtrDUNfjl1mWusIMJZnbye9nzh8KeXPEG/KJCgUZbSx0L3j8YcFN
+         A9S+yPMwbLUV3l78HF24rYwQ/yxps+1kdf7hg=
+DomainKey-Signature: a=rsa-sha1; c=nofws;
+        d=gmail.com; s=gamma;
+        h=mime-version:in-reply-to:references:date:message-id:subject:from:to
+         :content-type;
+        b=PKgNFlY9heJqGd+gVZVwnMsn7JKrgui/ypk3Kb3Uafe8tGlRvbhtmKZ2W24PGdLa4C
+         fd2P/OwyR7v9hasM5cwuGxZQDO5WVwNAxIjdIhoaZCOL9qWxa2O294g5CZQaW9A1AZHz
+         NZ1aZADX09Wyh1DCEngiXZWfm9sNY1/jJQEOc=
+MIME-Version: 1.0
+Received: by 10.42.178.134 with SMTP id bm6mr4257155icb.494.1298421564854;
+ Tue, 22 Feb 2011 16:39:24 -0800 (PST)
+Received: by 10.231.12.129 with HTTP; Tue, 22 Feb 2011 16:39:24 -0800 (PST)
+In-Reply-To: <20110222090001.16158.42675@donecal>
+References: <20110222090001.16158.42675@donecal>
+Date: Wed, 23 Feb 2011 08:39:24 +0800
+Message-ID: <AANLkTincj0+x7Mw+bCTFNDji2ZtpKoGq=y5tMEGZaN6P@mail.gmail.com>
+Subject: Re: [DoneCal] What did you do today?
+From: david <denghui.cn@gmail.com>
+To: DoneCal <reminder+4d32343474a1f87fa2000000@donecal.com>
+Content-Type: multipart/alternative; boundary=90e6ba6e8d9c245107049ce85468
+
+--90e6ba6e8d9c245107049ce85468
+Content-Type: text/plain; charset=GB2312
+Content-Transfer-Encoding: quoted-printable
+
+=BB=E3=B1=A8ppt=B1=E0=D0=B4
+
+
+
+On Tue, Feb 22, 2011 at 5:00 PM, DoneCal <
+reminder+4d32343474a1f87fa2000000@donecal.com> wrote:
+
+> Hi david,
+> What did you do *today*?
+>
+>
+> INSTRUCTIONS:
+> Just hit reply and type at the start of the email as you would enter
+> an event normally on DoneCal with tags and everything. To enter
+> multiple events separate them by two line breaks. A single line break
+> sets the description of the event.
+>
+> If you want it to be an hourly even write a number followed by the letter
+> 'h'. Like this for example:
+>
+>  14:45 Working on #projectX like Sam said
+>
+> If you want to specify exactly when it happened enter it like a 24 hour
+> clock or with AM/PM. Like this for example:
+>
+>  10:30 1h Helped Santa with gift wrapping
+>
+> If you don't start the line with a time, but do start the line with a
+> duration it will assume it's noon your local time.
+>
+>
+> SETTINGS:
+> If you want to change your email reminders simply go to this page:
+> http://donecal.com/emailreminders/?edit=3D4d32343474a1f87fa2000000
+>
+>
+
+--90e6ba6e8d9c245107049ce85468
+Content-Type: text/html; charset=GB2312
+Content-Transfer-Encoding: quoted-printable
+
+<div>=BB=E3=B1=A8ppt=B1=E0=D0=B4</div><br clear=3D"all"><span style=3D"font=
+-family:Verdana, Arial, Helvetica, sans-serif;font-size:13px;border-collaps=
+e:collapse"><p style=3D"margin-top:0px;margin-right:0px;margin-bottom:8px;m=
+argin-left:0px"><br></p>
+</span><br><div class=3D"gmail_quote">On Tue, Feb 22, 2011 at 5:00 PM, Done=
+Cal <span dir=3D"ltr">&lt;<a href=3D"mailto:reminder%2B4d32343474a1f87fa200=
+0000@donecal.com">reminder+4d32343474a1f87fa2000000@donecal.com</a>&gt;</sp=
+an> wrote:<br>
+<blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;border-left:1p=
+x #ccc solid;padding-left:1ex;">Hi david,<br>
+What did you do *today*?<br>
+<br>
+<br>
+INSTRUCTIONS:<br>
+Just hit reply and type at the start of the email as you would enter<br>
+an event normally on DoneCal with tags and everything. To enter<br>
+multiple events separate them by two line breaks. A single line break<br>
+sets the description of the event.<br>
+<br>
+If you want it to be an hourly even write a number followed by the letter &=
+#39;h&#39;. Like this for example:<br>
+<br>
+&nbsp;14:45 Working on #projectX like Sam said<br>
+<br>
+If you want to specify exactly when it happened enter it like a 24 hour clo=
+ck or with AM/PM. Like this for example:<br>
+<br>
+&nbsp;10:30 1h Helped Santa with gift wrapping<br>
+<br>
+If you don&#39;t start the line with a time, but do start the line with a d=
+uration it will assume it&#39;s noon your local time.<br>
+<br>
+<br>
+SETTINGS:<br>
+If you want to change your email reminders simply go to this page:<br>
+<a href=3D"http://donecal.com/emailreminders/?edit=3D4d32343474a1f87fa20000=
+00" target=3D"_blank">http://donecal.com/emailreminders/?edit=3D4d32343474a=
+1f87fa2000000</a><br>
+<br>
+</blockquote></div><br>
+
+--90e6ba6e8d9c245107049ce85468--

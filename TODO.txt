@@ -1,3 +1,9 @@
+* (HIGH) Logged_in.json redirects to the home page!
+  need to do $.getJSON('/logged_in.json', {url:location.href}) or
+something
+
+* (HIGH) stats.json appear to be called twice.
+
 * (MEDIUM) Look into
   https://github.com/wycats/jquery-offline when doing Smartphone
   offline stuff.
