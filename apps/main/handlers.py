@@ -1633,14 +1633,12 @@ class AuthLoginHandler(BaseAuthHandler):
         except CredentialsError, msg:
             return self.write("Error: %s" % msg)
 
-        #self.set_secure_cookie("guid", str(user.guid), expires_days=100)
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
 
-        self.redirect(self.get_next_url())
-        #if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        #    return str(user.guid)
-        #else:
-        #    self.redirect(self.get_next_url())
+        url = self.get_next_url()
+        if user.premium:
+            url = self.httpsify_url(url)
+        self.redirect(url)
 
 
 @route('/auth/openid/google/')
@@ -1685,7 +1683,10 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
 
         self.set_secure_cookie("user", str(user.guid), expires_days=100)
 
-        self.redirect(self.get_next_url())
+        url = self.get_next_url()
+        if user.premium:
+            url = self.httpsify_url(url)
+        self.redirect(url)
 
 
 
@@ -1697,7 +1698,7 @@ class AuthLogoutHandler(BaseAuthHandler):
         #self.clear_cookie("shares")
         #self.clear_cookie("guid")
         #self.clear_cookie("hidden_shares")
-        self.redirect(self.get_next_url())
+        self.redirect(self.httpify_url(self.get_next_url()))
 
 
 @route(r'/help/([\w-]*)')

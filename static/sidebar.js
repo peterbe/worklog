@@ -76,7 +76,6 @@ function _big_display() {
    } else {
       //L("    do nothing");
    }
-   L('in _big_display()');
    var view = $('#calendar').fullCalendar('getView');
    display_sidebar_stats(view.start, view.end);
 }
