@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 
 import code, re
+import os, sys
+if os.path.abspath(os.curdir) not in sys.path:
+    sys.path.insert(0, os.path.abspath(os.curdir))
 
 if __name__ == '__main__':
-    
+
     from apps.main.models import *
     from apps.main import models
-    
+
     from apps.emailreminders.models import EmailReminder
     from mongokit import Connection, Document as mongokit_Document
     from pymongo.objectid import InvalidId, ObjectId
     con = Connection()
-    
+
     import settings
     model_classes = []
     for app_name in settings.APPS:
@@ -26,13 +29,13 @@ if __name__ == '__main__':
             thing = getattr(models, name)
             if issubclass(thing, mongokit_Document):
                 model_classes.append(thing)
-                
+
     con.register(model_classes)
 
-                
+
     db = con.worklog
     print "AVAILABLE:"
-    print '\n'.join(['\t%s'%x for x in locals().keys() 
+    print '\n'.join(['\t%s'%x for x in locals().keys()
                      if re.findall('[A-Z]\w+|db|con', x)])
     print "Database available as 'db'"
     code.interact(local=locals())

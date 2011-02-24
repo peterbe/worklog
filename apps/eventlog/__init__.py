@@ -1,3 +1,4 @@
+import logging
 def log_event(db, user, event, action, context, comment=None):
     try:
         event_log = db.EventLog()
@@ -21,4 +22,3 @@ for each in dir(constants):
         setattr(actions, each, getattr(constants, each))
     if each.startswith('CONTEXT_'):
         setattr(contexts, each, getattr(constants, each))
-

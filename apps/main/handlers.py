@@ -93,7 +93,6 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
 
     def _email_exception(self, exception): # pragma: no cover
         import sys
-        from pprint import pprint
         err_type, err_val, err_traceback = sys.exc_info()
         error = u'%s: %s' % (err_type, err_val)
         out = StringIO()

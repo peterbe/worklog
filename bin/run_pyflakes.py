@@ -3,6 +3,9 @@ import pyflakes.checker
 import compiler, sys
 import os
 
+if os.path.abspath(os.curdir) not in sys.path:
+    sys.path.insert(0, os.path.abspath(os.curdir))
+
 def check(codeString, filename):
     """
     Check the Python source given by C{codeString} for flakes.
@@ -70,7 +73,7 @@ def checkPath(filename):
         return check(file(filename, 'U').read() + '\n', filename)
     except IOError, msg:
         return ["%s: %s" % (filename, msg.args[1])]
-    
+
 def checkPaths(filenames):
     warnings = []
     for arg in filenames:
