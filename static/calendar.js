@@ -143,7 +143,7 @@ function _event_clicked(event, jsEvent, view) {
             decrement_total_no_events();
             $('#calendar').fullCalendar('removeEvents', event.id);
             var view = $('#calendar').fullCalendar('getView');
-            display_sidebar_stats_wrapped(view.start, view.end);
+            Calendar.display_sidebar_stats(view);
             __update_described_colors();
             show_undo_delete("UNDO last delete", event.id);
          });
@@ -231,8 +231,7 @@ function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view
          alert(response.error);
          revertFunc();
       }
-      display_sidebar_stats_wrapped(view.start, view.end);
-
+      Calendar.display_sidebar_stats(view);
    });
 }
 
@@ -249,7 +248,7 @@ function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc, jsEvent, u
          // it can happen that the event is moved from one month
          // to another (e.g. 30th Nov to 1st Dec). If this happens re-render
          // the pie chart stats
-         display_sidebar_stats_wrapped(view.start, view.end);
+         Calendar.display_sidebar_stats(view);
       }
    });
 }
@@ -298,15 +297,6 @@ function __inner_setup_ajaxsubmit_offline(element, event_id) {
 
       // close any open qtip
       close_current_tooltip();
-
-      //if (event_id)
-      // $('#calendar').fullCalendar('removeEvents', event_id);
-      //
-
-      //$('#calendar').fullCalendar('renderEvent', response.event);
-      //var view = $('#calendar').fullCalendar('getView');
-      //display_sidebar_stats_wrapped(view.start, view.end);
-      //__update_described_colors();
 
    }
    });
@@ -363,7 +353,7 @@ function __inner_setup_ajaxsubmit(element, event_id) {
 
 	    $('#calendar').fullCalendar('renderEvent', response.event);
 	    var view = $('#calendar').fullCalendar('getView');
-	    display_sidebar_stats_wrapped(view.start, view.end);
+            Calendar.display_sidebar_stats(view);
 	    __update_described_colors();
 	 }
       });
@@ -473,7 +463,7 @@ function show_undo_delete(text, event_id) {
            increment_total_no_events();
            $('#calendar').fullCalendar('renderEvent', response.event);
            var view = $('#calendar').fullCalendar('getView');
-           display_sidebar_stats_wrapped(view.start, view.end);
+           Calendar.display_sidebar_stats(view);
            __update_described_colors();
            $('#undo-delete').hide();
         });
@@ -495,6 +485,7 @@ function close_current_tooltip(parent) {
 var AVAILABLE_TAGS;
 
 var Calendar = (function() {
+   var _first_view_display = false;
    // private
    function _load_calendar() {
       var defaultView = 'month';
@@ -612,8 +603,17 @@ var Calendar = (function() {
          eventResize: _event_resized,
          eventDrop: _event_dropped,
          viewDisplay: function(view) {
+
             close_current_tooltip(); // if any open
-            display_sidebar_stats_wrapped(view.start, view.end);
+            // viewDisplay() is called(back) the first time you render the
+            // calendar but also every time you change the view (month,week,day)
+            // but we only want to update the sidebar stats when the view is
+            // *changed*
+            if (!_first_view_display) {
+               _first_view_display = true;
+            } else {
+               Calendar.display_sidebar_stats(view);
+            }
             if (save_view_cookie) {
                var href = '#' + view.name.replace('agenda', '').toLowerCase();
                href += ',' + view.start.getFullYear();
@@ -631,6 +631,8 @@ var Calendar = (function() {
       });
    }
 
+
+
    // public
    return {
       load: function() {
@@ -638,6 +640,13 @@ var Calendar = (function() {
          /*$.getJSON('/xsrf.json', function(r) {
             XSRF = r.xsrf;
          });*/
+      },
+      display_sidebar_stats: function(view) {
+         // the global 'display_sidebar_stats' here is a function
+         // defined in sidebar.js
+         if ('undefined' != typeof display_sidebar_stats) {
+            display_sidebar_stats(view.start, view.end);
+         }
       }
    }
 })();
@@ -681,15 +690,3 @@ head.ready(function() {
     */
 
 });
-
-
-// Because this file is loaded before stats.js
-// We can't yet use display_sidebar_stats() since that function might not yet
-// have been created. So until then we will use a function to avoid a
-// 'display_sidebar_stats is not defined' error
-display_sidebar_stats_wrapped = function(start, end) {
-   if (typeof jqplot_loaded != 'undefined' && jqplot_loaded) {
-      L($(window).width());
-      display_sidebar_stats(start, end);
-   }
-};

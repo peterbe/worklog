@@ -76,6 +76,7 @@ function _big_display() {
    } else {
       //L("    do nothing");
    }
+   L('in _big_display()');
    var view = $('#calendar').fullCalendar('getView');
    display_sidebar_stats(view.start, view.end);
 }
@@ -97,14 +98,13 @@ var jqplot_loaded = false;
 head.ready(function() {
    head.js(JS_URLS.jqplot, JS_URLS.jqplot_pierenderer, function() {
       $.jqplot.config.enablePlugins = true;
-      
+
       jqplot_loaded = true;
       var resize_timer;
       $(window).resize(function() {
 	 //L($(window).width());
 	 clearTimeout(resize_timer);
 	 resize_timer = setTimeout(function() {
-	    L($(window).width());
 	    if ($(window).width() > 1200) {
 	       _big_display();
 	    } else {
@@ -114,7 +114,6 @@ head.ready(function() {
       });
       if ($(window).width() > 1100) {
 	 var view = $('#calendar').fullCalendar('getView');
-	 display_sidebar_stats(view.start, view.end);
 	 _big_display();
       } else {
 	 _small_dislay();

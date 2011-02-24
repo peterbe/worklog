@@ -48,7 +48,7 @@ class HTTPSMixin(object):
             parsed = urlparse(self.request.full_url())
             return 'http://%s%s' % (parsed.netloc, url)
         else:
-            return url.replace('http://', 'https://')
+            return url.replace('https://', 'http://')
 
     def httpsify_url(self, url=None):
         url = url if url else self.request.full_url()
@@ -1589,11 +1589,17 @@ class AuthLoginHandler(BaseAuthHandler):
             # but are you allowed to use secure URLs?
             if not user or (user and not user['premium']):
                 # not allowed!
-                info['redirect_to'] = self.httpify_url('/')
+                redirect_to = self.get_argument('url', '/')
+                if redirect_to.startswith('http'):
+                    assert urlparse(redirect_to).netloc == self.request.host
+                info['redirect_to'] = self.httpify_url(redirect_to)
         else:
             if user and user['premium']:
                 # allowed but not using it
-                info['redirect_to'] = self.httpsify_url('/')
+                redirect_to = self.get_argument('url', '/')
+                if redirect_to.startswith('http'):
+                    assert urlparse(redirect_to).netloc == self.request.host
+                info['redirect_to'] = self.httpsify_url(redirect_to)
 
         self.write_json(info)
 

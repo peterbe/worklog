@@ -37,6 +37,7 @@ class Application(tornado.web.Application):
                  optimize_static_content=None):
         ui_modules_map = {}
         for app_name in settings.APPS:
+            # XXX consider replacing this with use of tornado.util.import_object
             _ui_modules = __import__('apps.%s' % app_name, globals(), locals(),
                                      ['ui_modules'], -1)
             try:
