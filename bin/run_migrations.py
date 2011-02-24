@@ -2,10 +2,9 @@
 import datetime
 import re
 from glob import glob
-import os
-
-
-
+import os, sys
+if os.path.abspath(os.curdir) not in sys.path:
+    sys.path.insert(0, os.path.abspath(os.curdir))
 
 def main(locations, patterns):
     def _filter(filename):
@@ -32,13 +31,13 @@ def main(locations, patterns):
         t = t.strftime('%Y/%m/%d %H:%M:%S')
         done_filename = filename + '.done'
         open(done_filename, 'w').write("%s\n" % t)
-        print done_filename        
+        print done_filename
 
 from settings import APPS
-locations = [os.path.join('apps', x, 'migrations') 
+locations = [os.path.join('apps', x, 'migrations')
              for x in APPS
              if os.path.isdir(os.path.join('apps', x, 'migrations'))]
-             
+
 def run(*args):
     if not args:
         patterns = ['*.py']

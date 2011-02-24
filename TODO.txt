@@ -1,3 +1,6 @@
+* (HIGH) If Openid logging in, after it succeeds don't redirect to
+  http://donecal.com/ if you're premium and were on http:// before
+  
 * (MEDIUM) Look into
   https://github.com/wycats/jquery-offline when doing Smartphone
   offline stuff.
