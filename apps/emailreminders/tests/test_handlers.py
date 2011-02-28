@@ -341,6 +341,95 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertEqual(event.title, 'This is the title')
         self.assertEqual(event.description, 'This is the description')
 
+    def test_posting_email_in_stacked_after_each_other(self):
+        url = '/emailreminders/receive/'
+        body = ['From: bob@builder.com']
+        body += ['To: reminder@donecal.com']
+        body += ['Subject: [DoneCal] what did you do today?']
+        body += ['']
+        body += ['1h Doing']
+        body += ['']
+        body += ['2h Goofing']
+        body += ['']
+        body += ['On 23 Dec someone wrote']
+        body += ['> INSTRUCTIONS:']
+        body += ['']
+        body += ['> BLa bla bla']
+
+        db = self.get_db()
+        bob = db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.first_name = u"Bob"
+        bob.save()
+
+        email_reminder = db.EmailReminder()
+        email_reminder.user = bob
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (11,30)
+        email_reminder.tz_offset = 0.0
+        email_reminder.save()
+
+        body[1] = 'To: DoneCal <reminder+%s@donecal.com>' % email_reminder._id
+
+        response = self.post(url, '\r\n'.join(body))
+        self.assertEqual(db.Event.find().count(), 2)
+        events = list(db.Event.find().sort('start', 1))
+        self.assertEqual([x.title for x in events], [u'Doing', u'Goofing'])
+        self.assertEqual([x.start.hour for x in events], [12, 13])
+        first, last = events
+        self.assertEqual(first.start.hour, 12)
+        self.assertEqual(first.end.hour, 13)
+        self.assertEqual(last.start.hour, 13)
+        self.assertEqual(last.end.hour, 15)
+
+
+    def test_posting_email_in_stacked_after_each_other_with_specific_start(self):
+        url = '/emailreminders/receive/'
+        body = ['From: bob@builder.com']
+        body += ['To: reminder@donecal.com']
+        body += ['Subject: [DoneCal] what did you do today?']
+        body += ['']
+        body += ['1h Doing']
+        body += ['']
+        body += ['2h Goofing']
+        body += ['']
+        body += ['On 23 Dec someone wrote']
+        body += ['> INSTRUCTIONS:']
+        body += ['']
+        body += ['> BLa bla bla']
+
+        db = self.get_db()
+        bob = db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.first_name = u"Bob"
+        bob.save()
+        bob_settings = db.UserSettings()
+        bob_settings.user = bob
+        bob_settings.first_hour = 6
+        bob_settings.save()
+
+        email_reminder = db.EmailReminder()
+        email_reminder.user = bob
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (11,30)
+        email_reminder.tz_offset = 0.0
+        email_reminder.save()
+
+        body[1] = 'To: DoneCal <reminder+%s@donecal.com>' % email_reminder._id
+
+        response = self.post(url, '\r\n'.join(body))
+        self.assertEqual(db.Event.find().count(), 2)
+        events = list(db.Event.find().sort('start', 1))
+        self.assertEqual([x.title for x in events], [u'Doing', u'Goofing'])
+        self.assertEqual([x.start.hour for x in events], [6, 7])
+        first, last = events
+        self.assertEqual(first.start.hour, 6)
+        self.assertEqual(first.end.hour, 7)
+        self.assertEqual(last.start.hour, 7)
+        self.assertEqual(last.end.hour, 9)
+
     def test_posting_email_in_with_duration_only(self):
         url = '/emailreminders/receive/'
         body = ['From: bob@builder.com']

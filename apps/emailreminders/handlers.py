@@ -408,13 +408,17 @@ class ReceiveEmailReminder(EventsHandler):
         #
         # So we have to remove it.
         paragraphs = paragraphs[:-1]
+        previous_duration = None
         for text in paragraphs:
             if not text.strip():
                 # it was blank
                 continue
             try:
-                event = self.parse_and_create_event(from_user, text, about_today, tz_offset)
+                event = self.parse_and_create_event(from_user, text, about_today, tz_offset,
+                                                    previous_duration=previous_duration)
                 if event:
+                    if not event.all_day:
+                        previous_duration = (event.end - event.start).seconds / 60
                     self.write("Created %r\n" % event.title)
                     count_new_events += 1
             except ParseEventError, exception_message:
@@ -430,7 +434,8 @@ class ReceiveEmailReminder(EventsHandler):
 
         self.write("\n")
 
-    def parse_and_create_event(self, user, text, about_today, tz_offset):
+    def parse_and_create_event(self, user, text, about_today, tz_offset,
+                               previous_duration=None):
         """parse the text (which can be more than one line) and return either a
         newly created event object or nothing.
         """
@@ -445,10 +450,17 @@ class ReceiveEmailReminder(EventsHandler):
             if tz_offset_h > 0:
                 tz_offset_h -= 1
             else:
-                tz_offset_h += 1
-                tz_offset_m *= -1
+                if tz_offset_h:
+                    tz_offset_h += 1
+                if tz_offset_h:
+                    tz_offset_m *= -1
+            # default is at 12.00 if no time was specified
+            first_hour = 12
+            user_settings = self.get_user_settings(user, fast=True)
+            if user_settings:
+                first_hour = user_settings['first_hour']
+            time_ = (first_hour - tz_offset_h, 0 - tz_offset_m)
 
-            time_ = (12 - tz_offset_h, 0 - tz_offset_m)
 
         if len(text.splitlines()) > 1:
             title = text.splitlines()[0]
@@ -470,6 +482,15 @@ class ReceiveEmailReminder(EventsHandler):
         if all_day:
             start = end = start_base
         else:
+            if previous_duration:
+                duration_hours = int(previous_duration) / 60
+                duration_minutes = int(previous_duration) % 60
+                if isinstance(time_, tuple):
+                    time_ = list(time_)
+                time_[0] += duration_hours
+                time_[1] += duration_minutes
+
+
             start = start_base
             start = datetime.datetime(start.year, start.month, start.day,
                                       time_[0], time_[1])
