@@ -76,6 +76,7 @@ class Application(tornado.web.Application):
             title=settings.TITLE,
             template_path=os.path.join(os.path.dirname(__file__), "apps", "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "static"),
+            embed_static_url_timestamp=settings.EMBED_STATIC_URL_TIMESTAMP,
             ui_modules=ui_modules_map,
             xsrf_cookies=xsrf_cookies,
             cookie_secret=settings.COOKIE_SECRET,

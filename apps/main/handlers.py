@@ -1,5 +1,6 @@
 # python
 import traceback
+import stat
 import httplib
 from hashlib import md5
 from cStringIO import StringIO
@@ -60,6 +61,31 @@ class HTTPSMixin(object):
 
 
 class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
+
+    def static_url(self, path):
+        self.require_setting("static_path", "static_url")
+        if not hasattr(BaseHandler, "_static_timestamps"):
+            BaseHandler._static_timestamps = {}
+        timestamps = BaseHandler._static_timestamps
+        abs_path = os.path.join(self.application.settings["static_path"],
+                                        path)
+        if abs_path not in timestamps:
+            try:
+                timestamps[abs_path] = os.stat(abs_path)[stat.ST_MTIME]
+            except OSError:
+                logging.error("Could not open static file %r", path)
+                timestamps[abs_path] = None
+        base = self.request.protocol + "://" + self.request.host \
+            if getattr(self, "include_host", False) else ""
+        static_url_prefix = self.settings.get('static_url_prefix', '/static/')
+        if timestamps.get(abs_path):
+            if self.settings.get('embed_static_url_timestamp', False):
+                return base + static_url_prefix + 'v-%d/' % timestamps[abs_path] + path
+            else:
+                return base + static_url_prefix + path + "?v=%d" % timestamps[abs_path]
+        else:
+            return base + static_url_prefix + path
+
     def _handle_request_exception(self, exception):
         if not isinstance(exception, tornado.web.HTTPError) and \
           not self.application.settings['debug']:
