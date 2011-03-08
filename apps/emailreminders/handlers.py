@@ -4,6 +4,7 @@ import datetime
 from pymongo.objectid import InvalidId, ObjectId
 import tornado.web
 import logging
+from email import Parser
 
 from mongokit import ValidationError
 from utils.decorators import login_required
@@ -266,7 +267,7 @@ class ReceiveEmailReminder(EventsHandler):
             message = self.request.body
         else:
             message = self.get_argument('message')
-        from email import Parser
+
         parser = Parser.Parser()
         msg = parser.parsestr(message)
 
