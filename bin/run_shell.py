@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     from apps.main.models import *
     from apps.main import models
-
+    from apps.eventlog.models import EventLog
     from apps.emailreminders.models import EmailReminder
     from mongokit import Connection, Document as mongokit_Document
     from pymongo.objectid import InvalidId, ObjectId

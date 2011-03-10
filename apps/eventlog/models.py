@@ -11,17 +11,16 @@ class EventLog(BaseDocument):
       'comment': unicode,
     }
 
-    # we're not using autorefs here because then we don't have to cascade 
+    # we're not using autorefs here because then we don't have to cascade
     # deletes
     use_autorefs = False
-    
-    #ACTION_READ = 0
-    #ACTION_ADD = 1
-    #ACTION_EDIT = 2
-    #ACTION_DELETE = 3
-    #ACTION_RESTORE = 4
-    
-    #CONTEXT_CALENDAR = u'calendar'
-    #CONTEXT_API = u'api'
-    #CONTEXT_BOOKMARKLET = u'bookmarklet'
-    #CONTEXT_EMAILREMINDER = u'emailreminder'
+
+    @staticmethod
+    def get_eventlogs_by_event(event):
+        """return a cursor for all the eventlogs related to this parameter
+        event.
+
+        The reason why this is a static method here and not part of the
+        apps.main.models.Event class is because I don't want to clutter the main
+        app with something like the eventlog which is much less important."""
+        return event.db.EventLog.find({'event':event})
