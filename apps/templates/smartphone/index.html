@@ -105,10 +105,6 @@
 
 	<div data-role="content">
         <ul data-role="listview" data-inset="true" id="calendar-months">
-        <!--<li><a href="docs-lists.html">List markup conventions</a></li>
-        <li><a href="lists-ul.html">Basic linked list</a></li>
-        <li><a href="lists-nested.html">Nested list</a></li>
-        <li><a href="lists-ol.html">Numbered list</a></li>-->
         </ul>
 	</div><!-- /content -->
 </div>
@@ -170,7 +166,7 @@
 
 				</div>-->
 				<fieldset class="ui-grid-a">
-						<div class="ui-block-a"><button type="submit" data-theme="c">Cancel</button></div>
+						<div class="ui-block-a"><button type="submit" data-theme="c" class="cancel">Cancel</button></div>
 						<div class="ui-block-b"><button type="submit" data-theme="b">Save</button></div>
 			    </fieldset>
 
@@ -185,6 +181,57 @@
         </dl>
         </div><!-- /content -->
 </div>
+
+
+
+<div data-role="page" id="calendar-event">
+	<div data-role="header">
+		<h1>Loading</h1>
+	</div><!-- /header -->
+        <div data-role="content">
+			<h3></h3>
+			<form action="#" method="get">
+				<div data-role="fieldcontain">
+					<label for="title">Title:</label>
+					<input type="text" name="title" value="">
+
+				</div>
+
+				<div data-role="fieldcontain" id="field-duration-hours" xstyle="display:none">
+					<label for="title">Hours:</label>
+					<input type="text" name="duration_hours" value="">
+
+				</div>
+
+				<div data-role="fieldcontain" id="field-duration-days" xstyle="display:none">
+					<label for="title">Days:</label>
+					<input type="text" name="duration_days" value="">
+
+				</div>
+
+
+				<div data-role="fieldcontain">
+					<label for="textarea">Description:</label>
+					<textarea cols="40" rows="8" name="textarea"></textarea>
+
+				</div>
+				<fieldset class="ui-grid-a">
+						<!--<div class="ui-block-a"><button type="submit" data-theme="c" class="cancel">Cancel</button></div>-->
+						<div class="ui-block-b"><button type="submit" data-theme="b">Save</button></div>
+			    </fieldset>
+
+			</form>
+		</div><!-- /section 3 -->
+
+	<p>&nbsp;</p>
+        <ul data-role="listview" data-inset="false" id="calendar-day-events">
+        </ul>
+
+        <dl id="calendar-days-totals" title="Totals">
+        </dl>
+        </div><!-- /content -->
+</div>
+
 
 
 {% end %}

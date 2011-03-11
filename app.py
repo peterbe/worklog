@@ -28,6 +28,8 @@ define("database_name", default="worklog", help="mongodb database name")
 define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 define("showurls", default=False, help="Show all routed URLs", type=bool)
 define("dont_combine", default=False, help="Don't combine static resources", type=bool)
+define("dont_embed_static_url", default=False,
+       help="Don't put embed the static URL in static_url()", type=bool)
 
 
 class Application(tornado.web.Application):
@@ -76,7 +78,7 @@ class Application(tornado.web.Application):
             title=settings.TITLE,
             template_path=os.path.join(os.path.dirname(__file__), "apps", "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "static"),
-            embed_static_url_timestamp=settings.EMBED_STATIC_URL_TIMESTAMP,
+            embed_static_url_timestamp=True and not options.dont_embed_static_url,
             ui_modules=ui_modules_map,
             xsrf_cookies=xsrf_cookies,
             cookie_secret=settings.COOKIE_SECRET,

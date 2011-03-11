@@ -1,5 +1,6 @@
 from pprint import pprint
 import datetime
+from time import mktime
 from dateutil import relativedelta
 import tornado.web
 from utils.routes import route, route_redirect
@@ -7,6 +8,7 @@ from apps.main.handlers import BaseHandler, AuthLoginHandler, \
   CredentialsError, EventsHandler
 from apps.main.models import Event
 from apps.eventlog import log_event, actions, contexts
+from utils import niceboolean
 
 class XSRFIgnore(object):
     def check_xsrf_cookie(self):
@@ -68,8 +70,10 @@ class APIMonthsHandler(APIBaseHandler, SmartphoneAPIMixin):
 
     def get(self):
         user = self.must_get_user()
+        timestamp_only = niceboolean(self.get_argument('timestamp_only', False))
         _search = {'user.$id':user._id}
-        for event in self.db[Event.__collection__].find(_search).sort('start', 1).limit(1):
+        for event in self.db[Event.__collection__]\
+          .find(_search).sort('start', 1).limit(1):
             first_date = event['start']
             break
         else:
@@ -90,38 +94,44 @@ class APIMonthsHandler(APIBaseHandler, SmartphoneAPIMixin):
 
         months = []
         date = first_date
+        timestamp = 0
         while date <= last_date:
             first_of_date = datetime.datetime(
               date.year, date.month, 1, 0, 0, 0)
 
             next_date = first_of_date + relativedelta.relativedelta(months=1)
 
-            # becomes 28 for February for example
-            # Haven't tested for all years :)
-            #no_days = (next_date - first_of_date).days
-
-            #print first_of_date.strftime('%B'), no_days
-
-            count_events = self.db[Event.__collection__]\
+            for event in self.db.Event.collection\
               .find(dict(_search,
                          start={'$gte': first_of_date, '$lt':next_date}))\
-                         .count()
-            month_name = first_of_date.strftime('%B')
-            #if first_of_date.year == today.year and first_of_date.month == today.month:
-            #    month_name += " (today)"
-            months.append(dict(month_name=month_name,
-                               year=first_of_date.year,
-                               month=first_of_date.month,
-                               count=count_events,
-                               #no_days=no_days,
-                               ))
+              .limit(1).sort('add_date', -1):
+                tmp_timestamp = mktime(event['add_date'].timetuple())
+                if tmp_timestamp > timestamp:
+                    timestamp = tmp_timestamp
+                    break
 
+            if not timestamp_only:
+                # becomes 28 for February for example
+                # Haven't tested for all years :)
+                count_events = self.db[Event.__collection__]\
+                  .find(dict(_search,
+                             start={'$gte': first_of_date, '$lt':next_date}))\
+                             .count()
+                month_name = first_of_date.strftime('%B')
+                #if first_of_date.year == today.year and first_of_date.month == today.month:
+                #    month_name += " (today)"
+                months.append(dict(month_name=month_name,
+                                   year=first_of_date.year,
+                                   month=first_of_date.month,
+                                   count=count_events,
+                                   #no_days=no_days,
+                                   ))
             date = next_date
-        #print first_date
-        #print last_date
-        #pprint(months)
 
-        self.write_json(dict(months=months))
+        if timestamp_only:
+            self.write_json(dict(timestamp=timestamp))
+        else:
+            self.write_json(dict(months=months, timestamp=timestamp))
 
 @route('/smartphone/api/month\.json$')
 class APIMonthHandler(APIBaseHandler, SmartphoneAPIMixin):
@@ -130,26 +140,43 @@ class APIMonthHandler(APIBaseHandler, SmartphoneAPIMixin):
         user = self.must_get_user()
         year = int(self.get_argument('year'))
         month = int(self.get_argument('month'))
+        timestamp_only = niceboolean(self.get_argument('timestamp_only', False))
         _search = {'user.$id':user._id}
         first_day = datetime.datetime(year, month, 1, 0, 0, 0)
         date = first_day
         #no_days = 0
         day_counts = []
-        while date.month == first_day.month:
-            #print date,
-            count_events = self.db[Event.__collection__]\
-              .find(dict(_search,
-                         start={'$gte': date, '$lt':date + datetime.timedelta(days=1)}))\
-                         .count()
-            #print count_events
-            #no_days += 1
-            day_counts.append(count_events)
-            date += datetime.timedelta(days=1)
+        if timestamp_only:
+            while date.month == first_day.month:
+                date += datetime.timedelta(days=1)
+        else:
+            while date.month == first_day.month:
+                #print date,
+                count_events = self.db[Event.__collection__]\
+                  .find(dict(_search,
+                             start={'$gte': date, '$lt':date + datetime.timedelta(days=1)}))\
+                             .count()
+                #print count_events
+                #no_days += 1
+                day_counts.append(count_events)
+                date += datetime.timedelta(days=1)
 
-        #print "No_days", no_days
-        self.write_json(dict(month_name=first_day.strftime('%B'),
-                             day_counts=day_counts,
-                             first_day=first_day.strftime('%A')))
+        timestamp = 0
+        for event in self.db.Event.collection\
+          .find(dict(_search,
+                     start={'$gte': first_day, '$lt':date}
+                     )).limit(1).sort('add_date', -1):
+            timestamp = mktime(event['add_date'].timetuple())
+            break
+
+        if timestamp_only:
+            self.write_json(dict(timestamp=timestamp))
+        else:
+            #print "No_days", no_days
+            self.write_json(dict(month_name=first_day.strftime('%B'),
+                                 day_counts=day_counts,
+                                 first_day=first_day.strftime('%A'),
+                                 timestamp=timestamp))
 
 
 @route('/smartphone/api/day\.json$')
