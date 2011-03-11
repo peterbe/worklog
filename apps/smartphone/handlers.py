@@ -2,10 +2,11 @@ from pprint import pprint
 import datetime
 from time import mktime
 from dateutil import relativedelta
+from pymongo.objectid import InvalidId, ObjectId
 import tornado.web
 from utils.routes import route, route_redirect
 from apps.main.handlers import BaseHandler, AuthLoginHandler, \
-  CredentialsError, EventsHandler
+  CredentialsError, EventsHandler, EventHandler
 from apps.main.models import Event
 from apps.eventlog import log_event, actions, contexts
 from utils import niceboolean
@@ -82,12 +83,12 @@ class APIMonthsHandler(APIBaseHandler, SmartphoneAPIMixin):
             first_date = datetime.datetime(
               first_date.year, first_date.month, 1, 0, 0, 0)
 
-        for event in self.db[Event.__collection__].find(_search).sort('start', -1).limit(1):
-            last_date = event['start']
-            break
-        else:
-            last_date = datetime.date.today()
-            last_date = datetime.datetime(
+        #for event in self.db[Event.__collection__].find(_search).sort('start', -1).limit(1):
+        #    last_date = event['start']
+        #    break
+        #else:
+        last_date = datetime.date.today()
+        last_date = datetime.datetime(
               last_date.year, last_date.month, 1, 0, 0, 0)
 
         today = datetime.date.today()
@@ -113,7 +114,7 @@ class APIMonthsHandler(APIBaseHandler, SmartphoneAPIMixin):
             if not timestamp_only:
                 # becomes 28 for February for example
                 # Haven't tested for all years :)
-                count_events = self.db[Event.__collection__]\
+                count_events = self.db.Event.collection\
                   .find(dict(_search,
                              start={'$gte': first_of_date, '$lt':next_date}))\
                              .count()
@@ -187,44 +188,55 @@ class APIDayHandler(XSRFIgnore, EventsHandler, SmartphoneAPIMixin):
         year = int(self.get_argument('year'))
         month = int(self.get_argument('month'))
         day = int(self.get_argument('day'))
+        timestamp_only = niceboolean(self.get_argument('timestamp_only', False))
         _search = {'user.$id':user._id}
         date = datetime.datetime(year, month, day, 0, 0, 0)
 
-        events = []
-        days_spent = hours_spent = None
-        for each in self.db[Event.__collection__]\
-              .find(dict(_search,
-                         start={'$gte': date, '$lt':date + datetime.timedelta(days=1)})):
-            if days_spent is None:
-                days_spent = hours_spent = 0.0
+        timestamp = 0
+        for event in self.db.Event.collection\
+                  .find(dict(_search,
+                             start={'$gte': date, '$lt':date + datetime.timedelta(days=1)}))\
+                  .limit(1).sort('modify_date', -1):
+            timestamp = mktime(event['modify_date'].timetuple())
+            break
 
-            #print each
-            event = dict(id=str(each['_id']),
-                         all_day=each['all_day'],
-                         title=each['title'],
-                         tags=each['tags'])
-            if each.get('description'):
-                event['description'] = each['description']
-            if each.get('external_url'):
-                event['external_url'] = each['external_url']
-            event['length'] = self._describe_length(each)
-            events.append(event)
+        if not timestamp_only:
+            events = []
+            days_spent = hours_spent = None
+            for each in self.db.Event.collection\
+                  .find(dict(_search,
+                             start={'$gte': date, '$lt':date + datetime.timedelta(days=1)})):
+                if days_spent is None:
+                    days_spent = hours_spent = 0.0
 
-            if each['all_day']:
-                days_spent += 1 + (each['end'] - each['start']).days
-            else:
-                hours_spent += (each['end'] - each['start']).seconds / 60.0 / 60
+                #print each
+                event = dict(id=str(each['_id']),
+                             all_day=each['all_day'],
+                             title=each['title'],
+                             tags=each['tags'])
+                if each.get('description'):
+                    event['description'] = each['description']
+                if each.get('external_url'):
+                    event['external_url'] = each['external_url']
+                event['length'] = self._describe_length(each)
+                events.append(event)
 
-        data = dict(events=events)
-        if days_spent or hours_spent:
-            data['totals'] = dict()
-            # there were some events at least
-            if days_spent:
-                data['totals']['days_spent'] = days_spent
-            if hours_spent:
-                data['totals']['hours_spent'] = '%.1f' % round(hours_spent, 1)
+                if each['all_day']:
+                    days_spent += 1 + (each['end'] - each['start']).days
+                else:
+                    hours_spent += (each['end'] - each['start']).seconds / 60.0 / 60
 
-        #pprint(events)
+        data = dict(timestamp=timestamp)
+        if not timestamp_only:
+            data['events'] = events
+            if days_spent or hours_spent:
+                data['totals'] = dict()
+                # there were some events at least
+                if days_spent:
+                    data['totals']['days_spent'] = days_spent
+                if hours_spent:
+                    data['totals']['hours_spent'] = '%.1f' % round(hours_spent, 1)
+
         self.write_json(data)
 
     def _describe_length(self, item):
@@ -289,3 +301,34 @@ class APIDayHandler(XSRFIgnore, EventsHandler, SmartphoneAPIMixin):
                           id=str(event['_id']),
                           length=self._describe_length(event))
         self.write_json(dict(event=event_json))
+
+
+@route('/smartphone/api/event\.json$')
+class APIDayHandler(XSRFIgnore, EventsHandler, SmartphoneAPIMixin):
+
+    def get(self):
+        user = self.must_get_user()
+        event_id = self.get_argument('id')
+        timestamp_only = niceboolean(self.get_argument('timestamp_only', False))
+        _search = {'user.$id':user._id,
+                   '_id': ObjectId(event_id)}
+
+        event = self.db.Event.one(_search)
+        if not event:
+            self.write_json(dict(error="ERROR: Invalid Event"))
+            return
+
+        timestamp = mktime(event['modify_date'].timetuple())
+        data = dict(timestamp=timestamp)
+        if not timestamp_only:
+            event_data = dict(title=event['title'],
+                              all_day=event['all_day'],
+                              description=event['description']
+                              )
+            if event['all_day']:
+                event_data['days'] = 1 + (event['end'] - event['start']).days
+            else:
+                event_data['hours'] = (event['end'] - event['start']).seconds / 60.0 / 60
+            data['event'] = self.serialize_dict(event_data)
+        pprint(data)
+        self.write_json(data)

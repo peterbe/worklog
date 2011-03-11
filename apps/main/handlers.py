@@ -556,7 +556,7 @@ class EventsHandler(BaseHandler):
                                 full_name=full_name,
                                 key=share['key']))
 
-            for event in self.db[Event.__collection__].find(search):
+            for event in self.db.Event.collection.find(search):
                 events.append(
                   self.transform_fullcalendar_event(
                     event,
