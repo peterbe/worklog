@@ -9,7 +9,7 @@ from apps.main.handlers import BaseHandler, AuthLoginHandler, \
   CredentialsError, EventsHandler, EventHandler
 from apps.main.models import Event
 from apps.eventlog import log_event, actions, contexts
-from utils import niceboolean
+from utils import niceboolean, title_to_tags
 
 class XSRFIgnore(object):
     def check_xsrf_cookie(self):
@@ -56,7 +56,31 @@ class SmartphoneAPIMixin(object):
         return user
 
 class APIBaseHandler(XSRFIgnore, BaseHandler):
-    pass
+
+    def describe_length(self, item):
+        if item['all_day']:
+            days = (item['end'] - item['start']).days
+            if days > 1:
+                return "%s days" % days
+            return "All day"
+        else:
+            seconds = (item['end'] - item['start']).seconds
+            minutes = seconds / 60
+            hours = minutes / 60
+            if hours:
+                minutes = minutes % 60
+                if hours == 1:
+                    if minutes:
+                        return "1 hour %s minutes" % minutes
+                    else:
+                        return "1 hour"
+                else:
+                    if minutes:
+                        return "%s hours %s minutes" % (hours, minutes)
+                    else:
+                        return "%s hours" % hours
+            else:
+                return "%s minutes" % minutes
 
 @route('/smartphone/checkguid/$')
 class CheckGUIDHandler(APIBaseHandler, SmartphoneAPIMixin):
@@ -73,7 +97,7 @@ class APIMonthsHandler(APIBaseHandler, SmartphoneAPIMixin):
         user = self.must_get_user()
         timestamp_only = niceboolean(self.get_argument('timestamp_only', False))
         _search = {'user.$id':user._id}
-        for event in self.db[Event.__collection__]\
+        for event in self.db.Event.collection\
           .find(_search).sort('start', 1).limit(1):
             first_date = event['start']
             break
@@ -181,7 +205,7 @@ class APIMonthHandler(APIBaseHandler, SmartphoneAPIMixin):
 
 
 @route('/smartphone/api/day\.json$')
-class APIDayHandler(XSRFIgnore, EventsHandler, SmartphoneAPIMixin):
+class APIDayHandler(APIBaseHandler, EventsHandler, SmartphoneAPIMixin):
 
     def get(self):
         user = self.must_get_user()
@@ -213,56 +237,36 @@ class APIDayHandler(XSRFIgnore, EventsHandler, SmartphoneAPIMixin):
                 event = dict(id=str(each['_id']),
                              all_day=each['all_day'],
                              title=each['title'],
-                             tags=each['tags'])
-                if each.get('description'):
-                    event['description'] = each['description']
-                if each.get('external_url'):
-                    event['external_url'] = each['external_url']
-                event['length'] = self._describe_length(each)
-                events.append(event)
-
+                             #tags=each['tags'],
+                             )
+                event['description'] = each['description']
+                event['external_url'] = each['external_url']
                 if each['all_day']:
-                    days_spent += 1 + (each['end'] - each['start']).days
+                    event['days'] = 1 + (each['end'] - each['start']).days
                 else:
-                    hours_spent += (each['end'] - each['start']).seconds / 60.0 / 60
+                    event['hours'] = (each['end'] - each['start']).seconds / 60.0 / 60
+                event['length'] = self.describe_length(each)
+                events.append(event)
+                #if each['all_day']:
+                #    days_spent += 1 + (each['end'] - each['start']).days
+                #else:
+                #    hours_spent += (each['end'] - each['start']).seconds / 60.0 / 60
 
         data = dict(timestamp=timestamp)
         if not timestamp_only:
             data['events'] = events
-            if days_spent or hours_spent:
-                data['totals'] = dict()
-                # there were some events at least
-                if days_spent:
-                    data['totals']['days_spent'] = days_spent
-                if hours_spent:
-                    data['totals']['hours_spent'] = '%.1f' % round(hours_spent, 1)
-
+            #if days_spent or hours_spent:
+            #    data['totals'] = dict()
+            #    # there were some events at least
+            #    if days_spent:
+            #        data['totals']['days_spent'] = days_spent
+            #    if hours_spent:
+            #        data['totals']['hours_spent'] = '%.2f' % round(hours_spent, 1)
+        print "DAY.JSON"
+        pprint(data)
+        print "\n"
         self.write_json(data)
 
-    def _describe_length(self, item):
-        if item['all_day']:
-            days = (item['end'] - item['start']).days
-            if days > 1:
-                return "%s days" % days
-            return "All day"
-        else:
-            seconds = (item['end'] - item['start']).seconds
-            minutes = seconds / 60
-            hours = minutes / 60
-            if hours:
-                minutes = minutes % 60
-                if hours == 1:
-                    if minutes:
-                        return "1 hour %s minutes" % minutes
-                    else:
-                        return "1 hour"
-                else:
-                    if minutes:
-                        return "%s hours %s minutes" % (hours, minutes)
-                    else:
-                        return "%s hours" % hours
-            else:
-                return "%s minutes" % minutes
 
     def post(self):
         user = self.must_get_user()
@@ -299,12 +303,12 @@ class APIDayHandler(XSRFIgnore, EventsHandler, SmartphoneAPIMixin):
 
         event_json = dict(title=event['title'],
                           id=str(event['_id']),
-                          length=self._describe_length(event))
+                          length=self.describe_length(event))
         self.write_json(dict(event=event_json))
 
 
 @route('/smartphone/api/event\.json$')
-class APIDayHandler(XSRFIgnore, EventsHandler, SmartphoneAPIMixin):
+class APIDayHandler(APIBaseHandler, EventsHandler, SmartphoneAPIMixin):
 
     def get(self):
         user = self.must_get_user()
@@ -322,6 +326,7 @@ class APIDayHandler(XSRFIgnore, EventsHandler, SmartphoneAPIMixin):
         data = dict(timestamp=timestamp)
         if not timestamp_only:
             event_data = dict(title=event['title'],
+                              id=str(event['_id']),
                               all_day=event['all_day'],
                               description=event['description']
                               )
@@ -330,5 +335,68 @@ class APIDayHandler(XSRFIgnore, EventsHandler, SmartphoneAPIMixin):
             else:
                 event_data['hours'] = (event['end'] - event['start']).seconds / 60.0 / 60
             data['event'] = self.serialize_dict(event_data)
+        pprint(data)
+        self.write_json(data)
+
+
+    def post(self):
+        user = self.must_get_user()
+        event_id = self.get_argument('id')
+        _search = {'user.$id':user._id,
+                   '_id': ObjectId(event_id)}
+
+        event = self.db.Event.one(_search)
+        if not event:
+            self.write_json(dict(error="ERROR: Invalid Event"))
+            return
+        if event.user != user:
+            self.write_json(dict(error="ERROR: Not your event"))
+            return
+
+        title = self.get_argument('title').strip()
+        duration = float(self.get_argument('duration'))
+        external_url = self.get_argument('external_url', u'').strip()
+        description = self.get_argument('description', u'').strip()
+
+        if event.all_day:
+            _before = 1 + (event.end - event.start).days
+            if _before != duration:
+                event.end += datetime.timedelta(days=duration - _before)
+                diff = 1 + (event.end - event.start).days
+                if diff < 1:
+                    self.write_json(dict(error=\
+                      "ERROR. Duration can't be less than 1 day"))
+                    return
+        else:
+            _before = (event['end'] - event['start']).seconds / 60.0 / 60
+            if _before != duration:
+                event.end += datetime.timedelta(hours=duration - _before)
+                if event.start >= event.end:
+                    self.write_json(dict(error="ERROR. Duration too short"))
+                    return
+
+        # all possible validation and checking done, do the save
+        event.title = title
+        event.external_url = external_url
+        event.description = description
+        event.tags = title_to_tags(title)
+        event.save()
+
+        log_event(self.db, user, event, actions.ACTION_EDIT,
+                  contexts.CONTEXT_SMARTPHONE)
+
+        data = dict(timestamp=mktime(event.modify_date.timetuple()))
+        event_data = dict(title=title,
+                          external_url=external_url,
+                          description=description,
+                          id=str(event._id),
+                          all_day=event.all_day,
+                          )
+        if event.all_day:
+            event_data['days'] = 1 + (event.end - event.start).days
+        else:
+            event_data['hours'] = (event.end - event.start).seconds / 60.0 / 60
+        event_data['length'] = self.describe_length(event)
+        data['event'] = self.serialize_dict(event_data)
         pprint(data)
         self.write_json(data)

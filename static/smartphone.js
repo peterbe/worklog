@@ -21,6 +21,25 @@ var user_settings = (function() {
    }
 })();
 
+var LengthDescriber = (function() {
+   return {
+      describe_days: function(days) {
+         if (days == 1) {
+            return "All day";
+         } else {
+            return days + " days";
+         }
+      },
+      describe_hours: function(hours) {
+         L("XXX: this needs a lot of work");
+	 if (hours == 1)
+	   return "1 hour";
+         return hours + " hours";
+      }
+   }
+
+})();
+
 
 var MONTH_NAMES = {1:'January', 2:'February', 3:'March', 4:'April', 5:'May', 6:'June',
    7:'July', 8:'August', 9:'September', 10:'October', 11:'November', 12:'December'};
@@ -246,6 +265,9 @@ var Calendar = (function() {
    }
 
    return {
+      clear_last_day_loaded: function() {
+         last_day_loaded = null;
+      },
       set_current_year: function(year) {
          sessionStorage.setItem('current_year', year);
       },
@@ -405,6 +427,7 @@ var Calendar = (function() {
       init_day: function(year, month, day) {
 	 L("init_day()", year, month, day);
 	 var storage_key = '' + year + month + day;
+         L("...in init_day()", storage_key, last_day_loaded);
          if (storage_key != last_day_loaded) {
             this.load_day(year, month, day, storage_key);
          } else {
@@ -424,7 +447,10 @@ var Calendar = (function() {
 
 	 function _display_data(data) {
 	    L("displaying day data");
-	    var container = $('#calendar-day-events');
+	    var container = $('#calendar-day-events')
+              , days_spent = 0
+              , hours_spent = 0.0
+              , length;
 	    $.each(data.events, function(i, e) {
 	       var inner_container = $('<li>').appendTo(container);
 	       $('<a>', {text:e.title, href:'#calendar-event'})
@@ -432,23 +458,31 @@ var Calendar = (function() {
                     self.set_current_event_id(e.id);
 		 })
 		   .appendTo(inner_container);
-	       $('<span>', {text:e.length})
+
+               if (e.all_day) {
+                  length = LengthDescriber.describe_days(e.days);
+               } else {
+                  length = LengthDescriber.describe_hours(e.hours);
+               }
+	       $('<span>', {text:length})
 		 .addClass('ui-li-count')
 		   .appendTo(inner_container);
+               if (e.all_day)
+                 days_spent += e.days;
+               else
+                 hours_spent += e.hours;
 	    });
 	    $('#calendar-day-events').listview('refresh');
 	    $('#calendar-days-totals').html('');
-	    if (data.totals) {
+	    if (days_spent || hours_spent) {
 	       var container = $('#calendar-days-totals');
-	       if (data.totals.days_spents) {
-		  //var container = $('<p>').css('text-align', 'right');
+	       if (days_spent) {
 		  $('<dt>', {text:'Total days: '}).appendTo(container);
-		  $('<dd>', {text:data.totals.days_spent}).appendTo(container);
-		  container.appendTo($('#calendar-days-totals'));
+		  $('<dd>', {text:days_spent}).appendTo(container);
 	       }
-	       if (data.totals.hours_spent) {
+	       if (hours_spent) {
 		  $('<dt>', {text:'Total hours: '}).appendTo(container);
-		  $('<dd>', {text:data.totals.hours_spent}).appendTo(container);
+		  $('<dd>', {text:hours_spent}).appendTo(container);
 	       }
 	    }
 	    last_day_loaded = storage_key;
@@ -467,10 +501,12 @@ var Calendar = (function() {
                             var timestamps = Store.get('timestamps', {});
                             timestamps[storage_key] = response.timestamp;
 			    Store.set('timestamps', timestamps);
+                            L("STORING", response);
 			    Store.update(storage_key, response);
 			 }
 		   });
 	 } else {
+            L("STORED_DATA", stored_data);
 	    // yay! we can use local storage
 	    _display_data(stored_data);
 	    // if we're online, check if the latest timestamp has been updated
@@ -591,28 +627,28 @@ $(document).ready(function() {
 	 $('#calendar-day-add-collapse').trigger('collapse');
 	 return false;
       });
-      var form = $('form', '#calendar-day-add-collapse');
-      form.submit(function() {
-         if (!$('input[name="title"]', form).val()) {
+      $('form', '#calendar-day-add-collapse').submit(function() {
+         if (!$('input[name="title"]', this).val()) {
             alert("Please type something first");
             return false;
          }
-         if ($('input[name="duration"]:checked', form).val() == 'other') {
-            if (!$('input[name="duration_other"]', form).val()) {
+         if ($('input[name="duration"]:checked', this).val() == 'other') {
+            if (!$('input[name="duration_other"]', this).val()) {
                alert("Please enter the number of hours");
                return false;
             }
          }
 
          var post_data = {guid:Auth.get_guid(),
-            title: $('input[name="title"]', form).val(),
-            duration: $('input[name="duration"]:checked', form).val(),
-            duration_other: $('input[name="duration_other"]', form).val(),
+            title: $('input[name="title"]', this).val(),
+            duration: $('input[name="duration"]:checked', this).val(),
+            duration_other: $('input[name="duration_other"]', this).val(),
             year: Calendar.get_current_year(),
             month: Calendar.get_current_month(),
             day: Calendar.get_current_day()
          };
 
+	 var form = this;
          $.post('/smartphone/api/day.json', post_data, function(response) {
             if (response.error) {
                alert(response.error);
@@ -696,6 +732,7 @@ $(document).ready(function() {
       }
    });
 
+
    $('#calendar-event').bind('pageshow', function() {
       var event_id = Calendar.get_current_event_id();
       if (event_id) {
@@ -707,6 +744,85 @@ $(document).ready(function() {
             $.mobile.changePage($('#login'));
          }
       }
+   }).bind('pagecreate', function() {
+      $('form', '#calendar-event').submit(function() {
+         if (!$('input[name="title"]', this).val()) {
+            alert("Please enter a title");
+            return false;
+         }
+	 if (!$('input.duration:visible').val()) {
+            alert("Please enter the duration");
+            return false;
+	 }
+
+         var post_data = {guid:Auth.get_guid(),
+	    id: Calendar.get_current_event_id(), // perhaps better to use a hidden input
+            title: $('input[name="title"]', this).val(),
+            duration: $('input.duration:visible', this).val(),
+	    description: $('textarea[name="description"]', this).val(),
+            external_url: $('input[name="external_url"]', this).val(),
+         };
+
+	 var self = this;
+         $.post('/smartphone/api/event.json', post_data, function(response) {
+            if (response.error) {
+               alert(response.error);
+               return;
+            }
+	    var storage_key = Calendar.get_current_event_id();
+            var stored_data = Store.get(storage_key);
+            if (!stored_data) {
+               stored_data = {};
+               stored_data.event = {};
+            }
+            stored_data.timestamp = response.timestamp;
+            stored_data.event.title = response.event.title;
+            stored_data.event.description = response.event.description;
+            stored_data.event.external_url = response.event.external_url;
+            stored_data.event.all_day = response.event.all_day;
+            if (response.event.all_day)
+              stored_data.event.days = response.event.days;
+            else
+              stored_data.event.hours = response.event.hours;
+            Store.set(storage_key, stored_data);
+            L("SAT", storage_key, stored_data);
+
+	    storage_key = '' + Calendar.get_current_year() +
+	      Calendar.get_current_month() + Calendar.get_current_day();
+            stored_data = Store.get(storage_key);
+            if (!stored_data) {
+               stored_data = {};
+               stored_data.events = [];
+               stored_data.totals = {}
+            }
+            stored_data.timestamp = response.timestamp;
+            $.each(stored_data.events, function(i, event) {
+               if (event.id == response.event.id) {
+                  event.title = response.event.title;
+                  event.description = response.event.description;
+                  event.external_url = response.event.external_url;
+                  if (response.event.all_day)
+                    event.days = response.event.days;
+                  else
+                    event.hours = response.event.hours;
+                  stored_data.events[i] = event;
+               }
+            });
+            Store.set(storage_key, stored_data);
+            L("SATT", storage_key, stored_data);
+            Calendar.clear_last_day_loaded();
+	    $.mobile.changePage($('#calendar-day'));
+	 });
+         // stop assuming the calendar-day doesn't need to be re-rendered
+
+
+	 return false;
+      });
+
+      $('button.cancel', this).click(function() {
+	 $.mobile.changePage($('#calendar-day'));
+	 return false;
+      });
    });
 
    if (window.addEventListener) {

@@ -101,6 +101,7 @@
 <div data-role="page" id="calendar">
 	<div data-role="header">
 		<h1>Calendar</h1>
+                <a href="/smartphone/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="ui-btn-right jqm-home">Home</a>
 	</div><!-- /header -->
 
 	<div data-role="content">
@@ -112,6 +113,7 @@
 <div data-role="page" id="calendar-month">
 	<div data-role="header">
 		<h1>Loading...</h1>
+                <a href="/smartphone/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="ui-btn-right jqm-home">Home</a>
 	</div><!-- /header -->
         <div data-role="content">
         <ul data-role="listview" data-inset="true" id="calendar-month-days">
@@ -122,6 +124,7 @@
 <div data-role="page" id="calendar-day">
 	<div data-role="header">
 		<h1>Loading</h1>
+                <a href="/smartphone/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="ui-btn-right jqm-home">Home</a>
 	</div><!-- /header -->
         <div data-role="content">
 		<div data-role="collapsible" data-collapsed="true" id="calendar-day-add-collapse">
@@ -187,6 +190,7 @@
 <div data-role="page" id="calendar-event">
 	<div data-role="header">
 		<h1>Loading</h1>
+                <a href="/smartphone/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="ui-btn-right jqm-home">Home</a>
 	</div><!-- /header -->
         <div data-role="content">
 			<h3></h3>
@@ -199,13 +203,13 @@
 
 				<div data-role="fieldcontain" id="field-duration-hours" style="display:none">
 					<label for="title">Hours:</label>
-					<input type="text" name="duration_hours" value="">
+					<input type="number" name="duration_hours" class="duration" value="">
 
 				</div>
 
 				<div data-role="fieldcontain" id="field-duration-days" style="display:none">
 					<label for="title">Days:</label>
-					<input type="text" name="duration_days" value="">
+					<input type="number" name="duration_days" class="duration" value="">
 
 				</div>
 
@@ -215,6 +219,12 @@
 					<textarea cols="40" rows="8" name="description"></textarea>
 
 				</div>
+				<div data-role="fieldcontain">
+					<label for="id_external_url">URL:</label>
+					<input type="url" name="external_url" id="id_external_url" value="">
+
+				</div>
+
 				<fieldset class="ui-grid-a">
 						<div class="ui-block-a"><button type="submit" data-theme="c" class="cancel">Cancel</button></div>
 						<div class="ui-block-b"><button type="submit" data-theme="b">Save</button></div>

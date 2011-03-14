@@ -140,3 +140,7 @@ def stats(seq):
     median, average, std_dev, min_, max_ = _stats(seq)
     return {'median':median, 'average':average, 'std_dev':std_dev,
             'min':min_, 'max':max_}
+
+
+def title_to_tags(title):
+    return list(set([x[1:] for x in re.findall(r'\B[@#][\w\-\.]+', title, re.U)]))

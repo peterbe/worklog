@@ -27,15 +27,12 @@ from utils.decorators import login_required
 from utils import parse_datetime, niceboolean, \
   DatetimeParseError, valid_email, random_string, \
   all_hash_tags, all_atsign_tags, generate_random_color, \
-  stats
+  stats, title_to_tags
 from utils.timesince import smartertimesince
 from ui_modules import EventPreview
 from config import *
 from apps.eventlog import log_event, actions, contexts
 
-
-def title_to_tags(title):
-    return list(set([x[1:] for x in re.findall(r'\B[@#][\w\-\.]+', title, re.U)]))
 
 class HTTPSMixin(object):
 

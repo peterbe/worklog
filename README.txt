@@ -36,6 +36,13 @@ You start it like this:
 It will cancel the report if the tests don't pass.
 
 
+Running the Javascript test suite
+---------------------------------
+
+(this is currently under heavy development)
+
+Open static/tests/smartphone.html in Firefox as a static file. 
+
 Getting a copy of the live database
 -----------------------------------
 
