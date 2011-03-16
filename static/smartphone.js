@@ -31,10 +31,18 @@ var LengthDescriber = (function() {
          }
       },
       describe_hours: function(hours) {
-         L("XXX: this needs a lot of work");
+	 var minutes = hours * 60;
+	 var remainder = minutes % 60;
+	 
 	 if (hours == 1)
 	   return "1 hour";
-         return hours + " hours";
+	 else if (hours < 1)
+	   return minutes + " minutes";
+	 hours = (minutes - remainder)/60;
+	 if (hours == 1)
+	   return "1 hour " + remainder + " minutes";
+	 else
+	   return hours + " hours " + remainder + " minutes";
       }
    }
 
@@ -93,21 +101,26 @@ var Store = (function() {
 	    if (e == QUOTA_EXCEEDED_ERR) {
 	       // need to purge
 	       var old_key = keys.pop(); // oldest thing stored
-	       $.storage.del(old_key);
+	       Store.remove(old_key);
 	       $.storage.set('store_keys', keys);
-	       Store.set(key, data); // try again
+	       Store.update(key, data); // try again
 	    }
 	 }
       },
       get: function(key, default_) {
 	 var data = $.storage.get(key);
-	 default_ = default_ ? default_ : null;
+	 default_ = typeof(default_) != 'undefined' ? default_ : null;
 	 if (null === data) {
 	    data = default_;
 	 }
 	 return data;
       },
       remove: function(key) {
+	 var keys = this.get('store_keys', []);
+	 if (keys.indexOf(key) > -1) {
+	    keys.splice(keys.indexOf(key), 1);
+	    this.set('store_keys', keys);
+	 }
 	 $.storage.del(key);
       },
       clear: function() {
@@ -121,14 +134,14 @@ var Auth = (function() {
 
    return {
       get_guid: function() {
-	 return Store.get('guid', {guid:null}).guid;
+	 return Store.get('guid');
       },
       set_guid: function(guid) {
-	 Store.set('guid', {guid:guid});
+	 Store.set('guid', guid);
       },
-      unset_guid: function() {
-         Store.del('guid');
-      },
+      //unset_guid: function() {
+      //   Store.del('guid');
+      //},
       logout: function() {
          Store.clear();
       },
@@ -166,12 +179,12 @@ var Auth = (function() {
          if (!login_initialized) {
             Auth.init_login();
          }
-         // THIS DOESN'T WORK :(
+         // THIS DOESN'T WORK :( // or does it now???
          $.mobile.changePage($('#login'), 'pop', false, false);
       },
 
       ajax_login: function(email, password) {
-         $.ajax({url:'auth/login/?x=y',
+         $.ajax({url:'/smartphone/auth/login/',
             type:'POST',
             dataType:'json',
             data:{email:email, password:password},
