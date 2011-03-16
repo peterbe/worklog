@@ -7,6 +7,7 @@
 	<script type="text/javascript" src="../ext/jquery-1.5.min.js"></script>
 	<script type="text/javascript" src="../ext/jquery.store.js"></script>
 	<script type="text/javascript" src="../smartphone.js"></script>
+	<script type="text/javascript" src="../ext/jquery.mobile-1.0a3.js"></script>
 	<script type="text/javascript" src="test_smartphone.js"></script>
 </head>
 <body>
@@ -16,5 +17,20 @@
 	<h2 id="qunit-userAgent"></h2>
 	<ol id="qunit-tests"></ol>
 	<div id="qunit-fixture">test markup</div>
+	
+<div id="dom-fixture" style="display:none">
+<div data-role="page" id="calendar">
+	<div data-role="header">
+		<h1>Calendar</h1>
+                <a href="/smartphone/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="ui-btn-right jqm-home">Home</a>
+	</div><!-- /header -->
+
+	<div data-role="content">
+        <ul data-role="listview" data-inset="true" id="calendar-months">
+        </ul>
+	</div><!-- /content -->
+</div>
+
+</div>
 </body>
 </html>

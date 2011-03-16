@@ -1,20 +1,20 @@
 test("LengthDescriber, hours", function() {
    var r = LengthDescriber.describe_hours(1);
    equals(r, "1 hour");
-   var r = LengthDescriber.describe_hours(1.5);
+   r = LengthDescriber.describe_hours(1.5);
    equals(r, "1 hour 30 minutes");
-   var r = LengthDescriber.describe_hours(2.5);
+   r = LengthDescriber.describe_hours(2.5);
    equals(r, "2 hours 30 minutes");
-   var r = LengthDescriber.describe_hours(1.75);
+   r = LengthDescriber.describe_hours(1.75);
    equals(r, "1 hour 45 minutes");
-   var r = LengthDescriber.describe_hours(0.2);
+   r = LengthDescriber.describe_hours(0.2);
    equals(r, "12 minutes");
 });
 
 test("LengthDescriber, days", function() {
    var r = LengthDescriber.describe_days(1);
    equals(r, "All day");
-   var r = LengthDescriber.describe_days(2);
+   r = LengthDescriber.describe_days(2);
    equals(r, "2 days");
 });
 
@@ -148,6 +148,92 @@ test("test Auth", function() {
    equals($.mobile.current_page.selector, '#start');
    equals(Store.get('guid'), '10001');
 
+   result = Auth.is_logged_in(false);
+   equals(result, true);
 
+   result = Auth.is_logged_in(true);
+   equals(result, true);
+   
+   Auth.redirect_login();
+   Store.clear();
+   equals($.mobile.current_page.selector, '#login');
 
 });
+
+module("Calendar", {
+   setup: function() {
+      localStorage.clear();
+   },
+   teardown: function() {
+      localStorage.clear();
+   }
+});
+
+
+test("Test init_months()", function() {
+   var ajax_calls = [];
+   var months_fixture = {
+      timestamp: 1300195846,
+      months: [{"count": 4, "month_name": "October", "month": 10, "year": 2010}, 
+	       {count: 132, month_name: "November", month: 11, year: 2010}]
+   };
+   
+   $.ajax = function(options) {
+      ajax_calls.push(options);
+      switch (options.url) {
+       case '/smartphone/api/months.json':
+	 options.success(months_fixture);
+	 break;
+       case '/smartphone/checkguid/':
+	 options.success({ok:true});
+	 break;
+       case '/smartphone/auth/login/':
+	 if (options.data.password == 'secret')
+	   options.success({guid:'10001'});
+	 else
+	   options.success({error:"Wrong credentials"});
+	 break;
+       default:
+	 console.log(options.url);
+	 throw new Error("Mock not prepared (" + options.url + ")");
+      }
+   };
+   Auth.ajax_login('peterbe@example.com', 'secret');
+   equals(Store.get('guid'), '10001');
+   
+   // before we can do this we'll need to 
+   Calendar.init_months();
+   equals(ajax_calls.length, 2);
+   
+   equals($('#calendar-months li').size(), 2);
+   equals(Store.get('timestamps').years, 1300195846);
+   var years_stored_data = Store.get('years');
+   equals(years_stored_data.months.length, 2);
+   equals(years_stored_data.months[0].count, 4);
+   equals(years_stored_data.months[0].month, 10);
+   equals(years_stored_data.months[0].year, 2010);
+   equals(years_stored_data.months[0].month_name, "October");
+   equals(years_stored_data.months[1].count, 132);
+   equals(years_stored_data.months[1].month, 11);
+   equals(years_stored_data.months[1].year, 2010);
+   equals(years_stored_data.months[1].month_name, "November");
+   
+   // calling it a second time should do an AJAX command again but this
+   // time to just get the timestamp
+   Calendar.init_months();
+   equals(ajax_calls.length, 3);
+   ok(ajax_calls[2].data.timestamp_only);
+   
+   // now pretend the fixture has become different
+   months_fixture.timestamp += 1;
+   months_fixture.months.push({count:132, month_name:"November", month:12, year:2010});
+   Calendar.init_months();
+   equals(ajax_calls.length, 5);
+   ok(ajax_calls[3].data.timestamp_only);
+   ok(!ajax_calls[4].data.timestamp_only);
+   
+   equals($('#calendar-months li').size(), 3);
+   equals(Store.get('timestamps').years, 1300195846 + 1);
+});
+
+

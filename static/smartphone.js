@@ -239,7 +239,7 @@ var Calendar = (function() {
 		function(response) {
 		   if (response.timestamp > Store.get('timestamps')[storage_key]) {
 		      Store.remove(storage_key);
-		      Calendar.load_months(); // reload
+		      Calendar.load_months(storage_key); // reload
 		   }
 		});
    }
@@ -317,6 +317,7 @@ var Calendar = (function() {
          }
       },
       load_months: function(storage_key) {
+	 if(typeof(storage_key)=='undefined') throw new Error("Poop");
          var self = this;
          $('#calendar-months li').remove();
 
@@ -438,9 +439,7 @@ var Calendar = (function() {
 	 }
       },
       init_day: function(year, month, day) {
-	 L("init_day()", year, month, day);
 	 var storage_key = '' + year + month + day;
-         L("...in init_day()", storage_key, last_day_loaded);
          if (storage_key != last_day_loaded) {
             this.load_day(year, month, day, storage_key);
          } else {
@@ -450,7 +449,6 @@ var Calendar = (function() {
          }
       },
       load_day: function(year, month, day, storage_key) {
-	 L("load_day()", year, month, day, storage_key);
          this.set_current_year(year);
          this.set_current_month(month);
          this.set_current_day(day);
@@ -459,7 +457,6 @@ var Calendar = (function() {
          $('#calendar-day-events li').remove();
 
 	 function _display_data(data) {
-	    L("displaying day data");
 	    var container = $('#calendar-day-events')
               , days_spent = 0
               , hours_spent = 0.0
@@ -514,12 +511,10 @@ var Calendar = (function() {
                             var timestamps = Store.get('timestamps', {});
                             timestamps[storage_key] = response.timestamp;
 			    Store.set('timestamps', timestamps);
-                            L("STORING", response);
 			    Store.update(storage_key, response);
 			 }
 		   });
 	 } else {
-            L("STORED_DATA", stored_data);
 	    // yay! we can use local storage
 	    _display_data(stored_data);
 	    // if we're online, check if the latest timestamp has been updated
@@ -529,7 +524,6 @@ var Calendar = (function() {
 	 }
       },
       init_event: function(event_id) {
-         L("init_event()", event_id);
          var storage_key = '' + event_id;
          if (storage_key != last_event_loaded) {
             this.load_event(event_id, storage_key);
@@ -540,14 +534,12 @@ var Calendar = (function() {
          }
       },
       load_event: function(event_id, storage_key) {
-         L('load_event()', event_id, storage_key);
          this.set_current_event_id(event_id); // excessive?
          var day = this.get_current_day();
          var month = this.get_current_month();
          $('#calendar-event h1').text(utils.ordinalize(day) + ' ' + utils.month_name(month));
 	 var self = this;
          function _display_data(data) {
-            L("displaying event data");
             $('input[name="title"]', '#calendar-event').val(data.event.title);
             if (data.event.description) {
                $('textarea[name="description"]', '#calendar-event').val(data.event.description);
@@ -798,7 +790,6 @@ $(document).ready(function() {
             else
               stored_data.event.hours = response.event.hours;
             Store.set(storage_key, stored_data);
-            L("SAT", storage_key, stored_data);
 
 	    storage_key = '' + Calendar.get_current_year() +
 	      Calendar.get_current_month() + Calendar.get_current_day();
@@ -822,13 +813,10 @@ $(document).ready(function() {
                }
             });
             Store.set(storage_key, stored_data);
-            L("SATT", storage_key, stored_data);
             Calendar.clear_last_day_loaded();
 	    $.mobile.changePage($('#calendar-day'));
 	 });
          // stop assuming the calendar-day doesn't need to be re-rendered
-
-
 	 return false;
       });
 
