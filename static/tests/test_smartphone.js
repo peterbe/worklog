@@ -9,6 +9,8 @@ test("LengthDescriber, hours", function() {
    equals(r, "1 hour 45 minutes");
    r = LengthDescriber.describe_hours(0.2);
    equals(r, "12 minutes");
+   r = LengthDescriber.describe_hours(2.0);
+   equals(r, "2 hours");
 });
 
 test("LengthDescriber, days", function() {
@@ -160,9 +162,32 @@ test("test Auth", function() {
 
 });
 
+/*
+window.sessionStorage = (function() {
+   var _data = {};
+   return {
+      getItem: function(key) {
+	 return _data[key];
+      },
+      setItem: function(key, value) {
+	 _data[key] = value;
+      },
+      _clear: function() {
+	 _data = {};
+      }
+   }
+})();
+
+
+sessionStorage.setItem("foo","bar");
+if (sessionStorage.getItem("foo")!="bar") throw new Error("badly mocked");
+sessionStorage._clear();
+ */
+
 module("Calendar", {
    setup: function() {
-      localStorage.clear();
+      localStorage.clear(); 
+      sessionStorage.clear();
    },
    teardown: function() {
       localStorage.clear();
@@ -170,7 +195,7 @@ module("Calendar", {
 });
 
 
-test("Test init_months()", function() {
+test("Test loading months", function() {
    var ajax_calls = [];
    var months_fixture = {
       timestamp: 1300195846,
@@ -237,3 +262,50 @@ test("Test init_months()", function() {
 });
 
 
+test("Test loading month", function() {
+   var ajax_calls = [];
+   var month_fixture = {
+      timestamp: 1300456142, 
+      month_name: "March", 
+      first_day: "Tuesday", 
+      day_counts: [1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+   };
+   
+   $.ajax = function(options) {
+      ajax_calls.push(options);
+      switch (options.url) {
+       case '/smartphone/api/month.json':
+	 options.success(month_fixture);
+	 break;
+       case '/smartphone/checkguid/':
+	 options.success({ok:true});
+	 break;
+       case '/smartphone/auth/login/':
+	 if (options.data.password == 'secret')
+	   options.success({guid:'10001'});
+	 else
+	   options.success({error:"Wrong credentials"});
+	 break;
+       default:
+	 console.log(options.url);
+	 throw new Error("Mock not prepared (" + options.url + ")");
+      }
+   };
+   Auth.ajax_login('peterbe@example.com', 'secret');
+   L(sessionStorage.getItem('current_year'));
+   Calendar.set_current_year(''+2011);
+   Calendar.set_current_month(3);
+   $('#calendar-month').trigger('pageshow');
+   
+   //Calendar.init_month(2011, 3);
+   equals(ajax_calls.length, 2);
+   L($('#calendar-month'));
+   
+   //equals($('#calendar-month li').size(), month_fixture.day_counts.length);
+   //equals(Store.get('timestamps').years, month_fixture.timestamp);
+   //var stored_data = Store.get('' + year + month);
+   //L(stored_data);
+   
+     
+});

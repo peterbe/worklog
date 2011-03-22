@@ -40,9 +40,14 @@ var LengthDescriber = (function() {
 	   return minutes + " minutes";
 	 hours = (minutes - remainder)/60;
 	 if (hours == 1)
-	   return "1 hour " + remainder + " minutes";
+	   hours += " hour";
 	 else
-	   return hours + " hours " + remainder + " minutes";
+	   hours += " hours";
+	 if (remainder) 
+	   remainder = " " + remainder + " minutes";
+	 else
+	   remainder = "";
+         return hours + remainder;
       }
    }
 
@@ -374,6 +379,7 @@ var Calendar = (function() {
       },
 
       load_month: function(year, month, storage_key) {
+	 L('start');
          $('#calendar-month h1').text(utils.month_name(month) + ', ' + year);
          $('#calendar-month-days li').remove();
 	 var self = this
@@ -410,6 +416,8 @@ var Calendar = (function() {
 		   .appendTo(inner_container);
 	       i2++;
 	    });
+	    L($('#calendar-month-days'));
+	    
 	    $('#calendar-month-days').listview('refresh');
             last_month_loaded = storage_key;
 	 }
