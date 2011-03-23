@@ -390,8 +390,6 @@ class APIHandlerMixin(object):
 
     def check_guid(self):
         guid = self.get_argument('guid', None)
-        #print "CHECK GUID"
-        #print repr(guid)
         if guid:
             if guid.count('|') == 2:
                 guid = self.get_secure_cookie('guid', value=guid)
@@ -1027,6 +1025,15 @@ class EditEventHandler(BaseEventHandler):
         elif action == 'move':
             event.start += datetime.timedelta(days=days, minutes=minutes)
             event.end += datetime.timedelta(days=days, minutes=minutes)
+            if event.all_day and not all_day:
+                # Going from an all day to an not all day event
+                if event.start == event.end:
+                    # then it's no longer OK for the start to be equal to the
+                    # end date.
+                    # THe reason for using 2 hours is that by default it appears
+                    # that the fullCalendar makes an event moved from all-day to
+                    # a day event becomes as big as an 2 hour event
+                    event.end += datetime.timedelta(hours=2)#seconds=MINIMUM_DAY_SECONDS)
             event.all_day = all_day
             event.save()
         elif action == 'edit':
@@ -1180,7 +1187,6 @@ class EventStatsHandler(BaseHandler):
 
                     _map[tag] = color
                 hours_colors.append(color)
-                #print tag, color
 
             data['hours_colors'] = hours_colors
 
@@ -1599,7 +1605,7 @@ class SignupHandler(BaseAuthHandler):
         self.redirect('/')
 
 @route('/auth/logged_in.json$')
-class AuthLoginHandler(BaseAuthHandler):
+class AuthLoggedInHandler(BaseAuthHandler):
     def get(self):
         info = dict(xsrf=self.xsrf_token)
         user = self.get_current_user()
@@ -1629,7 +1635,7 @@ class AuthLoginHandler(BaseAuthHandler):
 class CredentialsError(Exception):
     pass
 
-@route('/auth/login/')
+@route('/auth/login/$')
 class AuthLoginHandler(BaseAuthHandler):
 
     def check_credentials(self, email, password):
@@ -2456,6 +2462,7 @@ class FeatureRequestsHandler(BaseHandler):
             voting_weight *= 2
 
         return int(voting_weight)
+
 
     def post(self):
         title = self.get_argument('title').strip()

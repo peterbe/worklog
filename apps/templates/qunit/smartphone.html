@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>QUnit Test Suite</title>
+	<link rel="stylesheet" href="{{ static_url("qunit/qunit.css") }}" type="text/css" media="screen">
+	<script type="text/javascript" src="{{ static_url("qunit/qunit.js") }}"></script>
+	<script type="text/javascript" src="{{ static_url("ext/jquery-1.5.1.min.js") }}"></script>
+	<script type="text/javascript" src="{{ static_url("ext/jquery.store.js") }}"></script>
+	<script type="text/javascript" src="{{ static_url("smartphone.js") }}"></script>
+	<script type="text/javascript" src="{{ static_url("ext/jquery.mobile-1.0a3.js") }}"></script>
+	<script type="text/javascript" src="{{ static_url("qunit/test_smartphone.js") }}"></script>
+</head>
+<body>
+	<h1 id="qunit-header">QUnit Test Suite</h1>
+	<h2 id="qunit-banner"></h2>
+	<div id="qunit-testrunner-toolbar"></div>
+	<h2 id="qunit-userAgent"></h2>
+	<ol id="qunit-tests"></ol>
+	<div id="qunit-fixture">
+
+<div data-role="page" id="calendar">
+	<div data-role="header">
+		<h1>Calendar</h1>
+                <a href="/smartphone/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="ui-btn-right jqm-home">Home</a>
+	</div><!-- /header -->
+
+	<div data-role="content">
+        <ul data-role="listview" data-inset="true" id="calendar-months">
+        </ul>
+	</div><!-- /content -->
+</div>
+<div data-role="page" id="calendar-month">
+	<div data-role="header">
+		<h1>Loading...</h1>
+                <a href="/smartphone/" data-icon="home" data-iconpos="notext" data-direction="reverse" class="ui-btn-right jqm-home">Home</a>
+	</div><!-- /header -->
+        <div data-role="content">
+        <ul data-role="listview" data-inset="true" id="calendar-month-days">
+        </ul>
+        </div><!-- /content -->
+</div><!-- /page -->
+
+
+<div data-role="page" id="login">
+	<div data-role="header" data-nobackbtn="true">
+		<h1>Not logged in</h1>
+	</div><!-- /header -->
+	<div data-role="content">
+	<form action="/smartphone/auth/login/" method="post">
+	<fieldset>
+                <input type="hidden" name="next" value="{{ request.path }}">
+		<div data-role="fieldcontain">
+		<label for="email">Email:</label>
+		<input type="email" name="email" id="email" value="">
+		</div>
+		<div data-role="fieldcontain">
+		<label for="password">Password:</label>
+		<input type="password" name="password" id="password" value="">
+		</div>
+
+		<button type="submit" data-theme="a">Log in</button>
+	</fieldset>
+        </form>
+	</div><!-- /content -->
+</div><!-- /page -->
+
+
+
+
+</div>
+</body>
+</html>

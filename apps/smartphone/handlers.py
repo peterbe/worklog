@@ -176,13 +176,10 @@ class APIMonthHandler(APIBaseHandler, SmartphoneAPIMixin):
                 date += datetime.timedelta(days=1)
         else:
             while date.month == first_day.month:
-                #print date,
                 count_events = self.db[Event.__collection__]\
                   .find(dict(_search,
                              start={'$gte': date, '$lt':date + datetime.timedelta(days=1)}))\
                              .count()
-                #print count_events
-                #no_days += 1
                 day_counts.append(count_events)
                 date += datetime.timedelta(days=1)
 
@@ -197,7 +194,6 @@ class APIMonthHandler(APIBaseHandler, SmartphoneAPIMixin):
         if timestamp_only:
             self.write_json(dict(timestamp=timestamp))
         else:
-            #print "No_days", no_days
             self.write_json(dict(month_name=first_day.strftime('%B'),
                                  day_counts=day_counts,
                                  first_day=first_day.strftime('%A'),
@@ -233,7 +229,6 @@ class APIDayHandler(APIBaseHandler, EventsHandler, SmartphoneAPIMixin):
                 if days_spent is None:
                     days_spent = hours_spent = 0.0
 
-                #print each
                 event = dict(id=str(each['_id']),
                              all_day=each['all_day'],
                              title=each['title'],
@@ -262,9 +257,6 @@ class APIDayHandler(APIBaseHandler, EventsHandler, SmartphoneAPIMixin):
             #        data['totals']['days_spent'] = days_spent
             #    if hours_spent:
             #        data['totals']['hours_spent'] = '%.2f' % round(hours_spent, 1)
-        print "DAY.JSON"
-        pprint(data)
-        print "\n"
         self.write_json(data)
 
 
@@ -308,7 +300,7 @@ class APIDayHandler(APIBaseHandler, EventsHandler, SmartphoneAPIMixin):
 
 
 @route('/smartphone/api/event\.json$')
-class APIDayHandler(APIBaseHandler, EventsHandler, SmartphoneAPIMixin):
+class APIEventHandler(APIBaseHandler, EventsHandler, SmartphoneAPIMixin):
 
     def get(self):
         user = self.must_get_user()
@@ -335,7 +327,6 @@ class APIDayHandler(APIBaseHandler, EventsHandler, SmartphoneAPIMixin):
             else:
                 event_data['hours'] = (event['end'] - event['start']).seconds / 60.0 / 60
             data['event'] = self.serialize_dict(event_data)
-        pprint(data)
         self.write_json(data)
 
 
@@ -398,5 +389,4 @@ class APIDayHandler(APIBaseHandler, EventsHandler, SmartphoneAPIMixin):
             event_data['hours'] = (event.end - event.start).seconds / 60.0 / 60
         event_data['length'] = self.describe_length(event)
         data['event'] = self.serialize_dict(event_data)
-        pprint(data)
         self.write_json(data)

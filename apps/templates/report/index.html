@@ -36,9 +36,9 @@
   </table>
   <div class="plot" id="days-plot" style="margin-left:340px;width:490px">
   </div>
-  
+
   </div>
-  
+
   <div id="hours">
   <h2>Hours</h2>
   <table style="float:left">
@@ -47,7 +47,7 @@
         <th>&nbsp;</th>
         <th>Hours</th>
       </tr>
-    </tbody>  
+    </tbody>
     <tbody id="hours_spent">
     </tbody>
   </table>
@@ -57,7 +57,7 @@
 
 </div>
 
-{% end %}	    
+{% end %}
 {% block sidebar %}
 
 <div id="export-options">
@@ -69,7 +69,7 @@
   <p id="csv-export">
     <a class="download-export" href="/report/export.csv" rel="nofollow">Download as CSV file</a>
   </p>
-  
+
   <!--
   <p id="pdf-export">
     <a class="download-export" href="/report/export.pdf">Download as PDF file</a>
@@ -77,12 +77,12 @@
   -->
 </div>
 
-{% end %}	    
+{% end %}
 {% block extrajs %}
 <script type="text/javascript">
 var minDate = new Date({{ first_date.year }}, {{ first_date.month }}-1, {{ first_date.day }});
 var maxDate = new Date({{ last_date.year }}, {{ last_date.month }}-1, {{ last_date.day }});
-$(function() {
+head.ready(function() {
   var href = $('a.excel-export').unbind('click').click(function() {
     var start = startDate.datepicker('getDate');
     var end = endDate.datepicker('getDate');

@@ -4,6 +4,7 @@ APPS = (
   'smartphone',
   'emailreminders',
   'eventlog',
+  'qunit',
 )
 
 LOGIN_URL = "/auth/login"

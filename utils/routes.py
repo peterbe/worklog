@@ -1,3 +1,4 @@
+import tornado.web
 class route(object):
     """
     decorates RequestHandlers and builds up a list of routables handlers
@@ -22,22 +23,27 @@ class route(object):
     class SomeRequestHandler(RequestHandler):
         pass
 
+    @route('/some/path', name='other')
+    class SomeOtherRequestHandler(RequestHandler):
+        pass
+
     my_routes = route.get_routes()
     """
     _routes = []
 
-    def __init__(self, uri):
+    def __init__(self, uri, name=None):
         self._uri = uri
+        self.name = name
 
     def __call__(self, _handler):
         """gets called when we class decorate"""
-        self._routes.append((self._uri, _handler))
+        name = self.name and self.name or _handler.__name__
+        self._routes.append(tornado.web.url(self._uri, _handler, name=name))
         return _handler
 
     @classmethod
     def get_routes(self):
         return self._routes
 
-import tornado.web
-def route_redirect(from_, to):
-    route._routes.append((from_, tornado.web.RedirectHandler, dict(url=to)))
+def route_redirect(from_, to, name=None):
+    route._routes.append(tornado.web.url(from_, tornado.web.RedirectHandler, dict(url=to), name=name))

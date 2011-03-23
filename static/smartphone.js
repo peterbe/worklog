@@ -33,7 +33,7 @@ var LengthDescriber = (function() {
       describe_hours: function(hours) {
 	 var minutes = hours * 60;
 	 var remainder = minutes % 60;
-	 
+
 	 if (hours == 1)
 	   return "1 hour";
 	 else if (hours < 1)
@@ -43,7 +43,7 @@ var LengthDescriber = (function() {
 	   hours += " hour";
 	 else
 	   hours += " hours";
-	 if (remainder) 
+	 if (remainder)
 	   remainder = " " + remainder + " minutes";
 	 else
 	   remainder = "";
@@ -325,7 +325,6 @@ var Calendar = (function() {
 	 if(typeof(storage_key)=='undefined') throw new Error("Poop");
          var self = this;
          $('#calendar-months li').remove();
-
 	 function _display_data(data) {
 	    var container = $('#calendar-months');
 	    $.grep(data.months, function(e, i) {
@@ -379,7 +378,6 @@ var Calendar = (function() {
       },
 
       load_month: function(year, month, storage_key) {
-	 L('start');
          $('#calendar-month h1').text(utils.month_name(month) + ', ' + year);
          $('#calendar-month-days li').remove();
 	 var self = this
@@ -416,8 +414,6 @@ var Calendar = (function() {
 		   .appendTo(inner_container);
 	       i2++;
 	    });
-	    L($('#calendar-month-days'));
-	    
 	    $('#calendar-month-days').listview('refresh');
             last_month_loaded = storage_key;
 	 }
@@ -618,7 +614,7 @@ $(document).ready(function() {
          }
 
          Auth.ajax_login($('input[name="email"]', this).val(),
-                                   $('input[name="password"]', this).val());
+                         $('input[name="password"]', this).val());
          return false;
       });
    });

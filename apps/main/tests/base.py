@@ -18,16 +18,16 @@ class BaseModelsTestCase(unittest.TestCase):
             self._once = True
             from mongokit import Connection
             con = Connection()
-            con.register([User, Event, UserSettings, Share, 
+            con.register([User, Event, UserSettings, Share,
                           FeatureRequest, FeatureRequestComment])
             self.db = con.test
             self._emptyCollections()
-            
+
     def _emptyCollections(self):
-        [self.db.drop_collection(x) for x 
-         in self.db.collection_names() 
+        [self.db.drop_collection(x) for x
+         in self.db.collection_names()
          if x not in ('system.indexes',)]
-        
+
     def tearDown(self):
         self._emptyCollections()
 
@@ -44,17 +44,17 @@ class HTTPClientMixin(object):
                 url += '?%s' % data
         return self._fetch(url, 'GET', headers=headers,
                            follow_redirects=follow_redirects)
-    
-    def post(self, url, data, headers=None, follow_redirects=True):
+
+    def post(self, url, data, headers=None, follow_redirects=False):
         if data is not None:
             if isinstance(data, dict):
                 #print urlencode(data)
                 #print help(urlencode)
                 data = urlencode(data, True)
                 #print data
-        return self._fetch(url, 'POST', data, headers, 
+        return self._fetch(url, 'POST', data, headers,
                            follow_redirects=follow_redirects)
-    
+
     def _fetch(self, url, method, data=None, headers=None, follow_redirects=True):
         full_url = self.get_url(url)
         request = HTTPRequest(full_url, follow_redirects=follow_redirects,
@@ -62,8 +62,8 @@ class HTTPClientMixin(object):
         self.http_client.fetch(request, self.stop)
         return self.wait()
 
-    
-                                
+
+
 import Cookie
 class TestClient(HTTPClientMixin):
     def __init__(self, testcase):
@@ -78,9 +78,9 @@ class TestClient(HTTPClientMixin):
         response = self.testcase.get(url, data=data, headers=headers,
                                      follow_redirects=follow_redirects)
         self._update_cookies(response.headers)
-        
+
         return response
-    
+
     def post(self, url, data, headers=None, follow_redirects=False):
         if self.cookies:
             if headers is None:
@@ -90,14 +90,14 @@ class TestClient(HTTPClientMixin):
                                      follow_redirects=follow_redirects)
         self._update_cookies(response.headers)
         return response
-    
+
     def _update_cookies(self, headers):
         try:
             sc = headers['Set-Cookie']
             self.cookies = Cookie.SimpleCookie(sc)
         except KeyError:
             return
-        
+
     def login(self, email, password):
         data = dict(email=email, password=password)
         response = self.post('/auth/login/', data, follow_redirects=False)
@@ -105,35 +105,39 @@ class TestClient(HTTPClientMixin):
             raise LoginError(response.body)
         if 'Error' in response.body:
             raise LoginError(response.body)
-        
-        
-        
+
+
+
 class BaseHTTPTestCase(AsyncHTTPTestCase, LogTrapTestCase, HTTPClientMixin):
-    
+
     _once = False
     def setUp(self):
         super(BaseHTTPTestCase, self).setUp()
         if not self._once:
             self._once = True
             self._emptyCollections()
-            
+
         self._app.settings['email_backend'] = 'utils.send_mail.backends.locmem.EmailBackend'
         self._app.settings['email_exceptions'] = False
-        
+
     def _emptyCollections(self):
         db = self.get_db()
-        [db.drop_collection(x) for x 
-         in db.collection_names() 
+        [db.drop_collection(x) for x
+         in db.collection_names()
          if x not in ('system.indexes',)]
-        
+
+    # replace self.get_db() with self.db one day
+    @property
+    def db(self):
+        return self.get_db()
     def get_db(self):
         return self._app.con[self._app.database_name]
-    
+
     def get_app(self):
-        return app.Application(database_name='test', 
+        return app.Application(database_name='test',
                                xsrf_cookies=False,
                                optimize_static_content=False)
-                               
+
     def decode_cookie_value(self, key, cookie_value):
         try:
             return re.findall('%s=([\w=\|]+);' % key, cookie_value)[0]
