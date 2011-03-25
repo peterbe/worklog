@@ -9,14 +9,15 @@ var JS_URLS = {
   fancybox: '{{ modules.StaticURL("ext/jquery.fancybox-1.3.2.pack.js") }}',
   cookie: '{{ modules.StaticURL("ext/jquery.cookie.js") }}',
   jquery_form: '{{ modules.StaticURL("ext/jquery.form.js") }}',
-  jquery: '{% if debug %}{{ modules.StaticURL("ext/jquery-1.4.4.min.js") }}{% else %}//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js{% end %}',
+  jquery: '{% if debug %}{{ modules.StaticURL("ext/jquery-1.5.1.min.js") }}{% else %}//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js{% end %}',
   jqplot: '{{ modules.StaticURL("ext/jquery.jqplot.min.js") }}',
   jqplot_pierenderer: '{{ modules.StaticURL("ext/jqplot.pieRenderer.min.js") }}',
   validate: '{{ modules.StaticURL("ext/jquery.validate.min.js") }}',
   qtip: '{{ modules.StaticURL("ext/jquery.qtip.min.js") }}',
   share: '{{ modules.StaticURL("share.js") }}',
   jquery_ui_droppable: '{{ modules.StaticURL("ext/jquery.ui.droppable.min.js") }}',
-  jquery_ui_draggable_resizable: '{{ modules.StaticURL("ext/jquery-ui-1.8.4.draggable-resizable.min.js") }}',
+  {% if 0 %}jquery_ui_draggable_resizable: '{{ modules.StaticURL("ext/jquery-ui-1.8.4.draggable-resizable.min.js") }}',{% end %}
+  jquery_ui_fullcalendar: '{{ modules.StaticURL("ext/jquery-ui-1.8.9.fullcalendar.min.js") }}',
   jquery_autocomplete: '{{ modules.StaticURL("ext/jquery.autocomplete.pack.js") }}',
   soundmanager: '{{ modules.StaticURL("ext/soundmanager2-nodebug-jsmin.js") }}'
 };
