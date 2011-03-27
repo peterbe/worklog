@@ -32,7 +32,6 @@ var Sharing = (function() {
          });
       },
       display_current_sharers: function(sharers) {
-         L('sharers',sharers);
          var container = $('#current-sharers ul');
          var any = false;
          var color;
