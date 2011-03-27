@@ -1016,3 +1016,9 @@ form.standard label.error {
 }
 
 input.cancel { font-size:0.8em;}
+
+@media print {
+  #sidebar, #login { display:none; }
+  #wrap #content { width: 95%; }
+  /* should I perhaps import some print css thing for fullcalender? */
+}

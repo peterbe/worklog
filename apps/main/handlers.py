@@ -418,12 +418,12 @@ class APIHandlerMixin(object):
               message=httplib.responses[status_code])
 
 
-
 @route('/')
 class HomeHandler(BaseHandler):
 
     def get(self):
         if self.get_argument('share', None):
+            print "DEPRECATED. Should use /share/<key> instead"
             shared_keys = self.get_secure_cookie('shares')
             if not shared_keys:
                 shared_keys = []
@@ -447,7 +447,6 @@ class HomeHandler(BaseHandler):
 
         # default settings
         options = self.get_base_options()
-        """
         user = options['user']
         if self.is_secure():
             # but are you allowed to use secure URLs?
@@ -470,7 +469,6 @@ class HomeHandler(BaseHandler):
                                       className=className))
 
         #options['settings']['hidden_shares'] = hidden_shares
-        """
         self.render("calendar.html",
           #
           **options
@@ -537,6 +535,9 @@ class EventsHandler(BaseHandler):
                 if include_tags and include_tags != 'all':
                     tags.update(event['tags'])
 
+        _share_colors = '#5C8D87,#994499,#6633CC,#B08B59,#DD4477,#22AA99,'\
+                        '#668CB3,#DD5511,#D6AE00,#668CD9,#3640AD'.split(',')
+        _share_colors = iter(_share_colors)
         for share in self.share_keys_to_share_objects(shares):
             share_user = self.db[User.__collection__].one(dict(_id=share['user'].id))
             search['user.$id'] = share_user['_id']
@@ -547,9 +548,12 @@ class EventsHandler(BaseHandler):
             full_name = full_name.strip()
             if not full_name:
                 full_name = share_user['email']
+            _share_color = _share_colors.next()
             sharers.append(dict(className=className,
                                 full_name=full_name,
-                                key=share['key']))
+                                key=share['key'],
+                                color=_share_color,
+                                ))
 
             for event in self.db.Event.collection.find(search):
                 events.append(
@@ -557,7 +561,9 @@ class EventsHandler(BaseHandler):
                     event,
                     True,
                     className=className,
-                    editable=False))
+                    editable=False,
+                    color=_share_color
+                    ))
 
         data['events'] = events
 
@@ -1297,7 +1303,7 @@ class SharingHandler(BaseHandler):
             share.key = Share.generate_new_key(self.db[Share.__collection__], min_length=7)
             share.save()
 
-        share_url = "/?share=%s" % share.key
+        share_url = "/share/%s" % share.key
         full_share_url = '%s://%s%s' % (self.request.protocol,
                                         self.request.host,
                                         share_url)
@@ -1357,7 +1363,32 @@ class EditSharingHandler(SharingHandler):
 
         self.write("OK")
 
+@route('/share/(\w+)$')
+class SharingAddHandler(BaseHandler):
 
+    def get(self, key):
+        user = self.get_current_user()
+        shared_keys = self.get_secure_cookie('shares')
+        if not shared_keys:
+            shared_keys = []
+        else:
+            shared_keys = [x.strip() for x in shared_keys.split(',')
+                           if x.strip() and \
+                           self.db.Share.collection.one(dict(key=x))]
+
+        share = self.db.Share.one(dict(key=key))
+        user = self.get_current_user()
+        if user and user == share.user:
+            # could flash a message or something here
+            pass
+        elif share.key not in shared_keys:
+            shared_keys.append(share.key)
+        if shared_keys:
+            self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=70)
+        url = '/'
+        if user and user['premium']:
+            url = self.httpsify_url(url)
+        return self.redirect(url)
 
 
 @route('/user/account/$')

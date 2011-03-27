@@ -1,3 +1,91 @@
+/* SHARING
+ */
+var Sharing = (function() {
+   var described_classNames = new Array()
+     , described_colors = {}
+   ,  _share_toggles = {};
+
+   function hide_share(share) {
+      if (_share_toggles[share.className]) {
+         $('li.' + share.className, '#current-sharers').fadeTo(300, 0.4);
+         $('div.' + share.className, '#calendar').fadeOut(300);
+         _share_toggles[share.className] = false;
+         SETTINGS.hidden_shares.push(share);
+      } else {
+         $('li.' + share.className, '#current-sharers').fadeTo(300, 1.0);
+         $('div.' + share.className, '#calendar').fadeIn(300);
+         _share_toggles[share.className] = true;
+         SETTINGS.hidden_shares = $.grep(SETTINGS.hidden_shares, function(element) {
+            return element != share;
+         });
+      }
+      $.post('/share/', {_xsrf:XSRF, key: share.key});
+      return _share_toggles[share.className];
+   }
+
+   return {
+      hide_hidden: function() {
+         $.each(_share_toggles, function (className, show) {
+            if (!show) {
+               $('div.' + className, '#calendar').hide();
+            }
+         });
+      },
+      display_current_sharers: function(sharers) {
+         L('sharers',sharers);
+         var container = $('#current-sharers ul');
+         var any = false;
+         var color;
+         $.each(sharers, function(i, share) {
+            var className = share.className;
+            var is_new = false;
+            if ($.inArray(className, described_classNames) == -1) {
+               is_new = true;
+               described_classNames.push(className);
+            }
+            //var color = colors[$.inArray(className, described_classNames)];
+            color = share.color;
+
+            if (is_new) {
+               _share_toggles[share.className] = true;
+               container.append($('<li></li>')
+                                .addClass(className)
+                                .css('background-color', color)
+                                .append($('<a href="#"></a>')
+                                        .text('hide')
+                                        .addClass('share-hider')
+                                        .bind('click', function() {
+                                           if (hide_share(share)) {
+                                              $(this).text('hide');
+                                           } else {
+                                              $(this).text('show');
+                                           }
+                                           return false;
+                                        }))
+                                .append($('<a href="#"></a>')
+                                        .text(share.full_name)));
+            }
+
+            described_colors[className] = color;
+            any = true;
+         });
+         if (any) {
+            if (SETTINGS.hidden_shares) {
+               $.each(SETTINGS.hidden_shares, function(i, share) {
+                  _share_toggles[share.className] = false;
+                  $('li.' + share.className, '#current-sharers').fadeTo(0, 0.4);
+                  $('div.' + share.className, '#calendar').fadeOut(0);
+                  $('li.' + share.className + ' a.share-hider', '#current-sharers').text('show');
+               });
+            }
+            $('#current-sharers').show();
+         }
+      }
+   }
+})();
+
+
+
 function __standard_qtip_options() {
   return {
    show: {
@@ -144,7 +232,7 @@ function _event_clicked(event, jsEvent, view) {
             $('#calendar').fullCalendar('removeEvents', event.id);
             var view = $('#calendar').fullCalendar('getView');
             Calendar.display_sidebar_stats(view);
-            __update_described_colors();
+            Sharing.hide_hidden();
             show_undo_delete("UNDO last delete", event.id);
          });
          return false;
@@ -225,18 +313,17 @@ function _event_clicked(event, jsEvent, view) {
 }
 
 function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view) {
-   __update_described_colors();
    $.post('/event/resize/', {_xsrf:XSRF, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
          alert(response.error);
          revertFunc();
       }
       Calendar.display_sidebar_stats(view);
+      Sharing.hide_hidden();
    });
 }
 
 function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc, jsEvent, ui, view) {
-   __update_described_colors();
    var date_before = new Date(event.start.getTime() - dayDelta*24*3600*1000);
    $.post('/event/move/', {_xsrf:XSRF, all_day: allDay, days: dayDelta, minutes: minuteDelta, id: event.id}, function(response) {
       if (response.error) {
@@ -250,6 +337,7 @@ function _event_dropped(event,dayDelta,minuteDelta,allDay,revertFunc, jsEvent, u
          // the pie chart stats
          Calendar.display_sidebar_stats(view);
       }
+      Sharing.hide_hidden();
    });
 }
 
@@ -354,97 +442,9 @@ function __inner_setup_ajaxsubmit(element, event_id) {
 	    $('#calendar').fullCalendar('renderEvent', response.event);
 	    var view = $('#calendar').fullCalendar('getView');
             Calendar.display_sidebar_stats(view);
-	    __update_described_colors();
+            Sharing.hide_hidden();
 	 }
       });
-}
-
-var _share_toggles = {};
-function __hide_share(share) {
-   if (_share_toggles[share.className]) {
-      $('li.' + share.className, '#current-sharers').fadeTo(300, 0.4);
-      $('div.' + share.className, '#calendar').fadeOut(300);
-      _share_toggles[share.className] = false;
-      SETTINGS.hidden_shares.push(share);
-   } else {
-      $('li.' + share.className, '#current-sharers').fadeTo(300, 1.0);
-      $('div.' + share.className, '#calendar').fadeIn(300);
-      _share_toggles[share.className] = true;
-      SETTINGS.hidden_shares = $.grep(SETTINGS.hidden_shares, function(element) {
-         return element != share;
-      });
-
-   }
-   $.post('/share/', {_xsrf:XSRF, key: share.key});
-   return _share_toggles[share.className];
-}
-
-/* In a "share" we can expect there to be a name,
- * a className and a key so that that particular share can be hidden
- */
-var colors = '#5C8D87,#994499,#6633CC,#B08B59,#DD4477,#22AA99,#668CB3,#DD5511,#D6AE00,#668CD9,#3640AD'.split(',');
-var described_classNames = new Array();
-var described_colors = {};
-function __display_current_sharers(sharers) {
-   var container = $('#current-sharers ul');
-   var any = false;
-   $.each(sharers, function(i, share) {
-
-      var className = share.className;
-      var is_new = false;
-      if ($.inArray(className, described_classNames) == -1) {
-	 is_new = true;
-	 described_classNames.push(className);
-      }
-      var color = colors[$.inArray(className, described_classNames)];
-
-      if (is_new) {
-	 _share_toggles[share.className] = true;
-	 container.append($('<li></li>')
-			  .addClass(className)
-			  .css('background-color', color)
-			  .append($('<a href="#"></a>')
-				  .text('hide')
-				  .addClass('share-hider')
-				  .bind('click', function() {
-				     if (__hide_share(share)) {
-				        $(this).text('hide');
-				     } else {
-					$(this).text('show');
-				     }
-
-				     return false;
-				  }))
-			  .append($('<a href="#"></a>')
-				  .text(share.full_name)));
-      }
-
-      described_colors[className] = color;
-      any = true;
-   });
-
-   if (any) {
-      __update_described_colors();
-      if (SETTINGS.hidden_shares) {
-         $.each(SETTINGS.hidden_shares, function(i, share) {
-            _share_toggles[share.className] = false;
-            $('li.' + share.className, '#current-sharers').fadeTo(0, 0.4);
-            $('div.' + share.className, '#calendar').fadeOut(0);
-            $('li.' + share.className + ' a.share-hider', '#current-sharers').text('show');
-         });
-      }
-
-      $('#current-sharers').show();
-   }
-}
-
-function __update_described_colors() {
-   $.each(described_colors, function(className, color) {
-      $('.' + className + ', .fc-agenda .' + className + ' .fc-event-time, .' + className + ' a'
-	  ).css('background-color', color).css('border-color', color);
-      if (!_share_toggles[className])
-	$('div.' + className, '#calendar').fadeOut(0);
-   });
 }
 
 var undo_delete_timer;
@@ -464,7 +464,7 @@ function show_undo_delete(text, event_id) {
            $('#calendar').fullCalendar('renderEvent', response.event);
            var view = $('#calendar').fullCalendar('getView');
            Calendar.display_sidebar_stats(view);
-           __update_described_colors();
+           Sharing.hide_hidden();
            $('#undo-delete').hide();
         });
         return false;
@@ -549,7 +549,7 @@ var Calendar = (function() {
                   SETTINGS.hidden_shares = response.hidden_shares;
                }
                if (response.sharers) {
-                  __display_current_sharers(response.sharers);
+                  Sharing.display_current_sharers(response.sharers);
                }
                if (response.tags) {
                   $.each(response.tags, function(i, tag) {
@@ -603,7 +603,7 @@ var Calendar = (function() {
          eventResize: _event_resized,
          eventDrop: _event_dropped,
          viewDisplay: function(view) {
-
+            Sharing.hide_hidden();
             close_current_tooltip(); // if any open
             // viewDisplay() is called(back) the first time you render the
             // calendar but also every time you change the view (month,week,day)
@@ -626,7 +626,7 @@ var Calendar = (function() {
 
          },
          windowResize: function(view) {
-            __update_described_colors();
+            Sharing.hide_hidden();
          }
       });
    }
@@ -673,20 +673,4 @@ head.ready(function() {
          }
       });
    });
-
-   /*
-   if ($('h1#calendar-h1').size()) {
-      setTimeout(function() {
-	 $('<img>', {
-	    alt:"Click to close",
-	      src:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTM5jWRgMAAAAVdEVYdENyZWF0aW9uIFRpbWUAMi8xNy8wOCCcqlgAAAQRdEVYdFhNTDpjb20uYWRvYmUueG1wADw/eHBhY2tldCBiZWdpbj0iICAgIiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+Cjx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDQuMS1jMDM0IDQ2LjI3Mjk3NiwgU2F0IEphbiAyNyAyMDA3IDIyOjExOjQxICAgICAgICAiPgogICA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgICAgICAgICB4bWxuczp4YXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iPgogICAgICAgICA8eGFwOkNyZWF0b3JUb29sPkFkb2JlIEZpcmV3b3JrcyBDUzM8L3hhcDpDcmVhdG9yVG9vbD4KICAgICAgICAgPHhhcDpDcmVhdGVEYXRlPjIwMDgtMDItMTdUMDI6MzY6NDVaPC94YXA6Q3JlYXRlRGF0ZT4KICAgICAgICAgPHhhcDpNb2RpZnlEYXRlPjIwMDgtMDMtMjRUMTk6MDA6NDJaPC94YXA6TW9kaWZ5RGF0ZT4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgICAgIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiCiAgICAgICAgICAgIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyI+CiAgICAgICAgIDxkYzpmb3JtYXQ+aW1hZ2UvcG5nPC9kYzpmb3JtYXQ+CiAgICAgIDwvcmRmOkRlc2NyaXB0aW9uPgogICA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDUdUmQAAAB9SURBVDiN1VNBDoAgDCuGB+GL9hT2lb1IfzQvSgCZYPBiEw5raLM24FQVM1im1F8Y+Hxg5gBg62hWZt7TpKrpxBi1h/NO0jQjiMgQBxgdEFEhEBEQUdPAN9nKxBKbG7yBaXCtXccZMqgzP5mYJY5wwL3EUDySNkI+uP9/pgNQQGCwjv058wAAAABJRU5ErkJggg=='})
-	   .appendTo($('<a>', {href:'#', title:'Click to hide'}).click(function() {
-	      $('h1#calendar-h1').fadeOut(500);
-              $.cookie('hide_h1', true);
-	      return false;
-	   }).appendTo('h1#calendar-h1'));
-      }, 3 * 1000);
-   }
-    */
-
 });
