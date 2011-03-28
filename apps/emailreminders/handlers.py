@@ -387,7 +387,6 @@ class ReceiveEmailReminder(EventsHandler):
             else:
                 break
 
-        #new_text = new_text.getvalue()
         new_text = u"\n".join(new_text)
         if email_reminder:
             if email_reminder.time[0] > 12:
@@ -402,7 +401,7 @@ class ReceiveEmailReminder(EventsHandler):
 
         tz_offset = email_reminder.tz_offset
         count_new_events = 0
-        paragraphs = new_text.strip().split('\n\n')
+        paragraphs = re.split('\n\n+', new_text.strip())
         # Because we expect the last line to be something like
         #    On 25 December 2010 09:00, DoneCal
         #    <reminder+4d11e7d674a1f8360a000078@donecal.com> wrote:

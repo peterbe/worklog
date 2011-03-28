@@ -1,0 +1,73 @@
+From ghayoun@gmail.com  Mon Mar 28 17:07:26 2011
+Return-Path: <ghayoun@gmail.com>
+Received: from mail-vw0-f44.google.com (mail-vw0-f44.google.com [209.85.212.44])
+	by donecal.fry-it.com (Postfix) with ESMTPS id 77BAD803B21EC
+	for <reminder+4d90a11374a1f8470e00005c@donecal.com>; Mon, 28 Mar 2011 17:07:26 +0000 (UTC)
+Received: by vws12 with SMTP id 12so2865453vws.31
+        for <reminder+4d90a11374a1f8470e00005c@donecal.com>; Mon, 28 Mar 2011 10:07:25 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=gamma;
+        h=domainkey-signature:mime-version:in-reply-to:references:from:date
+         :message-id:subject:to:content-type:content-transfer-encoding;
+        bh=wHCQQoLHrOSt/wa4Q4dKej2TsNzII+A4+9gRCc2/47U=;
+        b=fRVHL1onoucXmGHUt70G76DZGmYBSWZUt19a8YsD3IyBglk1Yygq3NiDliq+PwAVu2
+         6Fh8oRR7IGsSin6N2SQiv154kLsGE85LspAM8oEWuEgMBfpLAddKuE1u/GLxEXHWXtlr
+         USCbSS8xlJrHsUCvzwr0ts2N1OLGhBWPBI924=
+DomainKey-Signature: a=rsa-sha1; c=nofws;
+        d=gmail.com; s=gamma;
+        h=mime-version:in-reply-to:references:from:date:message-id:subject:to
+         :content-type:content-transfer-encoding;
+        b=REdJ36jemgg2cnkQWe9x/3vgUcytVMqv+F8QzM0QOL3CB8EJcGYlbN9CeJlz2+tmqm
+         7q/kGDJNrXxylijgGbLt/qUAzwajFmvy6xFV2LHOluAIWq6na6QPfAm0zuJiyr8frw1f
+         vF73wdcKgPCAl4yO1Kpg3I6/YKuycy2xaaCxk=
+Received: by 10.220.89.144 with SMTP id e16mr1219549vcm.49.1301332045186; Mon,
+ 28 Mar 2011 10:07:25 -0700 (PDT)
+MIME-Version: 1.0
+Received: by 10.220.87.66 with HTTP; Mon, 28 Mar 2011 10:07:05 -0700 (PDT)
+In-Reply-To: <20110328170001.18172.2571@donecal>
+References: <20110328170001.18172.2571@donecal>
+From: Gautier HAYOUN <peterbe@gmail.com>
+Date: Mon, 28 Mar 2011 18:07:05 +0100
+Message-ID: <AANLkTi=Hx2jn8LoTP3-mAEr1f8_GdQhoG-YO=RRUyRoA@mail.gmail.com>
+Subject: Re: [DoneCal] What did you do today?
+To: DoneCal <reminder+4d90a11374a1f8470e00005c@donecal.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+9:00 4h bounced back emails #waf
+
+
+15:00 2h deployed test env #orangepic
+
+
+On Mon, Mar 28, 2011 at 6:00 PM, DoneCal
+<reminder+4d90a11374a1f8470e00005c@donecal.com> wrote:
+> Hi Gautier,
+> What did you do *today*?
+>
+>
+> INSTRUCTIONS:
+> Just hit reply and type at the start of the email as you would enter
+> an event normally on DoneCal with tags and everything. To enter
+> multiple events separate them by two line breaks. A single line break
+> sets the description of the event.
+>
+> If you want it to be an hourly even write a number followed by the letter=
+ 'h'. Like this for example:
+>
+> =C2=A014:45 Working on #projectX like Sam said
+>
+> If you want to specify exactly when it happened enter it like a 24 hour c=
+lock or with AM/PM. Like this for example:
+>
+> =C2=A010:30 1h Helped Santa with gift wrapping
+>
+> If you don't start the line with a time, but do start the line with a dur=
+ation it will assume it's noon your local time.
+>
+>
+> SETTINGS:
+> If you want to change your email reminders simply go to this page:
+> http://donecal.com/emailreminders/?edit=3D4d90a11374a1f8470e00005c
+>
+>
