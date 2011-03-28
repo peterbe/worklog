@@ -1,3 +1,5 @@
+from pymongo import ASCENDING, DESCENDING
+from pprint import pprint
 from utils.decorators import login_required
 from apps.main.handlers import BaseHandler
 from utils.routes import route, route_redirect
@@ -16,7 +18,7 @@ class EventLogHandler(BaseHandler):
 
         search = {'user.$id': user._id}
         if superuser:
-            search = dict()
+            search = {}
 
         event_logs = self.db.EventLog.find(search)
         options['count_event_logs'] = event_logs.count()
@@ -28,7 +30,7 @@ class EventLogHandler(BaseHandler):
         options['page'] = page
         options['skip'] = skip
         options['pages'] = range(1, 1 + options['count_event_logs'] / batch_size)
-        options['event_logs'] = list(event_logs.sort('add_date', -1).skip(skip).limit(batch_size))
+        options['event_logs'] = list(event_logs.sort('add_date', DESCENDING).skip(skip).limit(batch_size))
 
         self.render("eventlog/index.html", **options)
 
@@ -45,6 +47,7 @@ class StatsEventLogHandler(BaseHandler):
         action_keys = constants.ACTIONS_HUMAN_READABLE.keys()
         action_keys.remove(0) # skip the "READ" action since it's not in use
         for key in sorted(action_keys):
+            pprint(self.db.EventLog.find({'action': key}).explain())
             actions.append((constants.ACTIONS_HUMAN_READABLE[key],
                             self.db.EventLog.find({'action': key}).count()))
         return actions

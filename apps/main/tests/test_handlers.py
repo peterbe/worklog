@@ -447,7 +447,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share.users = [user3]
         share.save()
 
-        response = self.get('/?share=%s' % share.key, headers={'Cookie':cookie},
+        response = self.get('/share/%s' % share.key, headers={'Cookie':cookie},
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
         shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
@@ -491,7 +491,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share.save()
 
         # use it yourself
-        response = self.get('/?share=%s' % share.key, headers={'Cookie':cookie},
+        response = self.get('/share/%s' % share.key, headers={'Cookie':cookie},
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
         self.assertTrue('Set-Cookie' not in response.headers) # because no cookie is set
@@ -506,7 +506,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share2.key = u'foo2'
         share2.save()
 
-        response = self.get('/?share=%s' % share2.key, headers={'Cookie':cookie},
+        response = self.get('/share/%s' % share2.key, headers={'Cookie':cookie},
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
         #self.assertTrue('Set-Cookie' not in response.headers) # because no cookie is set
@@ -524,7 +524,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share3.key = u'foo3'
         share3.save()
 
-        response = self.get('/?share=%s' % share3.key, headers={'Cookie':cookie},
+        response = self.get('/share/%s' % share3.key, headers={'Cookie':cookie},
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
         shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
@@ -586,7 +586,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share.user = user
         share.save()
 
-        url = '/?share=%s' % share.key
+        url = '/share/%s' % share.key
         response = self.get(url, follow_redirects=False)
         self.assertEqual(response.code, 302)
         shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
@@ -690,7 +690,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         # expect there to be a full URL in the HTML
         url = re.findall('value="http(.*)"', response.body)[0]
-        key = re.findall('share=(.*)', url)[0]
+        key = re.findall('/share/(.*)', url)[0]
         share = self.db.Share.one(dict(key=key))
         self.assertTrue(share)
         self.assertEqual(share.user, user)
@@ -702,7 +702,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(share.tags, [u'tag2'])
 
         # so a new user can start using this
-        response = self.get('/', dict(share=key), follow_redirects=False)
+        response = self.get('/share/%s' % key, follow_redirects=False)
         self.assertEqual(response.code, 302)
         shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
         cookie = 'shares=%s;' % shares_cookie
@@ -718,17 +718,6 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         hidden_shares_cookie = self.decode_cookie_value('hidden_shares', response.headers['Set-Cookie'])
         hidden_shares = base64.b64decode(hidden_shares_cookie.split('|')[0])
-
-        return # refactored
-        self.assertEqual(hidden_shares, key)
-        cookie += response.headers['Set-Cookie']
-        response = self.get('/', headers={'Cookie': cookie})
-        # a setting for 'hidden_shares' is going to appear in the rendered HTML
-        self.assertTrue('hidden_shares' in response.body)
-        # so will the share key
-        self.assertTrue(share.key in response.body)
-
-
 
 
     def test_signup(self):

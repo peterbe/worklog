@@ -36,10 +36,10 @@ class User(BaseDocument):
       'premium': False,
     }
 
-    indexes = [
-      {'fields': 'guid',
-       'unique': True},
-    ]
+    #indexes = [
+    #  {'fields': 'guid',
+    #   'unique': True},
+    #]
 
     def set_password(self, raw_password):
         self.password = encrypt_password(raw_password)
@@ -86,11 +86,11 @@ class UserSettings(BaseDocument):
       'first_hour': lambda x: 0 <= int(x) < 24
     }
 
-    indexes = [
-      {'fields': 'user.$id',
-       'check': False,
-       'unique': True},
-    ]
+    #indexes = [
+    #  {'fields': 'user.$id',
+    #   'check': False,
+    #   'unique': True},
+    #]
 
     @staticmethod
     def get_bool_keys():
@@ -114,9 +114,9 @@ class Event(BaseDocument):
     use_autorefs = True
     required_fields = ['user', 'title', 'all_day', 'start', 'end']
 
-    indexes = [
-      {'fields': ['user.$id', 'start', 'end'], 'check':False},
-    ]
+    #indexes = [
+    #  {'fields': ['user.$id', 'start', 'end'], 'check':False},
+    #]
 
     validators = {
       'title': lambda x: x.strip()
@@ -146,10 +146,10 @@ class Share(BaseDocument):
 
     required_fields = ['user']
 
-    indexes = [
-      {'fields': ['user.$id'], 'check':False},
-      {'fields': ['key'], 'unique': True},
-    ]
+    #indexes = [
+    #  {'fields': ['user.$id'], 'check':False},
+    #  {'fields': ['key'], 'unique': True},
+    #]
 
     @classmethod
     def generate_new_key(cls, collection, min_length=6):

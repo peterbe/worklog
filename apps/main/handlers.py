@@ -165,7 +165,6 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
     def db(self):
         return self.application.con[self.application.database_name]
 
-
     def get_current_user(self):
         # the 'user' cookie is for securely logged in people
         guid = self.get_secure_cookie("user")
@@ -511,7 +510,7 @@ class EventsHandler(BaseHandler):
                 hidden_shares = ''
             hidden_keys = [x for x in hidden_shares.split(',') if x]
             hidden_shares = []
-            for share in self.db[Share.__collection__].find({'key':{'$in':hidden_keys}}):
+            for share in self.db.Share.collection.find({'key':{'$in':hidden_keys}}):
                 className = 'share-%s' % share['user'].id
                 hidden_shares.append(dict(key=share['key'],
                                           className=className))
@@ -530,7 +529,7 @@ class EventsHandler(BaseHandler):
 
         if user:
             search['user.$id'] = user['_id']
-            for event in self.db[Event.__collection__].find(search):
+            for event in self.db.Event.collection.find(search):
                 events.append(self.transform_fullcalendar_event(event, True))
                 if include_tags and include_tags != 'all':
                     tags.update(event['tags'])
@@ -539,7 +538,7 @@ class EventsHandler(BaseHandler):
                         '#668CB3,#DD5511,#D6AE00,#668CD9,#3640AD'.split(',')
         _share_colors = iter(_share_colors)
         for share in self.share_keys_to_share_objects(shares):
-            share_user = self.db[User.__collection__].one(dict(_id=share['user'].id))
+            share_user = self.db.User.collection.one(dict(_id=share['user'].id))
             search['user.$id'] = share_user['_id']
             if share['tags']:
                 search['tags'] = {'$in': share['tags']}
@@ -1118,7 +1117,7 @@ class EventStatsHandler(BaseHandler):
                 end = parse_datetime(self.get_argument('end'))
                 search['end'] = {'$lt': end}
 
-            for entry in self.db[Event.__collection__].find(search):
+            for entry in self.db.Event.collection.find(search):
                 if entry['all_day']:
                     days = 1 + (entry['end'] - entry['start']).days
                     if entry['tags']:
