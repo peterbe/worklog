@@ -345,6 +345,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         options['git_revision'] = self.application.settings['git_revision']
         options['total_no_events'] = self._get_total_no_events()
         options['debug'] = self.application.settings['debug']
+        options['xsrf_token'] = self.xsrf_token
 
         return options
 

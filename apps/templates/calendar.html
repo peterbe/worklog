@@ -31,10 +31,13 @@
               <div class="plot" id="hours-plot">
               </div>
 
+              {% if user %}
               <div id="report-link" style="display:none">
                 <p style="text-align:center"><a href="/report/" rel="nofollow">Get the full report</a>
               </div>
+              {% end %}
 
+              {% if not user %}
               <div id="introduction" style="display:none">
     	        <p id="introduction-video"><strong>What on earth <em>is</em> this?</strong><br>
 	          <a href="/help/show_vimeo_video" class="vimeovideo"><img src="{{ modules.StaticURL("images/vimeovideo.png") }}" alt="Introduction to DoneCal.com on Vimeo"></a><br>
@@ -47,6 +50,7 @@
 		  as well as the <code>@</code> sig.
 	        </p>
               </div>
+              {% end %}
 
 	    </div>
 

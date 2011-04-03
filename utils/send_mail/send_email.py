@@ -1,10 +1,13 @@
+import mimetypes
 import time
 import random
 import os
+from email import Charset, Encoders
 from email.Header import Header
 from email.MIMEText import MIMEText
 from email.Utils import formatdate
-
+from email.MIMEBase import MIMEBase
+from email.MIMEMultipart import MIMEMultipart
 from dns_name import DNS_NAME
 from importlib import import_module
 
@@ -45,7 +48,7 @@ def smart_str(s, encoding='utf-8', strings_only=False, errors='strict'):
     else:
         return s
 
-    
+
 def make_msgid(idstring=None):
     """Returns a string suitable for RFC 2822 compliant Message-ID, e.g:
 
@@ -94,14 +97,24 @@ def forbid_multi_line_headers(name, val, encoding):
     return name, val
 
 class SafeMIMEText(MIMEText):
-    
+
     def __init__(self, text, subtype, charset):
         self.encoding = charset
         MIMEText.__init__(self, text, subtype, charset)
-    
-    def __setitem__(self, name, val):    
+
+    def __setitem__(self, name, val):
         name, val = forbid_multi_line_headers(name, val, self.encoding)
         MIMEText.__setitem__(self, name, val)
+
+class SafeMIMEMultipart(MIMEMultipart):
+
+    def __init__(self, _subtype='mixed', boundary=None, _subparts=None, encoding=None, **_params):
+        self.encoding = encoding
+        MIMEMultipart.__init__(self, _subtype, boundary, _subparts, **_params)
+
+    def __setitem__(self, name, val):
+        name, val = forbid_multi_line_headers(name, val, self.encoding)
+        MIMEMultipart.__setitem__(self, name, val)
 
 class EmailMessage(object):
     """
@@ -147,7 +160,7 @@ class EmailMessage(object):
 
     def message(self):
         encoding = self.encoding or 'utf-8'
-        
+
         msg = SafeMIMEText(smart_str(self.body, encoding),
                            self.content_subtype, encoding)
         msg = self._create_message(msg)
@@ -209,7 +222,7 @@ class EmailMessage(object):
 
     def _create_attachments(self, msg):
         if self.attachments:
-            encoding = self.encoding or settings.DEFAULT_CHARSET
+            encoding = self.encoding or 'utf-8'
             body_msg = msg
             msg = SafeMIMEMultipart(_subtype=self.mixed_subtype, encoding=encoding)
             if self.body:
@@ -227,7 +240,7 @@ class EmailMessage(object):
         """
         basetype, subtype = mimetype.split('/', 1)
         if basetype == 'text':
-            encoding = self.encoding or settings.DEFAULT_CHARSET
+            encoding = self.encoding or 'utf-8'
             attachment = SafeMIMEText(smart_str(content, encoding), subtype, encoding)
         else:
             # Encode non-text attachments with base64.
@@ -280,10 +293,29 @@ def send_email(backend, subject, message, from_email, recipient_list,
     Note: The API for this method is frozen. New code wanting to extend the
     functionality should use the EmailMessage class directly.
     """
-    connection = connection or get_connection(backend, 
+    return create_email(backend, subject, message, from_email, recipient_list,
+                        fail_silently=fail_silently, auth_user=auth_user,
+                        auth_password=auth_password, connection=connection,
+                        headers=headers).send()
+
+
+def create_email(backend, subject, message, from_email, recipient_list,
+               fail_silently=False, auth_user=None, auth_password=None,
+               connection=None, headers=None):
+    """
+    Easy wrapper for sending a single message to a recipient list. All members
+    of the recipient list will see the other recipients in the 'To' field.
+
+    If auth_user is None, the EMAIL_HOST_USER setting is used.
+    If auth_password is None, the EMAIL_HOST_PASSWORD setting is used.
+
+    Note: The API for this method is frozen. New code wanting to extend the
+    functionality should use the EmailMessage class directly.
+    """
+    connection = connection or get_connection(backend,
                                     username=auth_user,
                                     password=auth_password,
                                     fail_silently=fail_silently)
     return EmailMessage(subject, message, from_email, recipient_list,
                         connection=connection,
-                        headers=headers).send()
+                        headers=headers)

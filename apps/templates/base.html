@@ -44,16 +44,16 @@
     {% end %}
 
     <div id="login" class="topnav login_not">
-      <p><a href="/user/account/" class="account">Login &amp; Sign up</a></p>
-
     {% if 0 %}
+      <p><a href="/user/account/" class="account">Login &amp; Sign up</a></p>
+    {% end %}
+
       {% if user %}
       <p><a href="/user/account/" {% if user.premium %}title="You're a premium user!"{% end %} class="account">Hi {{ user_name }}</a>
       <a href="/auth/logout/" class="log-out">log out</a></p>
       {% else %}
       <p><a href="/user/account/" class="account">Login &amp; Sign up</a></p>
       {% end %}
-    {% end %}
     </div>
 
     <div id="wrap">
@@ -96,6 +96,7 @@
 {% block corejs %}
 {{ modules.Static("ext/head.load.min.js") }}
 <script type="text/javascript">
+var XSRF = {{ xsrf_token }};
 var total_no_events = {{ total_no_events }};
 head.js(JS_URLS.jquery, JS_URLS.base);
 head.js(JS_URLS.fancybox, function() {

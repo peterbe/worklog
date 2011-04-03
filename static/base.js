@@ -13,8 +13,8 @@ function decrement_total_no_events(new_no) {
   $('#total_no_events').text(total_no_events);
 }
 
-var XSRF;
 
+/*
 $.getJSON('/auth/logged_in.json', {url:location.href}, function(r) {
    if (r.redirect_to) {
       window.location.href = r.redirect_to;
@@ -39,3 +39,4 @@ $.getJSON('/auth/logged_in.json', {url:location.href}, function(r) {
       $('#introduction').show();
    }
 });
+*/
