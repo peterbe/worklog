@@ -114,6 +114,7 @@
 {{ modules.Static("ext/head.load.min.js") }}
 <script type="text/javascript">
 var total_no_events = {{ total_no_events }};
+var XSRF = '{{ xsrf_token }}';
 head.js(JS_URLS.jquery, JS_URLS.base);
 head.js(JS_URLS.fullcalendar,
         JS_URLS.cookie,
