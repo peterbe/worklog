@@ -1,8 +1,6 @@
 * (HIGH) Upgrade jqplot
   https://bitbucket.org/cleonello/jqplot/downloads/
   
-* (HIGH) no need to run first AJAX to get the name and XSRF
-
 * (HIGH) dragging tags when sharing doesn't work
 
 * (MEDIUM) Look into
