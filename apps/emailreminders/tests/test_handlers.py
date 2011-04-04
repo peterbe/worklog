@@ -27,7 +27,11 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         peter.email = u'peter@test.com'
         peter.set_password('secret')
         peter.save()
+
         self.client.login('peter@test.com', 'secret')
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        assert 'peter@test.com' in response.body
 
         from apps.emailreminders.models import EmailReminder
         data = dict(weekdays=[EmailReminder.MONDAY,
@@ -54,6 +58,19 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertTrue(edit_url in response.body)
 
+    def test_simple_client_get(self):
+        db = self.get_db()
+        bob = db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.set_password('secret')
+        bob.save()
+        self.client.login(bob.email, 'secret')
+        url = '/emailreminders/'
+        response = self.client.get(url)
+        assert response.code == 200
+        self.assertTrue(bob.email in response.body)
+
+
     def test_editing_setup_reminder(self):
         db = self.get_db()
         bob = db.User()
@@ -74,12 +91,19 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 403) # because you're not logged in
         self.client.login(bob.email, 'secret')
 
+        url = '/emailreminders/?edit=%s' % email_reminder._id
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200) # because you *are* logged in
+
         bad_url = '/emailreminders/?edit=%s' % ('_' * 100)
         response = self.client.get(bad_url)
         self.assertEqual(response.code, 400) # invalid id
 
         bad_url = '/emailreminders/?edit=%s' % \
           str(email_reminder._id).replace('0','1')
+        #print "*"*100
+        #print
+        #print bad_url
         response = self.client.get(bad_url)
         self.assertEqual(response.code, 404) # valid but not found
 

@@ -70,22 +70,27 @@ class TestClient(HTTPClientMixin):
         self.testcase = testcase
         self.cookies = Cookie.SimpleCookie()
 
+    def _render_cookie_back(self):
+        return ''.join(['%s=%s;' %(x, morsel.value)
+                        for (x, morsel)
+                        in self.cookies.items()])
+
     def get(self, url, data=None, headers=None, follow_redirects=False):
         if self.cookies:
             if headers is None:
                 headers = dict()
-            headers['Cookie'] = self.cookies.output()
+            headers['Cookie'] = self._render_cookie_back()
         response = self.testcase.get(url, data=data, headers=headers,
                                      follow_redirects=follow_redirects)
-        self._update_cookies(response.headers)
 
+        self._update_cookies(response.headers)
         return response
 
     def post(self, url, data, headers=None, follow_redirects=False):
         if self.cookies:
             if headers is None:
                 headers = dict()
-            headers['Cookie'] = self.cookies.output()
+            headers['Cookie'] = self._render_cookie_back()
         response = self.testcase.post(url, data=data, headers=headers,
                                      follow_redirects=follow_redirects)
         self._update_cookies(response.headers)
@@ -94,7 +99,7 @@ class TestClient(HTTPClientMixin):
     def _update_cookies(self, headers):
         try:
             sc = headers['Set-Cookie']
-            self.cookies = Cookie.SimpleCookie(sc)
+            self.cookies.update(Cookie.SimpleCookie(sc))
         except KeyError:
             return
 

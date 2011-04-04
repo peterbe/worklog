@@ -80,6 +80,7 @@ class EmailRemindersHandler(BaseHandler):
 
     def get_edit_reminder(self):
         edit_reminder = None
+        #print 'self.get_current_user()', self.get_current_user()
         if self.get_argument('edit', None):
             user = self.get_current_user()
             if not user:
