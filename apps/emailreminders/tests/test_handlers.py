@@ -2,7 +2,8 @@ import os
 import re
 from time import mktime
 import datetime
-from apps.main.tests.base import BaseHTTPTestCase, TestClient
+from apps.main.tests.base import BaseHTTPTestCase
+from utils.http_test_client import TestClient
 from utils import format_time_ampm
 import utils.send_mail as mail
 
@@ -14,7 +15,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
 
     def setUp(self):
         super(EmailRemindersTestCase, self).setUp()
-        self.client = TestClient(self)#self.get_app())
+        self.client = TestClient(self)
 
     def test_setting_up_reminders(self):
         db = self.get_db()
