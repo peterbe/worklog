@@ -1,11 +1,11 @@
 bcrypt
 coverage
-mongokit>=0.5.13-dev
+mongokit
 pycurl
-pymongo>=1.9
 simplejson
 xlwt
 lxml
 python-dateutil
 formatflowed
 markdown
+cssmin
