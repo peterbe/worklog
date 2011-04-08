@@ -217,6 +217,8 @@ class APIDayHandler(APIBaseHandler, EventsHandler, SmartphoneAPIMixin):
                   .find(dict(_search,
                              start={'$gte': date, '$lt':date + datetime.timedelta(days=1)}))\
                   .limit(1).sort('modify_date', -1):
+            # the reason we're after the modify_date is because we ultimately
+            # need to know the latest something was changed in this day.
             timestamp = mktime(event['modify_date'].timetuple())
             break
 

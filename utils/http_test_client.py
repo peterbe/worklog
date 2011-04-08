@@ -2,9 +2,11 @@ from urllib import urlencode
 import Cookie
 from tornado.httpclient import HTTPRequest
 
+__version__ = '1.0'
+
 class HTTPClientMixin(object):
 
-    def get(self, url, data=None, headers=None, follow_redirects=True):
+    def get(self, url, data=None, headers=None, follow_redirects=False):
         if data is not None:
             if isinstance(data, dict):
                 data = urlencode(data, True)
@@ -18,10 +20,7 @@ class HTTPClientMixin(object):
     def post(self, url, data, headers=None, follow_redirects=False):
         if data is not None:
             if isinstance(data, dict):
-                #print urlencode(data)
-                #print help(urlencode)
                 data = urlencode(data, True)
-                #print data
         return self._fetch(url, 'POST', data, headers,
                            follow_redirects=follow_redirects)
 

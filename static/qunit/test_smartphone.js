@@ -1,3 +1,48 @@
+var ajax_calls = []
+  , month_fixture
+  , months_fixture
+;
+
+$.ajax = function(options) {
+      ajax_calls.push(options);
+      switch (options.url) {
+       case '/smartphone/api/months.json':
+	 options.success(months_fixture);
+	 break;
+       case '/smartphone/api/month.json':
+	 options.success(month_fixture);
+	 break;
+       case '/smartphone/checkguid/':
+	 options.success({ok:true});
+	 break;
+       case '/smartphone/auth/login/':
+	 if (options.data.password == 'secret')
+	   options.success({guid:'10001'});
+	 else
+	   options.success({error:"Wrong credentials"});
+	 break;
+       default:
+	 console.log(options.url);
+	 throw new Error("Mock not prepared (" + options.url + ")");
+      }
+};
+
+var MockMobile = function() {
+   this.current_page;
+   this.loading = false;
+   this.urlHistory = {'stack':[]};
+};
+MockMobile.prototype.changePage = function(location) {
+   this.current_page = location;
+   this.loading = false;
+};
+MockMobile.prototype.pageLoading = function(b) {
+   this.loading = b;
+};
+
+$.mobile = new MockMobile();
+
+
 test("LengthDescriber, hours", function() {
    var r = LengthDescriber.describe_hours(1);
    equals(r, "1 hour");
@@ -109,39 +154,11 @@ test("Storing objects as JSON", function() {
    equals(Store.get('array')[1], 'two');
 });
 
-var MockMobile = function() {
-   this.current_page;
-   this.loading = false;
-   this.urlHistory = {'stack':[]};
-};
-MockMobile.prototype.changePage = function(location) {
-   this.current_page = location;
-   this.loading = false;
-};
-MockMobile.prototype.pageLoading = function(b) {
-   this.loading = b;
-};
 
 test("Auth", function() {
    var _last_alert;
    alert = function(msg) {
       _last_alert = msg;
-   };
-   $.ajax = function(options) {
-      switch (options.url) {
-       case '/smartphone/checkguid/':
-	 options.success({ok:true});
-	 break;
-       case '/smartphone/auth/login/':
-	 if (options.data.password == 'secret')
-	   options.success({guid:'10001'});
-	 else
-	   options.success({error:"Wrong credentials"});
-	 break;
-       default:
-	 console.log(options.url);
-	 throw new Error("Mock not prepared (" + options.url + ")");
-      }
    };
    var result = Auth.is_logged_in(false);
    equals(result, false);
@@ -167,72 +184,45 @@ test("Auth", function() {
 
 });
 
-/*
-window.sessionStorage = (function() {
-   var _data = {};
-   return {
-      getItem: function(key) {
-	 return _data[key];
-      },
-      setItem: function(key, value) {
-	 _data[key] = value;
-      },
-      _clear: function() {
-	 _data = {};
-      }
-   }
-})();
-
-
-sessionStorage.setItem("foo","bar");
-if (sessionStorage.getItem("foo")!="bar") throw new Error("badly mocked");
-sessionStorage._clear();
- */
 
 module("Calendar", {
    setup: function() {
       localStorage.clear();
-      sessionStorage.clear();
+      // Note: we're not allowed to call sessionStorage.clear()
+      // because it causes a security error
+
+      // initialize all listviews
+      // this is necessary since otherwise you can get errors about
+      // listsviews not being initialized before calling the refresh method.
+      $('ul[data-role="listview"]').listview();
+
+      sessionStorage.removeItem('current_year');
+      sessionStorage.removeItem('current_month');
+      sessionStorage.removeItem('current_day');
+      sessionStorage.removeItem('current_event_id');
+
    },
    teardown: function() {
       localStorage.clear();
-      sessionStorage.clear();
+
+      sessionStorage.removeItem('current_year');
+      sessionStorage.removeItem('current_month');
+      sessionStorage.removeItem('current_day');
+      sessionStorage.removeItem('current_event_id');
    }
 });
 
-$.mobile = new MockMobile();
 test("loading months", function() {
-   var ajax_calls = [];
-   var months_fixture = {
+   ajax_calls = []; // reset
+   months_fixture = {
       timestamp: 1300195846,
       months: [{"count": 4, "month_name": "October", "month": 10, "year": 2010},
 	       {count: 132, month_name: "November", month: 11, year: 2010}]
    };
 
-   $.ajax = function(options) {
-      ajax_calls.push(options);
-      switch (options.url) {
-       case '/smartphone/api/months.json':
-	 options.success(months_fixture);
-	 break;
-       case '/smartphone/checkguid/':
-	 options.success({ok:true});
-	 break;
-       case '/smartphone/auth/login/':
-	 if (options.data.password == 'secret')
-	   options.success({guid:'10001'});
-	 else
-	   options.success({error:"Wrong credentials"});
-	 break;
-       default:
-	 console.log(options.url);
-	 throw new Error("Mock not prepared (" + options.url + ")");
-      }
-   };
    Auth.ajax_login('peterbe@example.com', 'secret');
    equals(Store.get('guid'), '10001');
 
-   // before we can do this we'll need to
    Calendar.init_months();
    equals(ajax_calls.length, 2);
 
@@ -268,51 +258,32 @@ test("loading months", function() {
 });
 
 
-test("Test loading month", function() {
-   return;
-   var ajax_calls = [];
-   var month_fixture = {
+test("loading month", function() {
+   ajax_calls = []; // reset
+   month_fixture = {
       timestamp: 1300456142,
       month_name: "March",
       first_day: "Tuesday",
       day_counts: [1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
    };
-
-   $.ajax = function(options) {
-      ajax_calls.push(options);
-      switch (options.url) {
-       case '/smartphone/api/month.json':
-	 options.success(month_fixture);
-	 break;
-       case '/smartphone/checkguid/':
-	 options.success({ok:true});
-	 break;
-       case '/smartphone/auth/login/':
-	 if (options.data.password == 'secret')
-	   options.success({guid:'10001'});
-	 else
-	   options.success({error:"Wrong credentials"});
-	 break;
-       default:
-	 console.log(options.url);
-	 throw new Error("Mock not prepared (" + options.url + ")");
-      }
-   };
+   equals(ajax_calls.length, 0); // paranoia on the test setup
    Auth.ajax_login('peterbe@example.com', 'secret');
-   L(sessionStorage.getItem('current_year'));
+   equals(ajax_calls.length, 1);
+
+   equals(Store.get('guid'), '10001');
    Calendar.set_current_year(''+2011);
    Calendar.set_current_month(3);
-   $('#calendar-month').trigger('pageshow');
-
-   //Calendar.init_month(2011, 3);
+   //$('#calendar-month').trigger('pageshow'); // WHY! doesn't this trigger?!?! ...sometimes
+   Calendar.init_month(2011, 3);
    equals(ajax_calls.length, 2);
-   L($('#calendar-month'));
 
-   //equals($('#calendar-month li').size(), month_fixture.day_counts.length);
-   //equals(Store.get('timestamps').years, month_fixture.timestamp);
-   //var stored_data = Store.get('' + year + month);
-   //L(stored_data);
-
+   equals($('#calendar-month li').size(), month_fixture.day_counts.length);
+   equals(Store.get('timestamps')['' + 2011 + 3], month_fixture.timestamp);
+   var stored_data = Store.get('' + 2011 + 3);
+   equals(stored_data.timestamp, month_fixture.timestamp);
+   // can't compare arrays
+   equals(stored_data.day_counts.length, month_fixture.day_counts.length);
+   equals(stored_data.month_name, 'March');
 
 });

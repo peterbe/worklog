@@ -1224,8 +1224,9 @@ QUnit.jsDump = (function() {
 			object:function( map ) {
 				var ret = [ ];
 				QUnit.jsDump.up();
-				for ( var key in map )
+				for ( var key in map ) {
 					ret.push( QUnit.jsDump.parse(key,'key') + ': ' + QUnit.jsDump.parse(map[key]) );
+                                }
 				QUnit.jsDump.down();
 				return join( '{', ret, '}' );
 			},

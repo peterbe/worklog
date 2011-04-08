@@ -322,7 +322,7 @@ var Calendar = (function() {
          }
       },
       load_months: function(storage_key) {
-	 if(typeof(storage_key)=='undefined') throw new Error("Poop");
+	 if(typeof(storage_key)=='undefined') throw new Error("Poop"); // ????
          var self = this;
          $('#calendar-months li').remove();
 	 function _display_data(data) {
@@ -343,7 +343,11 @@ var Calendar = (function() {
 		  years_loaded.push(e.year);
 	       }
 	    });
-	    $('#calendar-months').listview('refresh');
+            try {
+               $('#calendar-months').listview('refresh');
+            } catch(e) {
+               L("ERROR", e);
+            }
 	 }
 	 var stored_data = Store.get(storage_key);
 	 if (!stored_data){
@@ -503,7 +507,6 @@ var Calendar = (function() {
 	 }
 
 	 var stored_data = Store.get(storage_key);
-
 	 if (!stored_data) {
 	    $.getJSON('/smartphone/api/day.json',
 		   {guid:Auth.get_guid(), year:year, month:month, day:day},
@@ -598,6 +601,7 @@ var Calendar = (function() {
 })();
 
 $(document).ready(function() {
+
    $('#start').bind('pagecreate', function() {
       if (!Auth.is_logged_in(true)) {
          Auth.redirect_login();
@@ -668,7 +672,7 @@ $(document).ready(function() {
             $('<a>', {text:response.event.title, href:'#calendar-event'})
               .click(function() {
 		 // could potentiall copy response.event.title to '#calendar-event h3' immediately
-                 self.init_event(response.event.id);
+                 Calendar.init_event(response.event.id);
               })
                 .appendTo(inner_container);
             $('<span>', {text:response.event.length})
@@ -682,18 +686,6 @@ $(document).ready(function() {
          });
          return false;
       });
-   });
-   $('#calendar-day').bind('pageshow', function() {
-      var container = $('#select-choice-hour');
-      var current_hour = new Date().getHours();
-      for (var i=0, len=24; i < len; i++) {
-         var o = $('<option>', {text:utils.format_hour(i, false)}).val(i);
-         if (i == current_hour) {
-            o.attr('selected','selected');
-         }
-         o.appendTo(container);
-      }
-      $('#select-choice-hour').selectmenu('refresh', true);
    });
 
    $('#calendar-page').bind('pageshow', function() {
@@ -713,6 +705,7 @@ $(document).ready(function() {
    });
 
    $('#calendar-month').bind('pageshow', function() {
+      L("IN pageshow for #calendar-month");
       var year = Calendar.get_current_year();
       var month = Calendar.get_current_month();
       if (year && month) {
@@ -726,7 +719,32 @@ $(document).ready(function() {
       }
    });
 
+   $('#add2today').click(function() {
+      var today = new Date();
+      Calendar.set_current_year(today.getFullYear());
+      Calendar.set_current_month(today.getMonth() + 1);
+      Calendar.set_current_day(today.getDate());
+
+      setTimeout(function() {
+	 $('#calendar-day-add-collapse', '#calendar-day').trigger('expand');
+	 $('input[name="title"]', '#calendar-day').trigger('focus');
+      }, 500);
+      return true;
+   });
+
+
    $('#calendar-day').bind('pageshow', function() {
+      var container = $('#select-choice-hour');
+      var current_hour = new Date().getHours();
+      for (var i=0, len=24; i < len; i++) {
+         var o = $('<option>', {text:utils.format_hour(i, false)}).val(i);
+         if (i == current_hour) {
+            o.attr('selected','selected');
+         }
+         o.appendTo(container);
+      }
+      $('#select-choice-hour').selectmenu('refresh', true);
+
       var year = Calendar.get_current_year();
       var month = Calendar.get_current_month();
       var day = Calendar.get_current_day();
