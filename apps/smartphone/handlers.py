@@ -17,7 +17,7 @@ class XSRFIgnore(object):
         return
 
 route_redirect('/smartphone$', '/smartphone/')
-@route('/smartphone/$')
+@route('/smartphone/$', name='smartphone')
 class SmartphoneHandler(BaseHandler):
     def get(self):
         options = self.get_base_options()
@@ -38,6 +38,17 @@ class SmartphoneAuthLoginHandler(XSRFIgnore, AuthLoginHandler):
             return self.write_json(dict(error="Error: %s" % msg))
         self.write_json(dict(guid=self.create_signed_value('guid', user.guid)))
 
+
+@route('/smartphone/openid/$')
+class SmartphoneOpenIdHandler(BaseHandler):
+    """
+    This handler exists so that it's possible to use OpenID and then hackisly
+    set the guid in the localStorage on the client afterwards.
+    """
+    def get(self):
+        user = self.get_current_user()
+        guid_signed = self.create_signed_value('guid', user.guid)
+        self.redirect(self.reverse_url('smartphone') + '#guid-%s' % guid_signed)
 
 class SmartphoneAPIMixin(object):
 

@@ -280,7 +280,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
             search = dict(base_search,
                           tags=re.compile(re.escape(tag), re.I))
 
-            for event in self.db[Event.__collection__].find(search):
+            for event in self.db.Event.collection.find(search):
                 checked_tags = get_checked_tags(event['tags'], tag)
                 if event['tags'] != checked_tags:
                     event['tags'] = checked_tags
@@ -289,7 +289,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                     event_obj = self.db.Event(event)
                     event_obj.save()
 
-            for share in self.db[Share.__collection__].find(search):
+            for share in self.db.Share.collection.find(search):
                 checked_tags = get_checked_tags(share['tags'], tag)
                 if share['tags'] != checked_tags:
                     share['tags'] = checked_tags
@@ -366,7 +366,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         tags = set()
         search = {'user.$id': user['_id'],
                   'tags': {'$ne': []}}
-        for event in self.db[Event.__collection__].find(search):
+        for event in self.db.Event.collection.find(search):
             for tag in event['tags']:
                 tags.add(tag)
         return tags

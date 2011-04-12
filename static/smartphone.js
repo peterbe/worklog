@@ -601,6 +601,10 @@ var Calendar = (function() {
 })();
 
 $(document).ready(function() {
+   if (location.hash && location.hash.search(/^#guid-/) > -1) {
+      Auth.set_guid(location.hash.split('#guid-')[1]);
+      location.hash = '#start';
+   }
 
    $('#start').bind('pagecreate', function() {
       if (!Auth.is_logged_in(true)) {
