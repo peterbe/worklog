@@ -14,9 +14,13 @@
 
               <div class="" id="settings-box">
 	        <p>
-                  <a class="user-settings" href="/user/settings/">Change your settings</a>
+                  <a class="user-settings" href="/user/settings/" rel="nofollow">Change your settings</a>
                   <br>
-                  <a class="share" href="/share/">Share your calendar</a>
+                  <a class="share" href="/share/" rel="nofollow">Share your calendar</a>
+		  {% if user %}
+                  <br>
+                  <a id="report-link" href="/report/" rel="nofollow">Get the full report</a>
+		  {% end %}
                 </p>
               </div>
 
@@ -31,11 +35,6 @@
               <div class="plot" id="hours-plot">
               </div>
 
-              {% if user %}
-              <div id="report-link" style="display:none">
-                <p style="text-align:center"><a href="/report/" rel="nofollow">Get the full report</a>
-              </div>
-              {% end %}
 
               {% if not user %}
               <div id="introduction" style="display:none">
