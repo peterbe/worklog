@@ -2680,7 +2680,8 @@ class PowerusersHandler(BaseHandler): #pragma: no cover
         return self.render('powerusers/index.html', **options)
 
 
-@route('/powerusers/top-10')
+route_redirect('/powerusers/top-10$', '/powerusers/top-10/')
+@route('/powerusers/top-10/')
 class PowerusersTop10Handler(PowerusersHandler): #pragma: no cover
 
     @login_required
