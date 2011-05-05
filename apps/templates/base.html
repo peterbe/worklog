@@ -10,9 +10,15 @@
         {{ modules.Static("css/style.css", "css/ext/jquery.fancybox-1.3.4.css") }}
 	<style type="text/css">
         #home { background-image:url('{{ modules.Static64("images/calendar_home.png") }}') }
-	.login_premium { background-image:url('{{ modules.Static64("images/premium.png") }}') }
-	.login_user { background-image:url('{{ modules.Static64("images/locked.gif") }}') }
+	{% if user %}
+	  {% if user.premium %}
+	  .login_premium { background-image:url('{{ modules.Static64("images/premium.png") }}') }
+	  {% else %}
+	  .login_user { background-image:url('{{ modules.Static64("images/locked.gif") }}') }
+  	  {% end %}
+	{% else %}
 	.login_not { background-image:url('{{ modules.Static64("images/key.gif") }}') }
+	{% end %}
 	</style>
         {% block extra_head_outer %}
         {% block extra_head %}{% end %}
@@ -43,7 +49,7 @@
     </div>
     {% end %}
 
-    <div id="login" class="topnav login_not">
+    <div id="login" class="topnav {% if user %}{% if user.premium %}login_premium{% else %}login_user{% end %}{% else %}login_not{% end %}">
     {% if 0 %}
       <p><a href="/user/account/" class="account">Login &amp; Sign up</a></p>
     {% end %}
