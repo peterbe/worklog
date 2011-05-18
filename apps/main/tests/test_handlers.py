@@ -709,7 +709,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         # I can now toggle this share to be hidden
         response = self.post('/share/', dict(), headers={'Cookie': cookie})
-        self.assertEqual(response.code, 404)
+        self.assertEqual(response.code, 400)
 
         response = self.post('/share/', dict(key='bullshit'), headers={'Cookie': cookie})
         self.assertEqual(response.code, 404)
@@ -787,7 +787,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         # no email supplied
         response = self.post('/user/account/', {}, headers={'Cookie':cookie})
-        self.assertEqual(response.code, 404)
+        self.assertEqual(response.code, 400)
 
         data = {'email':'bob'}
         response = self.post('/user/account/', data, headers={'Cookie':cookie})
@@ -1227,7 +1227,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         data = dict(title=u'')
         response = self.post(url, data)
-        self.assertEqual(response.code, 404) # no title
+        self.assertEqual(response.code, 400) # no title
 
         # the default placeholder text
         data['title'] = u"Add your own new feature request"
@@ -1318,7 +1318,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 404)
         data['id'] = ''
         response = self.get(url + 'feature.html', data, headers={'Cookie':cookie})
-        self.assertEqual(response.code, 404)
+        self.assertEqual(response.code, 400)
 
         data = dict(title="more cheese")
         response = self.get(url + 'find.json', data)
