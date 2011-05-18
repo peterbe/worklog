@@ -60,8 +60,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue(edit_url in response.body)
 
     def test_simple_client_get(self):
-        db = self.get_db()
-        bob = db.User()
+        bob = self.db.User()
         bob.email = u'Bob@Builder.com'
         bob.set_password('secret')
         bob.save()
@@ -171,8 +170,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('Not a registered account: bob@builder.com' in sent_email.body)
 
         # try again, this time with bob set up
-        db = self.get_db()
-        bob = db.User()
+        bob = self.db.User()
         bob.email = u'Bob@Builder.com'
         bob.first_name = u"Bob"
         bob.save()
@@ -183,7 +181,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('Not a reply to an email reminder' in response.body)
 
         # set one up!
-        email_reminder = db.EmailReminder()
+        email_reminder = self.db.EmailReminder()
         email_reminder.user = bob
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
@@ -201,8 +199,8 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         # Try again, now it should work
         response = self.post(url, '\r\n'.join(body))
         self.assertTrue('Created' in response.body)
-        self.assertEqual(db.Event.find().count(), 1)
-        event = db.Event.one()
+        self.assertEqual(self.db.Event.find().count(), 1)
+        event = self.db.Event.one()
         self.assertEqual(event.title, u'This is a test on @tagg')
         self.assertEqual(event.tags, [u'tagg'])
         self.assertEqual(event.user.first_name, u"Bob")
@@ -863,6 +861,44 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         events = db.Event.find({'user.$id':user._id})
         self.assertEqual(events.count(), 2)
 
+    def test_receive_minute_time_bug(self):
+        test_file = os.path.join(os.path.dirname(__file__), '2011-05-17_220706_318577.email')
+        body = open(test_file).read()
+        assert len(body)
+        url = '/emailreminders/receive/'
+        response = self.post(url, body)
+        self.assertTrue('Not recognized' in response.body)
+
+        user = self.db.User()
+        user.email = u'peterbe@gmail.com'
+        user.first_name = u"Peter"
+        user.save()
+
+        response = self.post(url, body)
+        self.assertTrue('Not a reply to an email reminder' in response.body)
+
+        email_reminder = self.db.EmailReminder()
+        email_reminder.user = user
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (8,0)
+        email_reminder.tz_offset = 0
+        email_reminder.include_instructions = True
+        email_reminder.include_summary = False
+        email_reminder.save()
+        email_reminder.set_next_send_date()
+        email_reminder.save()
+        body = body.replace('4dd2ca7c74a1f8034c000039',
+                            str(email_reminder._id))
+        response = self.post(url, body)
+        self.assertTrue('Created' in response.body)
+        events = self.db.Event.find({'user.$id':user._id})
+        self.assertEqual(events.count(), 1)
+        event = self.db.Event.one()
+        self.assertEqual((event.end - event.start).seconds, 3600)
+        self.assertEqual(event.title, u'Fate: configurar scanner WC35')
+
+
     def test_receive_gautier_time_bug(self):
         test_file = os.path.join(os.path.dirname(__file__), '2011-03-28_170726_751460.email')
         body = open(test_file).read()
@@ -897,3 +933,37 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('Created' in response.body)
         events = db.Event.find({'user.$id':user._id})
         self.assertEqual(events.count(), 2)
+
+    def test_posting_email_in_not_a_reply(self):
+        url = '/emailreminders/receive/'
+        body = ['From: bob@builder.com']
+        body += ['To: reminder@donecal.com']
+        body += ['Subject: [DoneCal] what did you do today?']
+        body += ['']
+        body += ['Just some nice text']
+        body += ['INSTRUCTIONS']
+        body += ['bla bla']
+        body += ['']
+
+        response = self.post(url, '\r\n'.join(body))
+        self.assertTrue('Not recognized from user' in response.body)
+        # try again, this time with bob set up
+        bob = self.db.User()
+        bob.email = u'Bob@Builder.com'
+        bob.first_name = u"Bob"
+        bob.save()
+        response = self.post(url, '\r\n'.join(body))
+        self.assertTrue('Not a reply to an email reminder' in response.body)
+
+        email_reminder = self.db.EmailReminder()
+        email_reminder.user = bob
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (11,30)
+        email_reminder.tz_offset = 0.0
+        email_reminder.save()
+
+        body[1] = 'To: reminder+%s@donecal.com' % email_reminder._id
+
+        response = self.post(url, '\r\n'.join(body))
+        self.assertTrue('Not a reply email' in response.body)

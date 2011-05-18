@@ -364,29 +364,46 @@ class ReceiveEmailReminder(EventsHandler):
         # formatflowed expects the line breakers to be \r\n
         if not message_body.count(CRLF):
             message_body = message_body.replace('\n', CRLF)
-
-
-        message_body_ascii = message_body.encode(character_set)
-        from formatflowed import decode
-        try:
-            if character_set:
+        original_message_lines = [x for x in message_body.splitlines()
+                                  if x.startswith('> ')]
+        if not original_message_lines:
+            # then desperately look for something like
+            # ------Mensaje original------
+            new_text = []
+            for line in message_body.splitlines():
+                if line.startswith('------') and line.endswith('------'):
+                    break
+                new_text.append(line)
+            else:
+                err_msg = u"Your email is not a reply to an email reminder. "\
+                          u"When sending your reply try to use inline style."
+                self.error_reply(err_msg, msg, message_body)
+                self.write("Not a reply email")
+                return
+            remove_last_paragraph = False
+        else:
+            remove_last_paragraph = True
+            message_body_ascii = message_body.encode(character_set)
+            from formatflowed import decode
+            try:
+                if character_set:
+                    textflow = decode(message_body_ascii, character_set=character_set)
+                else:
+                    textflow = decode(message_body_ascii)
+            except LookupError:
+                if not character_set:
+                    raise
+                # _character_set is quite likly 'iso-8859-1;format=flowed'
+                _character_set = _character_set.split(';')[0].strip()
                 textflow = decode(message_body_ascii, character_set=character_set)
-            else:
-                textflow = decode(message_body_ascii)
-        except LookupError:
-            if not character_set:
-                raise
-            # _character_set is quite likly 'iso-8859-1;format=flowed'
-            _character_set = _character_set.split(';')[0].strip()
-            textflow = decode(message_body_ascii, character_set=character_set)
 
-        new_text = []
-        for segment in textflow:
-            if not segment[0]['quotedepth']:
-                # level zero
-                new_text.append(segment[1])
-            else:
-                break
+            new_text = []
+            for segment in textflow:
+                if not segment[0]['quotedepth']:
+                    # level zero
+                    new_text.append(segment[1])
+                else:
+                    break
 
         new_text = u"\n".join(new_text)
         if email_reminder:
@@ -403,12 +420,13 @@ class ReceiveEmailReminder(EventsHandler):
         tz_offset = email_reminder.tz_offset
         count_new_events = 0
         paragraphs = re.split('\n\n+', new_text.strip())
-        # Because we expect the last line to be something like
-        #    On 25 December 2010 09:00, DoneCal
-        #    <reminder+4d11e7d674a1f8360a000078@donecal.com> wrote:
-        #
-        # So we have to remove it.
-        paragraphs = paragraphs[:-1]
+        if remove_last_paragraph:
+            # Because we expect the last line to be something like
+            #    On 25 December 2010 09:00, DoneCal
+            #    <reminder+4d11e7d674a1f8360a000078@donecal.com> wrote:
+            #
+            # So we have to remove it.
+            paragraphs = paragraphs[:-1]
         previous_duration = None
         for text in paragraphs:
             if not text.strip():
@@ -484,6 +502,7 @@ class ReceiveEmailReminder(EventsHandler):
             start = end = start_base
         else:
             if previous_duration:
+
                 duration_hours = int(previous_duration) / 60
                 duration_minutes = int(previous_duration) % 60
                 if isinstance(time_, tuple):
@@ -491,6 +510,9 @@ class ReceiveEmailReminder(EventsHandler):
                 time_[0] += duration_hours
                 time_[1] += duration_minutes
 
+            if time_[1] == 60:
+                time_[0] += 1
+                time_[1] = 0
 
             start = start_base
             start = datetime.datetime(start.year, start.month, start.day,
