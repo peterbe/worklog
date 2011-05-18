@@ -1,0 +1,31 @@
+{% extends "../base.html" %}
+
+{% block title %}Activity log{% end %}
+
+{% block extra_head %}
+{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/logs.css") }}
+{% end %}
+
+
+{% block sidebar %}
+
+{% end %}
+
+{% block content_inner %}
+
+<h1>Activity log</h1>
+
+              <div class="plot" id="users-plot">
+              </div>
+              <div class="plot" id="events-plot">
+              </div>
+{% end %}
+
+
+{% block extrajs %}
+<script>
+var jqplot_dateaxisrenderer = '{{ modules.StaticURL("ext/jqplot.dateAxisRenderer.min.js") }}';
+head.js(JS_URLS.jqplot, jqplot_dateaxisrenderer);
+</script>
+{{ modules.Static("activitylog.js") }}
+{% end %}

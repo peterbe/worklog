@@ -1,3 +1,4 @@
+import datetime
 from pymongo import ASCENDING, DESCENDING
 from pprint import pprint
 from utils.decorators import login_required
@@ -47,7 +48,7 @@ class StatsEventLogHandler(BaseHandler):
         action_keys = constants.ACTIONS_HUMAN_READABLE.keys()
         action_keys.remove(0) # skip the "READ" action since it's not in use
         for key in sorted(action_keys):
-            pprint(self.db.EventLog.find({'action': key}).explain())
+            #pprint(self.db.EventLog.find({'action': key}).explain())
             actions.append((constants.ACTIONS_HUMAN_READABLE[key],
                             self.db.EventLog.find({'action': key}).count()))
         return actions
@@ -61,3 +62,55 @@ class StatsEventLogHandler(BaseHandler):
             contexts.append((label,
                             self.db.EventLog.find({'context': key}).count()))
         return contexts
+
+
+@route('/log/activity/$')
+class EventLogActivityHandler(BaseHandler):
+
+    #@login_required ## doesn't work with positional arguments
+    def get(self):
+        options = self.get_base_options()
+        if not options['user']:
+            self.redirect('/log/')
+            return
+        self.render('eventlog/activity.html', **options)
+
+@route('/log/activity.json$')
+class EventLogActivityJSONHandler(BaseHandler):
+
+    #@login_required ## doesn't work with positional arguments
+    def get(self):
+        first_event = list(self.db.EventLog.find().sort('add_date').limit(1))[0]
+        first_event_date = first_event.add_date
+        last_event = list(self.db.EventLog.find().sort('add_date', -1).limit(1))[0]
+        last_event_date = last_event.add_date
+
+        while first_event_date.strftime('%A') != 'Monday':
+            first_event_date -= datetime.timedelta(days=1)
+        while last_event_date.strftime('%A') != 'Monday':
+            last_event_date -= datetime.timedelta(days=1)
+
+        #print first_event_date, last_event_date
+        users = []
+        events = []
+        date = first_event_date
+        while date < last_event_date:
+            #print "\t", date
+            next = date + datetime.timedelta(days=7)
+            search = {'add_date': {'$gte': date, '$lt': next}}
+            user_ids = set()
+            event_ids = set()
+            for each in self.db.EventLog.collection.find(search):
+                if isinstance(each['user'], dict):
+                    user_ids.add(each['user']['_id'])
+                else:
+                    user_ids.add(each['user'].id)
+                if isinstance(each['event'], dict):
+                    event_ids.add(each['event']['_id'])
+                else:
+                    event_ids.add(each['event'].id)
+            users.append([date.strftime('%Y-%m-%d'), len(user_ids)])
+            events.append([date.strftime('%Y-%m-%d'), len(event_ids)])
+            date = next
+
+        self.write_json(dict(users=users, events=events))

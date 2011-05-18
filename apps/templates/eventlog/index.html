@@ -68,5 +68,10 @@
 
 
 {% block extrajs %}
-{{ modules.Static("ext/jquery.jqplot.min.js","ext/jqplot.pieRenderer.min.js","eventlog.js") }}
+<script>
+//var jquery_jqplot = '{{ modules.StaticURL("ext/jquery.jqplot.min.js") }}';
+var jqplot_pierenderer = '{{ modules.StaticURL("ext/jqplot.pieRenderer.min.js") }}';
+head.js(JS_URLS.jqplot, jqplot_pierenderer);
+</script>
+{{ modules.Static("eventlog.js") }}
 {% end %}
