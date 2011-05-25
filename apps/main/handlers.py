@@ -1728,7 +1728,18 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
         if user is None:
             user = self.db.User.one(dict(email=re.compile(re.escape(email), re.I)))
 
-        if not user:
+
+        if user:
+            needs_save = False
+            if first_name and first_name != user.first_name:
+                user.first_name = first_name
+                needs_save = True
+            if last_name and last_name != user.last_name:
+                user.last_name = last_name
+                needs_save = True
+            if needs_save:
+                user.save()
+        else:
             # create a new account
             user = self.db.User()
             user.email = email

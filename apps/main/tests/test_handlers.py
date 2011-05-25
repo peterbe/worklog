@@ -228,8 +228,6 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         event_obj = self.db.Event.one(dict(title="Foo"))
         event_user = event_obj.user
-        #print event_obj
-        #print "TODAY", today
         # now move it from an all_day event to a day event
         data = {'event':{}, 'id':str(event_obj._id), 'days':0, 'minutes':800}
         now = datetime.datetime(today.year, today.month, today.day, 10, 30, 0)
@@ -1534,3 +1532,44 @@ class ApplicationTestCase(BaseHTTPTestCase):
                     include_tags='all')
         response = self.get(url, data)
         self.assertEqual(response.code, 400)
+
+    def test_google_openid_callback(self):
+        url = '/auth/openid/google/'
+        import apps.main.handlers
+        apps.main.handlers.GoogleAuthHandler.get_authenticated_user = \
+          mocked_get_authenticated_user
+
+        data = {
+          u'openid.assoc_handle': u'AOQobUdw52vqgNiH0NJF10tdIDrfXFI_jsBPAPbFWg7tJ6ZLU6AI7agN',
+          u'openid.claimed_id': u'https://www.google.com/accounts/o8/id?id=AItOawmwnMmHH-_LJoEdOiFnzx-3lMWX62MG5Zk',
+          u'openid.ext1.mode': u'fetch_response',
+          u'openid.ext1.type.email': u'http://axschema.org/contact/email',
+          u'openid.ext1.type.firstname': u'http://axschema.org/namePerson/first',
+          u'openid.ext1.type.language': u'http://axschema.org/pref/language',
+          u'openid.ext1.type.lastname': u'http://axschema.org/namePerson/last',
+          u'openid.ext1.value.email': u'huseyinin@gmail.com',
+          u'openid.ext1.value.firstname': u'H\xc3\xbcseyin',
+          u'openid.ext1.value.language': u'en',
+          u'openid.ext1.value.lastname': u'Mert',
+          u'openid.identity': u'https://www.google.com/accounts/o8/id?id=AItOawmwnMmHH-_LJoEdOiFnzx-3lMWX62MG5Zk',
+          u'openid.mode': u'id_res',
+          u'openid.ns': u'http://specs.openid.net/auth/2.0',
+          u'openid.ns.ext1': u'http://openid.net/srv/ax/1.0',
+          u'openid.op_endpoint': u'https://www.google.com/accounts/o8/ud',
+          u'openid.response_nonce': u'2011-05-24T20:41:44ZBVg6KFBvv5VpgA',
+          u'openid.return_to': u'http://donecal.com/auth/openid/google/',
+          u'openid.sig': u'e1GxK6Rlw/qnT+tdEEbyNiiSu94=',
+          u'openid.signed': u'op_endpoint,claimed_id,identity,return_to,response_nonce,assoc_handle,ns.ext1,ext1.mode,ext1.type.firstname,ext1.value.firstname,ext1.type.email,ext1.value.email,ext1.type.language,ext1.value.language,ext1.type.lastname,ext1.value.lastname'
+        }
+        response = self.get(url, data)
+        self.assertEqual(response.code, 302)
+        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
+        cookie = 'user=%s;' % user_cookie
+        guid = base64.b64decode(user_cookie.split('|')[0])
+        user = self.db.User.one({'guid':guid})
+        self.assertEqual(user.first_name, u'H\xc3\xbcseyin')
+
+
+import mock_data
+def mocked_get_authenticated_user(self, callback):
+    callback(mock_data.MOCK_GOOGLE_USER)
