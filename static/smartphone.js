@@ -79,59 +79,59 @@ var utils = (function() {
 })();
 
 var Store = (function() {
-   $.storage = new $.store();
-   return {
-      set: function(key, data) {
-	 try {
-	    $.storage.set(key, data);
-	 } catch(e) {
-	    if (e == QUOTA_EXCEEDED_ERR) {
-	       alert("Ran out of local storage space.\nWill reset");
-	       Store.clear();
-	       $.storage.set(key, data);
-	    }
-	 }
-      },
-      update: function(key, data) {
-	 var keys = $.storage.get('store_keys');
-	 keys = keys !== null ? keys: [];
-	 if (keys.indexOf(key) > -1) {
-	    keys.splice(keys.indexOf(key), 1);
-	 }
-	 keys.unshift(key);
-	 try {
-	    $.storage.set('store_keys', keys);
-	    $.storage.set(key, data);
-	 } catch (e) {
-	    if (e == QUOTA_EXCEEDED_ERR) {
-	       // need to purge
-	       var old_key = keys.pop(); // oldest thing stored
-	       Store.remove(old_key);
-	       $.storage.set('store_keys', keys);
-	       Store.update(key, data); // try again
-	    }
-	 }
-      },
-      get: function(key, default_) {
-	 var data = $.storage.get(key);
-	 default_ = typeof(default_) != 'undefined' ? default_ : null;
-	 if (null === data) {
-	    data = default_;
-	 }
-	 return data;
-      },
-      remove: function(key) {
-	 var keys = this.get('store_keys', []);
-	 if (keys.indexOf(key) > -1) {
-	    keys.splice(keys.indexOf(key), 1);
-	    this.set('store_keys', keys);
-	 }
-	 $.storage.del(key);
-      },
-      clear: function() {
-	 $.storage.flush();
+  $.storage = new $.store();
+  return {
+     set: function(key, data) {
+       try {
+         $.storage.set(key, data);
+       } catch(e) {
+         if (e == QUOTA_EXCEEDED_ERR) {
+           alert("Ran out of local storage space.\nWill reset");
+           Store.clear();
+           $.storage.set(key, data);
+         }
+       }
+     },
+    update: function(key, data) {
+      var keys = $.storage.get('store_keys');
+      keys = keys !== null ? keys: [];
+      if (keys.indexOf(key) > -1) {
+        keys.splice(keys.indexOf(key), 1);
       }
-   }
+      keys.unshift(key);
+      try {
+        $.storage.set('store_keys', keys);
+        $.storage.set(key, data);
+      } catch (e) {
+        if (e == QUOTA_EXCEEDED_ERR) {
+          // need to purge
+          var old_key = keys.pop(); // oldest thing stored
+          Store.remove(old_key);
+          $.storage.set('store_keys', keys);
+          Store.update(key, data); // try again
+        }
+      }
+    },
+    get: function(key, default_) {
+      var data = $.storage.get(key);
+      default_ = typeof(default_) != 'undefined' ? default_ : null;
+      if (null === data) {
+        data = default_;
+      }
+      return data;
+    },
+    remove: function(key) {
+      var keys = this.get('store_keys', []);
+      if (keys.indexOf(key) > -1) {
+        keys.splice(keys.indexOf(key), 1);
+        this.set('store_keys', keys);
+      }
+      $.storage.del(key);
+    },
+    clear: function() {
+      $.storage.flush();
+    }
+  }
 })();
 
 var Auth = (function() {

@@ -182,13 +182,13 @@ head.ready(function() {
       $('#to_date').val($.datepicker.formatDate(dateformat, maxDate));
    }
 
-    slider = $('#slider').slider({range: true, max: daysDiff(minDate, maxDate),
+  slider = $('#slider').slider({range: true, max: daysDiff(minDate, maxDate),
             stop: function(event, ui) {
               still_sliding = false;
               refresh_date_range();
             },
             slide: function(event, ui) { resync(ui.values); }});
-    startDate = $('#from_date').datepicker({
+  startDate = $('#from_date').datepicker({
         firstDay: SETTINGS.monday_first ? 1 : 0,
         minDate: minDate,
         maxDate: maxDate,
@@ -198,7 +198,7 @@ head.ready(function() {
           refresh_date_range();
         }}).
         keyup(function() { resync(); });
-    endDate = $('#to_date').datepicker({
+  endDate = $('#to_date').datepicker({
         firstDay: SETTINGS.monday_first ? 1 : 0,
             minDate: minDate,
             maxDate: maxDate,

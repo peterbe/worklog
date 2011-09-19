@@ -1,11 +1,11 @@
 {% extends "../base.html" %}
 
-{% block title %}{{ modules.HelpPageTitle() }}{% end %}
+{% block title %}{% module HelpPageTitle() %}{% end %}
 
 {% block sidebar %}
 <h3>See also</h3>
 <ul>
-  {{ modules.HelpSeeAlsoLinks() }}
+  {% module HelpSeeAlsoLinks() %}
 </ul>
 
 <div id="follow-us-on-twitter" style="margin-top:110px;margin-left:0px">

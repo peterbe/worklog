@@ -9,7 +9,7 @@ from email import Parser
 from mongokit import ValidationError
 from utils.decorators import login_required
 from utils import parse_datetime, niceboolean, format_time_ampm
-from utils.routes import route
+from tornado_utils.routes import route
 from apps.main.handlers import BaseHandler, EventsHandler
 from apps.main.config import MINIMUM_DAY_SECONDS
 from models import EmailReminder
@@ -17,7 +17,7 @@ from utils.send_mail import send_email
 from reminder_utils import ParseEventError, parse_time, \
   parse_duration, parse_email_line
 from settings import EMAIL_REMINDER_SENDER, EMAIL_REMINDER_NOREPLY
-from utils.timesince import smartertimesince
+from tornado_utils.timesince import smartertimesince
 
 
 @route('/emailreminders/$')
@@ -306,9 +306,18 @@ class ReceiveEmailReminder(EventsHandler):
                     message_body = part.get_payload(decode=True)
                     if isinstance(message_body, str):
                         for charset in part.get_charsets():
+                            if not charset:
+                                charset = 'utf8'
                             message_body = unicode(message_body, charset)
                             character_set = charset
                             break
+                    #print "BODY"
+                    #print repr(message_body)
+                    #print message_body
+                    # If it's a multipart email, only use the first part
+                    break
+
+
         else:
             # not a multipart message then it's easy
             message_body = msg.get_payload(decode=True)
@@ -320,7 +329,6 @@ class ReceiveEmailReminder(EventsHandler):
                 message_body = unicode(message_body, character_set)
             else:
                 message_body = unicode(message_body, 'utf-8')
-
 
         if not from_user:
             # only bother to reply if the email appears to be sent from
@@ -480,6 +488,7 @@ class ReceiveEmailReminder(EventsHandler):
                 first_hour = user_settings['first_hour']
             time_ = (first_hour - tz_offset_h, 0 - tz_offset_m)
 
+        text = text.strip()
 
         if len(text.splitlines()) > 1:
             title = text.splitlines()[0]

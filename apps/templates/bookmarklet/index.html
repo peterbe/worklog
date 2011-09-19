@@ -25,7 +25,7 @@ on
 <p>
   <input type="checkbox" id="id_use_current_url" name="use_current_url" value="1" checked>
   <label for="id_use_current_url">Remember that it was here on
-  <em>{{ modules.TruncateString(external_url, 35) }}</em>
+  <em>{% module TruncateString(external_url, 35) %}</em>
   </label>
   <input type="hidden" name="external_url" value="{{ external_url }}">
 </p>
@@ -52,7 +52,7 @@ on
   <input type="hidden" id="id_now" name="now" value="">
   <input type="submit" value="Save on DoneCal">
 </div>
-{{ xsrf_form_html() }}
+{% module xsrf_form_html() %}
 </form>
 {% end %}
 

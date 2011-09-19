@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block extra_head %}
-{{ modules.Static("css/ext/fullcalendar.css", "css/ext/jquery.jqplot.min.css", "css/ext/jquery.autocomplete.css", "css/ext/jquery.qtip.css", "css/calendar.css") }}
+{% module Static("css/ext/fullcalendar.css", "css/ext/jquery.jqplot.min.css", "css/ext/jquery.autocomplete.css", "css/ext/jquery.qtip.css", "css/calendar.css") %}
 {% end %}
 
 {% block home_nav %}{% end %}
@@ -39,7 +39,7 @@
               {% if not user %}
               <div id="introduction" style="display:none">
     	        <p id="introduction-video"><strong>What on earth <em>is</em> this?</strong><br>
-	          <a href="/help/show_vimeo_video" class="vimeovideo"><img src="{{ modules.StaticURL("images/vimeovideo.png") }}" alt="Introduction to DoneCal.com on Vimeo"></a><br>
+	          <a href="/help/show_vimeo_video" class="vimeovideo"><img src="{% module StaticURL("images/vimeovideo.png") %}" alt="Introduction to DoneCal.com on Vimeo"></a><br>
 	          <a href="/help/show_vimeo_video" class="vimeovideo">Watch an introduction video</a>
 	        </p>
 	        <p id="introduction-video-after" style="display:none">
@@ -62,7 +62,7 @@
     <input type="submit" value="Save">
     <input type="button" class="cancel" value="Cancel">
   </div>
-  {{ xsrf_form_html() }}
+  {% module xsrf_form_html() %}
 </form>
 </div>
 
@@ -100,7 +100,7 @@
     </p>
   </div>
 
-  {{ xsrf_form_html() }}
+  {% module xsrf_form_html() %}
 </form>
 </div>
 
@@ -110,7 +110,7 @@
 
 
 {% block corejs %}
-{{ modules.Static("ext/head.load.min.js") }}
+{% module Static("ext/head.load.min.js") %}
 <script type="text/javascript">
 var total_no_events = {{ total_no_events }};
 var XSRF = '{{ xsrf_token }}';
@@ -135,7 +135,7 @@ head.ready(function() {
     });
     soundManager.onready(function(status) {
       if (status.success) {
-        soundManager.createSound('pling', '{{ modules.StaticURL("sounds/glass.mp3") }}');
+        soundManager.createSound('pling', '{% module StaticURL("sounds/glass.mp3") %}');
       } else {
         SETTINGS.disable_sound = true;
       }
@@ -145,7 +145,7 @@ head.ready(function() {
 </script>
 
   {% if settings.get('offline_mode') %}
-  {{ modules.Static("ext/jquery.store.js", "ext/json2.js", "ajaxproxy.js") }}
+  {% module Static("ext/jquery.store.js", "ext/json2.js", "ajaxproxy.js") %}
   {% else %}<script type="text/javascript">var is_offline=false;</script>
   {% end %}
 

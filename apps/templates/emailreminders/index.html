@@ -89,7 +89,7 @@ at the begining of the next day.
 <tbody>
   <tr>
   {% for weekday in weekdays %}
-    <td>{{ modules.ShowWeekdayReminders(weekday, weekday_reminders) }}</td>
+    <td>{% module ShowWeekdayReminders(weekday, weekday_reminders) %}</td>
   {% end %}
   </tr>
 </tbody>
@@ -178,7 +178,7 @@ at the begining of the next day.
   <noscript>
   Javascript is needed to submit this form
   </noscript>
-  {{ xsrf_form_html() }}
+  {% module xsrf_form_html() %}
   </div>
 </form>
 
@@ -189,5 +189,5 @@ at the begining of the next day.
 {% end %}
 
 {% block extrajs %}
-{{ modules.Static("emailreminders.js") }}
+{% module Static("emailreminders.js") %}
 {% end %}

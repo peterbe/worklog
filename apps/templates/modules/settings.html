@@ -1,24 +1,24 @@
-<script type="text/javascript">
-var SETTINGS = {{ settings_json }};
+<script>
+var SETTINGS = {% raw settings_json %};
 var JS_URLS = {
-  base: '{{ modules.StaticURL("base.js") }}',
-  calendar:  '{{ modules.StaticURL("calendar.js") }}',
-  fullcalendar:  '{{ modules.StaticURL("ext/fullcalendar.min.js") }}',
-  sidebar: '{{ modules.StaticURL("sidebar.js") }}',
-  account: '{{ modules.StaticURL("account.js") }}',
-  fancybox: '{{ modules.StaticURL("ext/jquery.fancybox-1.3.4.pack.js") }}',
-  cookie: '{{ modules.StaticURL("ext/jquery.cookie.min.js") }}',
-  jquery_form: '{{ modules.StaticURL("ext/jquery.form.js") }}',
-  jquery: '{% if debug %}{{ modules.StaticURL("ext/jquery-1.5.2.min.js") }}{% else %}//ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js{% end %}',
-  jqplot: '{{ modules.StaticURL("ext/jquery.jqplot.min.js") }}',
-  jqplot_pierenderer: '{{ modules.StaticURL("ext/jqplot.pieRenderer.min.js") }}',
-  validate: '{{ modules.StaticURL("ext/jquery.validate.min.js") }}',
-  qtip: '{{ modules.StaticURL("ext/jquery.qtip.min.js") }}',
-  share: '{{ modules.StaticURL("share.js") }}',
-  jquery_ui_droppable: '{{ modules.StaticURL("ext/jquery.ui.droppable.min.js") }}',
-  {% if 0 %}jquery_ui_draggable_resizable: '{{ modules.StaticURL("ext/jquery-ui-1.8.4.draggable-resizable.min.js") }}',{% end %}
-  jquery_ui_fullcalendar: '{{ modules.StaticURL("ext/jquery-ui-1.8.9.fullcalendar.min.js") }}',
-  jquery_autocomplete: '{{ modules.StaticURL("ext/jquery.autocomplete.pack.js") }}',
-  soundmanager: '{{ modules.StaticURL("ext/soundmanager2-nodebug-jsmin.js") }}'
+  base: '{% module StaticURL("base.js") %}',
+  calendar:  '{% module StaticURL("calendar.js") %}',
+  fullcalendar:  '{% module StaticURL("ext/fullcalendar.min.js") %}',
+  sidebar: '{% module StaticURL("sidebar.js") %}',
+  account: '{% module StaticURL("account.js") %}',
+  fancybox: '{% module StaticURL("ext/jquery.fancybox-1.3.4.pack.js") %}',
+  cookie: '{% module StaticURL("ext/jquery.cookie.min.js") %}',
+  jquery_form: '{% module StaticURL("ext/jquery.form.js") %}',
+  jquery: '{% if debug %}{% module StaticURL("ext/jquery-1.5.2.min.js") %}{% else %}//ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js{% end %}',
+  jqplot: '{% module StaticURL("ext/jquery.jqplot.min.js") %}',
+  jqplot_pierenderer: '{% module StaticURL("ext/jqplot.pieRenderer.min.js") %}',
+  validate: '{% module StaticURL("ext/jquery.validate.min.js") %}',
+  qtip: '{% module StaticURL("ext/jquery.qtip.min.js") %}',
+  share: '{% module StaticURL("share.js") %}',
+  jquery_ui_droppable: '{% module StaticURL("ext/jquery.ui.droppable.min.js") %}',
+  {% if 0 %}jquery_ui_draggable_resizable: '{% module StaticURL("ext/jquery-ui-1.8.4.draggable-resizable.min.js") %}',{% end %}
+  jquery_ui_fullcalendar: '{% module StaticURL("ext/jquery-ui-1.8.9.fullcalendar.min.js") %}',
+  jquery_autocomplete: '{% module StaticURL("ext/jquery.autocomplete.pack.js") %}',
+  soundmanager: '{% module StaticURL("ext/soundmanager2-nodebug-jsmin.js") %}'
 };
 </script>

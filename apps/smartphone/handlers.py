@@ -4,7 +4,7 @@ from time import mktime
 from dateutil import relativedelta
 from pymongo.objectid import InvalidId, ObjectId
 import tornado.web
-from utils.routes import route, route_redirect
+from tornado_utils.routes import route, route_redirect
 from apps.main.handlers import BaseHandler, AuthLoginHandler, \
   CredentialsError, EventsHandler, EventHandler
 from apps.main.models import Event

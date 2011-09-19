@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 #
 
+# pre
+import site
+import os.path
+ROOT = os.path.abspath(os.path.dirname(__file__))
+path = lambda *a: os.path.join(ROOT,*a)
+site.addsitedir(path('vendor'))
 
 # python
 import re
-import os.path
 from mongokit import Connection, Document as mongokit_Document
 import logging
 
@@ -17,7 +22,7 @@ from tornado.options import define, options
 
 # app
 import settings
-from utils.routes import route
+from tornado_utils.routes import route
 from utils.git import get_git_revision
 
 ################################################################################

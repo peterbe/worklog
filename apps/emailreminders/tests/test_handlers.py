@@ -898,6 +898,46 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertEqual((event.end - event.start).seconds, 3600)
         self.assertEqual(event.title, u'Fate: configurar scanner WC35')
 
+    def test_receive_charset_bug(self):
+        test_file = os.path.join(os.path.dirname(__file__), '2011-09-19_090052_194569.email')
+        body = open(test_file).read()
+        assert len(body)
+        url = '/emailreminders/receive/'
+        response = self.post(url, body)
+        self.assertTrue('Not recognized' in response.body)
+
+        user = self.db.User()
+        user.email = u'peterbe@gmail.com'
+        user.first_name = u"Peter"
+        user.save()
+
+        response = self.post(url, body)
+        self.assertTrue('Not a reply to an email reminder' in response.body)
+
+        email_reminder = self.db.EmailReminder()
+        email_reminder.user = user
+        today = datetime.date.today()
+        email_reminder.weekdays = [unicode(today.strftime('%A'))]
+        email_reminder.time = (8,0)
+        email_reminder.tz_offset = 0
+        email_reminder.include_instructions = True
+        email_reminder.include_summary = False
+        email_reminder.save()
+        email_reminder.set_next_send_date()
+        email_reminder.save()
+        body = body.replace('4dd2ca7c74a1f8034c000039',
+                            str(email_reminder._id))
+        response = self.post(url, body)
+
+        self.assertTrue('Created' in response.body)
+        events = self.db.Event.find({'user.$id':user._id})
+        self.assertEqual(events.count(), 2)
+        for event in self.db.Event.find():
+            t1 = u'\u62b1\u6b49\uff0c\u60a8\u7684\u90ae\u4ef6\u88ab'\
+                 u'\u9000\u56de\u6765\u4e86\u2026\u2026'
+            t2 = u'\u5efa\u8bae\u89e3\u51b3\u65b9\u6848\uff1a'
+            self.assertTrue(event.title in (t1, t2))
+
 
     def test_receive_gautier_time_bug(self):
         test_file = os.path.join(os.path.dirname(__file__), '2011-03-28_170726_751460.email')

@@ -40,7 +40,7 @@
 
 		<button type="submit" data-theme="a">Log in</button>
 	</fieldset>
-        {{ xsrf_form_html() }}
+        {% module xsrf_form_html() %}
         </form>
         <p>Or use your <a href="/auth/openid/google/?next=/smartphone/openid/&amp;nextnext={{ request.path }}" rel="external">Google account</a><br>
            Need to <a href="#registration">register an account</a>?

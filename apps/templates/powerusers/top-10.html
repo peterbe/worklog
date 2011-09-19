@@ -75,7 +75,7 @@ table.stats td { font-size:80%; }
 
 {% block extrajs %}
 <script>
-head.js('{{ modules.StaticURL("ext/jquery.sparkline.min.js") }}', function () {
+head.js('{% module StaticURL("ext/jquery.sparkline.min.js") %}', function () {
   $('.inlinesparkline').sparkline();
 });
 </script>

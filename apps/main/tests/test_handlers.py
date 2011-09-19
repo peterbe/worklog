@@ -10,11 +10,13 @@ from utils import encrypt_password
 #from apps.main.models import Event, User, Share
 import utils.send_mail as mail
 from apps.main.config import MINIMUM_DAY_SECONDS
+from tornado_utils.http_test_client import TestClient
+
 
 class ApplicationTestCase(BaseHTTPTestCase):
 
     def test_homepage(self):
-        response = self.get('/')
+        response = self.client.get('/')
         self.assertTrue('id="calendar"' in response.body)
 
     def test_posting_events(self):
@@ -24,7 +26,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertTrue(struct.get('event'))
@@ -62,7 +64,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@fryit Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data, headers={'Cookie':cookie})
+        response = self.client.post('/events/', data, headers={'Cookie':cookie})
         struct = json.loads(response.body)
         self.assertTrue(struct.get('event'))
         self.assertEqual(struct.get('tags'), ['@fryit'])
@@ -77,7 +79,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@FryIT working on @Italy",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data, headers={'Cookie':cookie})
+        response = self.client.post('/events/', data, headers={'Cookie':cookie})
         struct = json.loads(response.body)
         self.assertTrue(struct.get('event'))
         self.assertEqual(struct.get('tags'), ['@Italy', '@FryIT'])
@@ -92,7 +94,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@It Experiment",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data, headers={'Cookie':cookie})
+        response = self.client.post('/events/', data, headers={'Cookie':cookie})
 
         self.assertEqual(self.db.User.find().count(), 1)
         # change the other ones from before
@@ -109,7 +111,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         event_id = struct['event']['id']
@@ -128,7 +130,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': 'true', # still
                 'days': '-1',
                 'minutes': 0}
-        response = self.post('/event/move/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/move/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         new_start = struct['event']['start']
@@ -144,7 +146,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': '',
                 'days': '3',
                 'minutes': 0}
-        response = self.post('/event/resize/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/resize/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         new_start = struct['event']['start']
@@ -159,22 +161,17 @@ class ApplicationTestCase(BaseHTTPTestCase):
                 'all_day': '',
                 'days': '0',
                 'minutes': 10}
-        response = self.post('/event/resize/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/resize/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertTrue(struct.get('error'))
 
         # render the edit template
         data = {'id': event_id}
-        #response = self.get('/event.html', headers={'Cookie':cookie})
-        #self.assertEqual(response.code, 404)
-        #response = self.get('/event/edit', data, headers={'Cookie':cookie})
-        #self.assertEqual(response.code, 200)
-        #self.assertTrue('value="Foo"' in response.body)
 
         # edit title
         data['title'] = 'New title'
-        response = self.post('/event/edit/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/edit/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['event']['title'], data['title'])
@@ -182,7 +179,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(self.db.Event.one({'title':'New title'}))
 
         data['description'] = '\nA longer description\n'
-        response = self.post('/event/edit/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/edit/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['event']['description'], data['description'].strip())
@@ -192,22 +189,22 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'id': event_id,
                 'title': 'New title',
                 'external_url': 'junk'}
-        response = self.post('/event/edit/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/edit/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 400)
         # edit URL (right)
         data['external_url'] = 'http://www.peterbe.com'
-        response = self.post('/event/edit/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/edit/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['event']['external_url'], data['external_url'])
 
         # delete
         data = {'id': '___'}
-        response = self.post('/event/delete/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/delete/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 404)
 
         data['id'] = event_id
-        response = self.post('/event/delete/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/delete/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
 
         search = {'user.$id': event_user._id}
@@ -218,7 +215,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         event_id = struct['event']['id']
@@ -236,7 +233,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data['event']['end'] = data['event']['start'] # this is what fullCalendar does
         data['event']['id'] = str(event_obj._id)
         data['event']['title'] = event_obj.title
-        response = self.post('/event/move/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/move/', data, headers={'Cookie':cookie})
         self.assertEqual(response.code, 200)
 
         event_obj = self.db.Event.one(dict(_id=event_obj._id))
@@ -249,7 +246,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         event_id = struct['event']['id']
@@ -257,18 +254,20 @@ class ApplicationTestCase(BaseHTTPTestCase):
         event_obj = self.db.Event.one(dict(title="Foo"))
         self.assertTrue(event_obj.all_day)
 
-        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
-        cookie = 'guid=%s;' % guid_cookie
-        guid = base64.b64decode(guid_cookie.split('|')[0])
+        #guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
+        #cookie = 'guid=%s;' % guid_cookie
+        guid_cookie = self.client.cookies['guid']
+        guid = base64.b64decode(guid_cookie.value.split('|')[0])
         self.assertEqual(self.db.User.find({'guid':guid}).count(), 1)
 
         url = '/event.json'
-        response = self.get(url, dict(id=event_id))
+        client2 = TestClient(self)
+        response = client2.get(url, dict(id=event_id))
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertTrue(struct.get('error'))
 
-        response = self.get(url, dict(id=event_id), headers={'Cookie':cookie})
+        response = self.client.get(url, dict(id=event_id))
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct.get('title'), data['title'])
@@ -277,7 +276,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         event_obj.description = u"A description"
         event_obj.save()
 
-        response = self.get(url, dict(id=event_id), headers={'Cookie':cookie})
+        response = self.client.get(url, dict(id=event_id))
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['description'], event_obj.description)
@@ -285,7 +284,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
     def test_get_event_stats(self):
         today = datetime.date.today()
 
-        response = self.get('/events/stats.json')
+        response = self.client.get('/events/stats.json')
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct,
@@ -295,13 +294,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
 
-        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
-        cookie = 'guid=%s;' % guid_cookie
+        #guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
+        #cookie = 'guid=%s;' % guid_cookie
 
-        response = self.get('/events/stats.json', headers={'Cookie':cookie})
+        response = self.client.get('/events/stats.json')
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct.get('hours_spent'), [])
@@ -313,24 +312,25 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo2 @tagged",
                 'date': mktime(today.timetuple()),
                 'all_day': 'no'}
-        response = self.post('/events/', data, headers={'Cookie':cookie})
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
 
-        response = self.get('/events/stats.json', headers={'Cookie':cookie})
+        response = self.client.get('/events/stats.json')
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
-        self.assertEqual(struct.get('hours_spent'), [['tagged', MINIMUM_DAY_SECONDS/float(60*60)]])
+        self.assertEqual(struct.get('hours_spent'),
+                         [['tagged', MINIMUM_DAY_SECONDS/float(60*60)]])
 
         data = {'title': "Foo3 @tagged",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data, headers={'Cookie':cookie})
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         event = self.db.Event.one(dict(title=data['title']))
         event.end += datetime.timedelta(days=2)
         event.save()
 
-        response = self.get('/events/stats.json', headers={'Cookie':cookie})
+        response = self.client.get('/events/stats.json')
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         days_spent = struct['days_spent']
@@ -338,7 +338,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         numbers = [x[1] for x in days_spent]
         self.assertEqual(numbers, [1.0, 3.])
 
-        response = self.get('/events/stats.txt', headers={'Cookie':cookie})
+        response = self.client.get('/events/stats.txt')
         self.assertEqual(response.code, 200)
         self.assertTrue('*Untagged*' in response.body)
         self.assertEqual(response.body.count('1.0'), 1)
@@ -352,22 +352,24 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         event_id = struct['event']['id']
 
-        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
-        cookie = 'guid=%s;' % guid_cookie
+        #guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
+        #cookie = 'guid=%s;' % guid_cookie
+        guid_cookie = self.client.cookies['guid'].value
         guid = base64.b64decode(guid_cookie.split('|')[0])
         self.assertEqual(self.db.User.find({'guid':guid}).count(), 1)
 
-        response = self.get('/event?id=%s' % event_id)
+        client2 = TestClient(self)
+        response = client2.get('/event?id=%s' % event_id)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
-        self.assertTrue(struct.get('error')) # not logged in
+        self.assertTrue(struct.get('error'))  # not logged in
 
-        response = self.get('/event.html?id=%s' % event_id, headers={'Cookie':cookie})
+        response = self.client.get('/event.html?id=%s' % event_id)
         self.assertEqual(response.code, 200)
         self.assertTrue(data['title'] in response.body)
         self.assertTrue("by peter" not in response.body.lower())
@@ -381,7 +383,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user.email = u"peter@fry-it.com"
         user.save()
 
-        response = self.get('/event.html?id=%s' % event_id, headers={'Cookie':cookie})
+        response = self.client.get('/event.html?id=%s' % event_id)
         self.assertEqual(response.code, 200)
         self.assertTrue(data['title'] in response.body)
         self.assertTrue("peter@fry-it.com" in response.body)
@@ -391,11 +393,11 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user.save()
 
         self.assertTrue("Peter" not in response.body)
-        response = self.get('/event.html?id=%s' % event_id, headers={'Cookie':cookie})
+        response = self.client.get('/event.html?id=%s' % event_id)
         self.assertEqual(response.code, 200)
         self.assertTrue("by Peter" in response.body)
 
-        response = self.get('/event.html?id=______' , headers={'Cookie':cookie})
+        response = self.client.get('/event.html?id=______')
         self.assertEqual(response.code, 404)
 
 
@@ -405,13 +407,14 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         event_id = struct['event']['id']
 
-        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
-        cookie = 'guid=%s;' % guid_cookie
+        #guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
+        #cookie = 'guid=%s;' % guid_cookie
+        guid_cookie = self.client.cookies['guid'].value
         guid = base64.b64decode(guid_cookie.split('|')[0])
 
         # try to preview someone else's event
@@ -430,7 +433,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
 
         # you can't view this one yet
-        response = self.get('/event/?id=%s' % event_id, headers={'Cookie':cookie})
+        response = self.client.get('/event/?id=%s' % event_id)
         self.assertEqual(response.code, 403)
 
         # user2 needs to create a share
@@ -445,13 +448,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share.users = [user3]
         share.save()
 
-        response = self.get('/share/%s' % share.key, headers={'Cookie':cookie},
+        response = self.client.get('/share/%s' % share.key,
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
-        shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
-
-        cookie += ';shares=%s' % shares_cookie
-        response = self.get('/event/?id=%s' % event_id, headers={'Cookie':cookie})
+        #shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
+        #
+        #cookie += ';shares=%s' % shares_cookie
+        response = self.client.get('/event/?id=%s' % event_id)
         # shared but not shared with this user
 
         self.assertEqual(response.code, 403)
@@ -459,7 +462,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share.users = []
         share.save()
 
-        response = self.get('/event/', {'id': event_id}, headers={'Cookie':cookie})
+        response = self.client.get('/event/', {'id': event_id})
         self.assertEqual(response.code, 200)
 
     def test_sharing_with_yourself(self):
@@ -469,13 +472,14 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         #event_id = struct['event']['id']
 
-        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
-        cookie = 'guid=%s;' % guid_cookie
+        #guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
+        #cookie = 'guid=%s;' % guid_cookie
+        guid_cookie = self.client.cookies['guid'].value
         guid = base64.b64decode(guid_cookie.split('|')[0])
 
         user = self.db.User.one()
@@ -489,7 +493,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share.save()
 
         # use it yourself
-        response = self.get('/share/%s' % share.key, headers={'Cookie':cookie},
+        response = self.client.get('/share/%s' % share.key,
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
         self.assertTrue('Set-Cookie' not in response.headers) # because no cookie is set
@@ -504,14 +508,14 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share2.key = u'foo2'
         share2.save()
 
-        response = self.get('/share/%s' % share2.key, headers={'Cookie':cookie},
+        response = self.client.get('/share/%s' % share2.key,
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
         #self.assertTrue('Set-Cookie' not in response.headers) # because no cookie is set
-        shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
-        cookie += 'shares=%s;' % shares_cookie
-        shares = base64.b64decode(shares_cookie.split('|')[0])
-        self.assertEqual(shares, 'foo2')
+        #shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
+        #cookie += 'shares=%s;' % shares_cookie
+        #shares = base64.b64decode(shares_cookie.split('|')[0])
+        #self.assertEqual(shares, 'foo2')
 
         user3 = self.db.User()
         user3.email = u'ass@three.com'
@@ -522,10 +526,11 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share3.key = u'foo3'
         share3.save()
 
-        response = self.get('/share/%s' % share3.key, headers={'Cookie':cookie},
+        response = self.client.get('/share/%s' % share3.key,
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
-        shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
+        #shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
+        shares_cookie = self.client.cookies['shares'].value
         shares = base64.b64decode(shares_cookie.split('|')[0])
         self.assertEqual(shares, 'foo2,foo3')
 
@@ -537,7 +542,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         start = mktime(start.timetuple())
         end = mktime(end.timetuple())
         data = dict(start=start, end=end)
-        response = self.get(url, data)
+        response = self.client.get(url, data)
         self.assertEqual(response.code, 200)
 
         self.assertTrue('application/json' in response.headers['Content-Type'])
@@ -546,18 +551,18 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(struct, dict(events=[]))
 
         data['include_tags'] = 'yes'
-        response = self.get(url, data)
+        response = self.client.get(url, data)
         struct = json.loads(response.body)
         self.assertEqual(struct, dict(events=[], tags=[]))
 
         url = '/events.js'
-        response = self.get(url, data)
+        response = self.client.get(url, data)
         self.assertEqual(response.code, 200)
         self.assertTrue('text/javascript' in response.headers['Content-Type'])
         self.assertTrue('UTF-8' in response.headers['Content-Type'])
 
         url = '/events.txt'
-        response = self.get(url, data)
+        response = self.client.get(url, data)
         self.assertEqual(response.code, 200)
         self.assertTrue('text/plain' in response.headers['Content-Type'])
         self.assertTrue('UTF-8' in response.headers['Content-Type'])
@@ -585,20 +590,20 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share.save()
 
         url = '/share/%s' % share.key
-        response = self.get(url, follow_redirects=False)
+        response = self.client.get(url, follow_redirects=False)
         self.assertEqual(response.code, 302)
-        shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
-        cookie = 'shares=%s;' % shares_cookie
+        #shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
+        #cookie = 'shares=%s;' % shares_cookie
         data = dict(start=mktime(datetime.datetime(2010,10,1).timetuple()),
                     end=mktime(datetime.datetime(2010,10,30).timetuple()))
-        response = self.get('/events.json', data, headers={'Cookie':cookie})
+        response = self.client.get('/events.json', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['events'][0]['title'], event.title)
         self.assertTrue('tags' not in struct)
 
         data['include_tags'] = 'yes'
-        response = self.get('/events.json', data, headers={'Cookie':cookie})
+        response = self.client.get('/events.json', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         #self.assertEqual(struct['tags'], [u"@tag1"])
@@ -616,16 +621,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         share.tags = [u'tag2']
         share.save()
 
-        response = self.get('/events.json', data, headers={'Cookie':cookie})
+        response = self.client.get('/events.json', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['events'][0]['title'], event2.title)
 
-
-
-
     def test_user_settings(self):
-        response = self.get('/user/settings/')
+        response = self.client.get('/user/settings/')
         self.assertEqual(response.code, 200)
         # nothing is checked
         self.assertTrue(not response.body.count('checked'))
@@ -633,7 +635,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue('name="monday_first"' in response.body)
         self.assertTrue('name="disable_sound"' in response.body)
 
-        response = self.get('/user/settings.js')
+        response = self.client.get('/user/settings.js')
         self.assertEqual(response.code, 200)
         json_str = re.findall('{.*?}', response.body)[0]
         settings = json.loads(json_str)
@@ -643,7 +645,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'hide_weekend':True,
                 'disable_sound':True,
                 'first_hour':10}
-        response = self.post('/user/settings/', data, follow_redirects=False)
+        response = self.client.post('/user/settings/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
         guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         guid = base64.b64decode(guid_cookie.split('|')[0])
@@ -657,9 +659,8 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(user_settings.first_hour, 10)
         self.assertFalse(user_settings.monday_first)
 
-
     def test_share_calendar(self):
-        response = self.get('/share/')
+        response = self.client.get('/share/')
         self.assertEqual(response.code, 200)
         self.assertTrue("don't have anything" in response.body)
 
@@ -668,14 +669,17 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@tag1 @tag2 Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        #response = self.client.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
 
-        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
-        cookie = 'guid=%s;' % guid_cookie
-        guid = base64.b64decode(guid_cookie.split('|')[0])
+        #guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
+        #cookie = 'guid=%s;' % guid_cookie
+        #guid = base64.b64decode(guid_cookie.split('|')[0])
+        user, = self.db.User.find()
+        guid = user.guid
 
-        response = self.get('/share/', headers={'Cookie':cookie})
+        response = self.client.get('/share/')
         self.assertEqual(response.code, 200)
         self.assertTrue("can't share yet" in response.body.lower())
 
@@ -683,7 +687,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user.first_name = u"peter"
         user.save()
 
-        response = self.get('/share/', headers={'Cookie':cookie})
+        response = self.client.get('/share/')
         self.assertEqual(response.code, 200)
 
         # expect there to be a full URL in the HTML
@@ -694,38 +698,41 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(share.user, user)
 
         data = {'id': str(share._id), 'tags':'tag2'}
-        response = self.post('/share/edit/', data, headers={'Cookie':cookie})
+        #response = self.client.post('/share/edit/', data, headers={'Cookie':cookie})
+        response = self.client.post('/share/edit/', data)
         self.assertEqual(response.code, 200)
         share = self.db.Share.one(dict(_id=share._id))
         self.assertEqual(share.tags, [u'tag2'])
 
         # so a new user can start using this
-        response = self.get('/share/%s' % key, follow_redirects=False)
+        client2 = TestClient(self)
+        response = client2.get('/share/%s' % key, follow_redirects=False)
         self.assertEqual(response.code, 302)
-        shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
-        cookie = 'shares=%s;' % shares_cookie
+        #shares_cookie = self.decode_cookie_value('shares', response.headers['Set-Cookie'])
+        #cookie = 'shares=%s;' % shares_cookie
 
         # I can now toggle this share to be hidden
-        response = self.post('/share/', dict(), headers={'Cookie': cookie})
+        #response = self.client.post('/share/', dict(), headers={'Cookie': cookie})
+        response = client2.post('/share/', dict())
         self.assertEqual(response.code, 400)
 
-        response = self.post('/share/', dict(key='bullshit'), headers={'Cookie': cookie})
+        #response = self.client.post('/share/', dict(key='bullshit'), headers={'Cookie': cookie})
+        response = client2.post('/share/', dict(key='bullshit'))
         self.assertEqual(response.code, 404)
 
-        response = self.post('/share/', dict(key=key), headers={'Cookie': cookie})
+        #response = self.client.post('/share/', dict(key=key), headers={'Cookie': cookie})
+        response = client2.post('/share/', dict(key=key))
         self.assertEqual(response.code, 200)
-        hidden_shares_cookie = self.decode_cookie_value('hidden_shares', response.headers['Set-Cookie'])
-        hidden_shares = base64.b64decode(hidden_shares_cookie.split('|')[0])
-
+        assert client2.cookies['hidden_shares']
 
     def test_signup(self):
         # the get method is just used to validate if an email is used another
         # user
-        response = self.get('/user/signup/')
+        response = self.client.get('/user/signup/')
         self.assertEqual(response.code, 404)
 
         data = {'validate_email': 'peter@test.com'}
-        response = self.get('/user/signup/', data)
+        response = self.client.get('/user/signup/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct, dict(ok=True))
@@ -735,7 +742,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user.save()
 
         data = {'validate_email': 'peter@test.com'}
-        response = self.get('/user/signup/', data)
+        response = self.client.get('/user/signup/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct, dict(error='taken'))
@@ -744,7 +751,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                     password="secret",
                     first_name="Peter",
                     last_name="Bengtsson")
-        response = self.post('/user/signup/', data, follow_redirects=False)
+        response = self.client.post('/user/signup/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
 
         data.pop('password')
@@ -752,7 +759,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(user)
 
         # a secure cookie would have been set containing the user id
-        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
+        user_cookie = self.client.cookies['user'].value
         guid = base64.b64decode(user_cookie.split('|')[0])
         self.assertEqual(user.guid, guid)
 
@@ -768,35 +775,32 @@ class ApplicationTestCase(BaseHTTPTestCase):
         other_user.save()
 
         data = dict(email=user.email, password="secret")
-        response = self.post('/auth/login/', data, follow_redirects=False)
+        response = self.client.post('/auth/login/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
-        user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
-        guid = base64.b64decode(user_cookie.split('|')[0])
-        self.assertEqual(user.guid, guid)
-        cookie = 'user=%s;' % user_cookie
 
-        response = self.get('/user/account/', headers={'Cookie':cookie})
+        response = self.client.get('/user/account/')
         self.assertEqual(response.code, 200)
         self.assertTrue('value="Ptr"' in response.body)
 
         # not logged in
-        response = self.post('/user/account/', {})
+        client2 = TestClient(self)
+        response = client2.post('/user/account/', {})
         self.assertEqual(response.code, 403)
 
         # no email supplied
-        response = self.post('/user/account/', {}, headers={'Cookie':cookie})
+        response = self.client.post('/user/account/', {})
         self.assertEqual(response.code, 400)
 
         data = {'email':'bob'}
-        response = self.post('/user/account/', data, headers={'Cookie':cookie})
+        response = self.client.post('/user/account/', data)
         self.assertEqual(response.code, 400)
 
         data = {'email':'PETERBE@gmail.com'}
-        response = self.post('/user/account/', data, headers={'Cookie':cookie})
+        response = self.client.post('/user/account/', data)
         self.assertEqual(response.code, 400)
 
         data = {'email':'bob@test.com', 'last_name': '  Last Name \n'}
-        response = self.post('/user/account/', data, headers={'Cookie':cookie},
+        response = self.client.post('/user/account/', data,
                              follow_redirects=False)
         self.assertEqual(response.code, 302)
 
@@ -804,53 +808,47 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(user.last_name, data['last_name'].strip())
 
         # log out
-        response = self.get('/auth/logout/', headers={'Cookie':cookie},
+        response = self.client.get('/auth/logout/',
                             follow_redirects=False)
         self.assertEqual(response.code, 302)
         self.assertTrue('user=;' in response.headers['Set-Cookie'])
 
-        # commented out because I used to manually clear all cookies even if
-        # their keys hadn't been used.
-        #self.assertTrue('guid=;' in response.headers['Set-Cookie'])
-        #self.assertTrue('shares=;' in response.headers['Set-Cookie'])
-        #self.assertTrue('hidden_shares=;' in response.headers['Set-Cookie'])
-
     def test_bookmarklet_with_cookie(self):
         today = datetime.date.today()
-
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
-        guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
-        cookie = 'guid=%s;' % guid_cookie
+        #guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
+        #cookie = 'guid=%s;' % guid_cookie
+        guid_cookie = self.client.cookies['guid'].value
         guid = base64.b64decode(guid_cookie.split('|')[0])
         self.assertEqual(self.db.User.find({'guid':guid}).count(), 1)
         user = self.db.User.one({'guid':guid})
 
-        response = self.get('/bookmarklet/', headers={'Cookie':cookie})
+        response = self.client.get('/bookmarklet/')
         self.assertTrue('external_url' not in response.body)
 
         data = {'external_url': 'http://www.peterbe.com/page'}
-        response = self.get('/bookmarklet/', data, headers={'Cookie':cookie})
+        response = self.client.get('/bookmarklet/', data)
         self.assertTrue('value="%s"' % data['external_url'] in response.body)
 
         # post something now
         # ...but fail first
         data = dict()
-        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        response = self.client.post('/bookmarklet/', data)
         self.assertEqual(response.code, 200)
         self.assertEqual(response.body, "'now' not sent. Javascript must be enabled")
 
         future = datetime.datetime.now() + datetime.timedelta(hours=2)
         data = dict(now=mktime(future.timetuple()))
-        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        response = self.client.post('/bookmarklet/', data)
         self.assertEqual(response.code, 200)
         self.assertTrue('Error: No title entered' in response.body)
 
         data['title'] = u" Saving the day "
-        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        response = self.client.post('/bookmarklet/', data)
         self.assertEqual(response.code, 200)
         self.assertTrue('Thanks!' in response.body)
 
@@ -873,7 +871,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                               'in the description'
         past = future - datetime.timedelta(hours=2)
         data['now'] = mktime(past.timetuple())
-        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        response = self.client.post('/bookmarklet/', data)
         event = self.db.Event.one({'user.$id':user._id,
                               'title': re.compile('^now')})
 
@@ -884,7 +882,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         # try again, writing on multiple lines
         data['description'] = 'Line one\nLine two\nLine three'
-        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        response = self.client.post('/bookmarklet/', data)
         event = self.db.Event.one({'user.$id':user._id,
                               'title': re.compile('^Line')})
         self.assertEqual(event.title, u"Line one")
@@ -892,7 +890,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         # one more time when the description is short
         data['description'] = "@mytag one word"
-        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        response = self.client.post('/bookmarklet/', data)
         event = self.db.Event.one({'user.$id':user._id,
                               'title': data['description']})
         self.assertEqual(event.description, u"")
@@ -903,7 +901,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data['title'] = "half hour event"
         data['description'] = ''
         data['now'] = mktime(future.timetuple())
-        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        response = self.client.post('/bookmarklet/', data)
         event = self.db.Event.one({'user.$id':user._id,
                               'title': data['title']})
         diff_seconds = (event.end - event.start).seconds
@@ -917,7 +915,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
@@ -925,46 +923,46 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(self.db.User.find({'guid':guid}).count(), 1)
         self.assertTrue(self.db.User.one({'guid':guid}))
 
-        response = self.get('/bookmarklet/', headers={'Cookie':cookie})
+        response = self.client.get('/bookmarklet/')
         self.assertTrue('external_url' not in response.body)
 
         data = {'external_url': 'http://www.peterbe.com/page',
                 'use_current_url': 'yes',
                 'title': '@donecal is da @bomb',
                 'now':mktime(today.timetuple())}
-        response = self.post('/bookmarklet/', data, headers={'Cookie':cookie})
+        response = self.client.post('/bookmarklet/', data)
         self.assertTrue('Thank' in response.body)
         event = self.db.Event.one(dict(title=data['title']))
         self.assertEqual(event.tags, [u'donecal', u'bomb'])
         self.assertEqual(event.external_url, data['external_url'])
 
         data = {'external_url': 'http://www.peterbe.com/some/other/page',}
-        response = self.get('/bookmarklet/', data, headers={'Cookie':cookie})
+        response = self.client.get('/bookmarklet/', data)
         self.assertTrue('value="@donecal @bomb "' in response.body)
 
 
     def test_help_pages(self):
         # index
-        response = self.get('/help/')
+        response = self.client.get('/help/')
         self.assertEqual(response.code, 200)
         self.assertTrue('Help' in response.body)
 
         # about
-        response = self.get('/help/About')
+        response = self.client.get('/help/About')
         self.assertEqual(response.code, 200)
         self.assertTrue('Peter Bengtsson' in response.body)
 
-        response = self.get('/help/abOUt')
+        response = self.client.get('/help/abOUt')
         self.assertEqual(response.code, 200)
         self.assertTrue('Peter Bengtsson' in response.body)
 
         # Bookmarklet
-        response = self.get('/help/Bookmarklet')
+        response = self.client.get('/help/Bookmarklet')
         self.assertEqual(response.code, 200)
         self.assertTrue('Bookmarklet' in response.body)
 
         # API
-        response = self.get('/help/API')
+        response = self.client.get('/help/API')
         self.assertEqual(response.code, 200)
         self.assertTrue('API' in response.body)
 
@@ -973,13 +971,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
         cookie = 'guid=%s;' % guid_cookie
         guid = base64.b64decode(guid_cookie.split('|')[0])
 
-        response = self.get('/help/API', headers={'Cookie':cookie})
+        response = self.client.get('/help/API')
         self.assertEqual(response.code, 200)
         self.assertTrue(guid in response.body)
         self.assertTrue(response.body.split('<body')[1].count('https://') == 0)
@@ -992,11 +990,11 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user.save()
 
         data = dict(email=user.email, password="secret")
-        response = self.post('/auth/login/', data, follow_redirects=False)
+        response = self.client.post('/auth/login/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
         user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
         cookie = 'user=%s;' % user_cookie
-        response = self.get('/help/API', headers={'Cookie':cookie})
+        response = self.client.get('/help/API')
         self.assertEqual(response.code, 200)
         self.assertTrue(response.body.count('https://') >= 1)
 
@@ -1007,7 +1005,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                     password="secret",
                     first_name="Peter",
                     last_name="Bengtsson")
-        response = self.post('/user/signup/', data, follow_redirects=False)
+        response = self.client.post('/user/signup/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
 
         data.pop('password')
@@ -1015,18 +1013,18 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertTrue(user)
 
 
-        response = self.get('/user/forgotten/')
+        response = self.client.get('/user/forgotten/')
         self.assertEqual(response.code, 200)
 
-        response = self.post('/user/forgotten/', dict(email="bogus"))
+        response = self.client.post('/user/forgotten/', dict(email="bogus"))
         self.assertEqual(response.code, 400)
 
-        response = self.post('/user/forgotten/', dict(email="valid@email.com"))
+        response = self.client.post('/user/forgotten/', dict(email="valid@email.com"))
         self.assertEqual(response.code, 200)
         self.assertTrue('Error' in response.body)
         self.assertTrue('valid@email.com' in response.body)
 
-        response = self.post('/user/forgotten/', dict(email="PETERBE@gmail.com"))
+        response = self.client.post('/user/forgotten/', dict(email="PETERBE@gmail.com"))
         self.assertEqual(response.code, 200)
         self.assertTrue('success' in response.body)
         self.assertTrue('peterbe@gmail.com' in response.body)
@@ -1040,14 +1038,14 @@ class ApplicationTestCase(BaseHTTPTestCase):
         link = [x for x in links if x.count('recover')][0]
         # pretending to click the link in the email now
         url = urlparse(link).path
-        response = self.get(url)
+        response = self.client.get(url)
         self.assertEqual(response.code, 200)
 
         self.assertTrue('name="password"' in response.body)
 
         data = dict(password='secret')
 
-        response = self.post(url, data, follow_redirects=False)
+        response = self.client.post(url, data, follow_redirects=False)
         self.assertEqual(response.code, 302)
 
         user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
@@ -1055,14 +1053,14 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(user.guid, guid)
         cookie = 'user=%s;' % user_cookie
 
-        response = self.get('/auth/logged_in.json', headers={'Cookie': cookie})
+        response = self.client.get('/auth/logged_in.json', headers={'Cookie': cookie})
         self.assertEqual(response.code, 200)
         self.assertTrue("Peter" in response.body)
         struct = json.loads(response.body)
         self.assertEqual(struct['user_name'], 'Peter')
 
     def test_auth_logged_in_json(self):
-        response = self.get('/auth/logged_in.json')
+        response = self.client.get('/auth/logged_in.json')
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct.keys(), ['xsrf'])
@@ -1071,7 +1069,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                     password="secret",
                     first_name="Peter",
                     last_name="Bengtsson")
-        response = self.post('/user/signup/', data, follow_redirects=False)
+        response = self.client.post('/user/signup/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
 
         data.pop('password')
@@ -1081,14 +1079,14 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
         cookie = 'user=%s;' % user_cookie
 
-        response = self.get('/auth/logged_in.json', headers={'Cookie':cookie})
+        response = self.client.get('/auth/logged_in.json')
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['user_name'], 'Peter')
         user.premium = True
         user.save()
 
-        response = self.get('/auth/logged_in.json', headers={'Cookie':cookie})
+        response = self.client.get('/auth/logged_in.json')
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['user_name'], 'Peter')
@@ -1102,7 +1100,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         event_id = struct['event']['id']
@@ -1116,7 +1114,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         self.assertEqual(self.db.Event.find({'user.$id':user._id}).count(), 1)
         data['id'] = event_id
-        response = self.post('/event/delete/', data, headers={'Cookie':cookie})
+        response = self.client.post('/event/delete/', data)
         self.assertEqual(response.code, 200)
         self.assertEqual(self.db.Event.find({'user.$id':user._id}).count(), 0)
 
@@ -1126,13 +1124,14 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(self.db.Event.find({'user.$id': undoer._id}).count(), 1)
 
         # to undo you just need to hit a URL
-        response = self.post('/event/undodelete/', {'id': event_id})
         # but you can't do it without a cookie
+        other_client = TestClient(self)
+        response = other_client.post('/event/undodelete/', {'id': event_id})
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertTrue(struct.get('error'))
 
-        response = self.post('/event/undodelete/', {'id': event_id}, headers={'Cookie':cookie})
+        response = self.client.post('/event/undodelete/', {'id': event_id})
         self.assertEqual(response.code, 200)
         self.assertEqual(self.db.Event.find({'user.$id': undoer._id}).count(), 0)
         self.assertEqual(self.db.Event.find({'user.$id':user._id}).count(), 1)
@@ -1147,7 +1146,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         # special client side trick
         data['anchor'] = '#month,2010,11,1'
 
-        response = self.post('/user/settings/', data, follow_redirects=False)
+        response = self.client.post('/user/settings/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
         self.assertTrue(response.headers['Location'].endswith(data['anchor']))
 
@@ -1160,7 +1159,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(self.db.UserSettings.find({'user.$id':user._id}).count(), 1)
 
         # pick up the cookie and continue to the home page
-        response = self.get(response.headers['Location'], headers={'Cookie': cookie})
+        response = self.client.get(response.headers['Location'], headers={'Cookie': cookie})
         self.assertEqual(response.code, 200)
         # the settings we just made will be encoded as a JSON string inside the HTML
         self.assertTrue('"monday_first": true' in response.body)
@@ -1174,7 +1173,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "Foo @Tag",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         event = self.db.Event.one()
         assert event.tags == [u'Tag']
@@ -1193,7 +1192,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@tAG New one",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data, headers={'Cookie': cookie})
+        response = self.client.post('/events/', data, headers={'Cookie': cookie})
         self.assertEqual(response.code, 200)
         assert self.db.Event.find().count() == 2
         self.assertEqual(self.db.Event.find(dict(tags=[u'tAG'])).count(), 2)
@@ -1224,26 +1223,26 @@ class ApplicationTestCase(BaseHTTPTestCase):
         url = '/features/'
 
         data = dict(title=u'')
-        response = self.post(url, data)
+        response = self.client.post(url, data)
         self.assertEqual(response.code, 400) # no title
 
         # the default placeholder text
         data['title'] = u"Add your own new feature request"
-        response = self.post(url, data)
+        response = self.client.post(url, data)
         self.assertEqual(response.code, 400)
 
         # already taken
         data['title'] = u"more cheese"
-        response = self.post(url, data)
+        response = self.client.post(url, data)
         self.assertEqual(response.code, 400)
 
         data['title'] = u"New title"
         data['description'] = u"\nwww.google.com\ntest "
-        response = self.post(url, data)
+        response = self.client.post(url, data)
         self.assertEqual(response.code, 403) # not logged in
 
         # because we're not logged in we don't get the entry form at all
-        response = self.get(url)
+        response = self.client.get(url)
         self.assertTrue('<input name="title"' not in response.body)
 
         me = self.db.User()
@@ -1252,7 +1251,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         me.first_name = u"Peter"
         me.save()
 
-        response = self.post('/auth/login/',
+        response = self.client.post('/auth/login/',
                              dict(email=me.email, password="secret"),
                              follow_redirects=False)
         self.assertEqual(response.code, 302)
@@ -1261,38 +1260,38 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(me.guid, guid)
         cookie = 'user=%s;' % user_cookie
 
-        response = self.get(url, headers={'Cookie':cookie})
+        response = self.client.get(url)
         self.assertTrue('<input name="title"' in response.body)
 
-        response = self.post(url, data, headers={'Cookie':cookie})
+        response = self.client.post(url, data)
         self.assertEqual(response.code, 302)
         self.assertEqual(self.db.FeatureRequestComment.find().count(), 2)
 
-        response = self.get(url, headers={'Cookie':cookie})
+        response = self.client.get(url)
         self.assertTrue('Thanks!' in response.body)
         self.assertTrue('<a href="http://www.google.com">www.google.com</a>' \
           in response.body) # linkifyied
 
         # now ajax submit one more comment to the first feature request
-
         data = {'id':'feature--%s' % feature_request._id,
                 'comment': u"\tSure thing "}
-        response = self.post(url + 'vote/up/', data)
+        client2 = TestClient(self)
+        response = client2.post(url + 'vote/up/', data)
         struct = json.loads(response.body)
         self.assertTrue(struct.get('error'))
 
-        response = self.post(url + 'vote/up/', data, headers={'Cookie':cookie})
+        response = self.client.post(url + 'vote/up/', data)
         struct = json.loads(response.body)
         self.assertTrue(struct.get('vote_weights'))
 
-        response = self.get(url, headers={'Cookie':cookie})
+        response = self.client.get(url)
         self.assertTrue("\tSure thing" not in response.body) # stripped
         self.assertTrue("Sure thing" in response.body)
 
         vote_weight_before = self.db.FeatureRequest\
           .one({'_id': feature_request._id}).vote_weight
         data['comment'] = "More sure thing!"
-        response = self.post(url + 'vote/up/', data, headers={'Cookie':cookie})
+        response = self.client.post(url + 'vote/up/', data)
         self.assertEqual(response.code, 200)
 
         vote_weight_after = self.db.FeatureRequest\
@@ -1302,7 +1301,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         # or you can render just one single item
         data = {'id': str(feature_request._id)}
-        response = self.get(url + 'feature.html', data, headers={'Cookie':cookie})
+        response = self.client.get(url + 'feature.html', data)
         self.assertEqual(response.code, 200)
         self.assertTrue("Added by Peter" in response.body)
         self.assertTrue("More sure thing" in response.body)
@@ -1312,20 +1311,20 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         # but don't fuck with the id
         data['id'] = '_' * 100
-        response = self.get(url + 'feature.html', data, headers={'Cookie':cookie})
+        response = self.client.get(url + 'feature.html', data)
         self.assertEqual(response.code, 404)
         data['id'] = ''
-        response = self.get(url + 'feature.html', data, headers={'Cookie':cookie})
+        response = self.client.get(url + 'feature.html', data)
         self.assertEqual(response.code, 400)
 
         data = dict(title="more cheese")
-        response = self.get(url + 'find.json', data)
+        response = self.client.get(url + 'find.json', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertTrue(struct['feature_requests'])
 
         data = dict(title="Uh??")
-        response = self.get(url + 'find.json', data)
+        response = self.client.get(url + 'find.json', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertTrue(not struct['feature_requests'])
@@ -1337,7 +1336,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         me.first_name = u"Peter"
         me.save()
 
-        response = self.post('/auth/login/',
+        response = self.client.post('/auth/login/',
                              dict(email=me.email, password="secret"),
                              follow_redirects=False)
         self.assertEqual(response.code, 302)
@@ -1348,7 +1347,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
 
         url = '/features/'
         data = dict(title=u'This is my feature request', description="Great!")
-        response = self.post(url, data, headers={'Cookie':cookie})
+        response = self.client.post(url, data)
         self.assertEqual(response.code, 302)
         self.assertEqual(self.db.FeatureRequest.find().count(), 1)
         self.assertEqual(self.db.FeatureRequestComment.find().count(), 1)
@@ -1368,7 +1367,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@Tag1 bla bl a",
                 'date': mktime(today.timetuple()),
                 'all_day': '0'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         user = self.db.User.one()
 
@@ -1377,13 +1376,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@Tag2 yesterday",
                 'date': mktime(today.timetuple()) - 100,
                 'all_day': '0'}
-        response = self.post('/events/', data, headers={'Cookie': cookie})
+        response = self.client.post('/events/', data, headers={'Cookie': cookie})
         self.assertEqual(response.code, 200)
 
         self.assertTrue(self.db.Event.find().count(), 2)
         self.assertTrue(self.db.Event.find({'all_day': False}).count(), 2)
 
-        response = self.get('/events/stats.json', headers={'Cookie': cookie})
+        response = self.client.get('/events/stats.json', headers={'Cookie': cookie})
         struct = json.loads(response.body)
         hours_spent = struct['hours_spent']
         min_hours = MINIMUM_DAY_SECONDS / float(60 * 60)
@@ -1395,7 +1394,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         event.end += datetime.timedelta(hours=1)
         event.save()
 
-        response = self.get('/events/stats.json', headers={'Cookie': cookie})
+        response = self.client.get('/events/stats.json', headers={'Cookie': cookie})
         struct = json.loads(response.body)
         hours_spent = struct['hours_spent']
         # they should be ordered by the tag
@@ -1406,7 +1405,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "No tag here",
                 'date': mktime(today.timetuple()) - 100,
                 'all_day': '0'}
-        response = self.post('/events/', data, headers={'Cookie': cookie})
+        response = self.client.post('/events/', data, headers={'Cookie': cookie})
         self.assertEqual(response.code, 200)
 
 
@@ -1414,7 +1413,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         event.end += datetime.timedelta(hours=2)
         event.save()
 
-        response = self.get('/events/stats.json', headers={'Cookie': cookie})
+        response = self.client.get('/events/stats.json', headers={'Cookie': cookie})
         struct = json.loads(response.body)
         hours_spent = struct['hours_spent']
         self.assertEqual(hours_spent[0], ['<em>Untagged</em>', min_hours + 2])
@@ -1428,7 +1427,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@tag1 and #tag2 Foo",
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data)
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertTrue(struct.get('event'))
@@ -1448,7 +1447,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "#tag2 and #tag3 Bar", # clearly prefers '#' as prefix
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data, headers={'Cookie':cookie})
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct.get('tags'), [u'#tag2',u'#tag3'])
@@ -1465,7 +1464,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
                     end=mktime((today + datetime.timedelta(days=1)).timetuple()))
 
         data['include_tags'] = 'yes'
-        response = self.get('/events.json', data, headers={'Cookie':cookie})
+        response = self.client.get('/events.json', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['tags'], ["#tag1", "#tag2", "#tag3"])
@@ -1474,7 +1473,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = {'title': "@tag3 alone", # clearly prefers '#' as prefix
                 'date': mktime(today.timetuple()),
                 'all_day': 'yes'}
-        response = self.post('/events/', data, headers={'Cookie':cookie})
+        response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct.get('tags'), [u'@tag3'])
@@ -1483,13 +1482,13 @@ class ApplicationTestCase(BaseHTTPTestCase):
                     end=mktime((today + datetime.timedelta(days=1)).timetuple()))
 
         data['include_tags'] = 'yes'
-        response = self.get('/events.json', data, headers={'Cookie':cookie})
+        response = self.client.get('/events.json', data)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertEqual(struct['tags'], ["@tag1", "@tag2", "@tag3"])
 
     def test_rendering_with_or_without_https(self):
-        response = self.get('/auth/logged_in.json', headers={'X-Scheme':'https'},
+        response = self.client.get('/auth/logged_in.json', headers={'X-Scheme':'https'},
                             follow_redirects=False)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
@@ -1504,7 +1503,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user.save()
 
         data = dict(email=user.email, password="secret")
-        response = self.post('/auth/login/', data, follow_redirects=False)
+        response = self.client.post('/auth/login/', data, follow_redirects=False)
         self.assertEqual(response.code, 302)
         user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
         cookie = 'user=%s;' % user_cookie
@@ -1512,11 +1511,11 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user = self.db.User.one({'guid':guid})
         assert user.premium
 
-        response = self.get('/auth/logged_in.json', headers={'Cookie':cookie, 'X-Scheme':'https'},
+        response = self.client.get('/auth/logged_in.json', headers={'Cookie':cookie, 'X-Scheme':'https'},
                             follow_redirects=False)
         self.assertEqual(response.code, 200)
 
-        response = self.get('/auth/logged_in.json', headers={'Cookie':cookie}, follow_redirects=False)
+        response = self.client.get('/auth/logged_in.json', follow_redirects=False)
         self.assertEqual(response.code, 200)
         struct = json.loads(response.body)
         self.assertTrue(struct['redirect_to'])
@@ -1530,7 +1529,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
         data = dict(start='-2736000000',
                     end='288000000',
                     include_tags='all')
-        response = self.get(url, data)
+        response = self.client.get(url, data)
         self.assertEqual(response.code, 400)
 
     def test_google_openid_callback(self):
@@ -1561,7 +1560,7 @@ class ApplicationTestCase(BaseHTTPTestCase):
           u'openid.sig': u'e1GxK6Rlw/qnT+tdEEbyNiiSu94=',
           u'openid.signed': u'op_endpoint,claimed_id,identity,return_to,response_nonce,assoc_handle,ns.ext1,ext1.mode,ext1.type.firstname,ext1.value.firstname,ext1.type.email,ext1.value.email,ext1.type.language,ext1.value.language,ext1.type.lastname,ext1.value.lastname'
         }
-        response = self.get(url, data)
+        response = self.client.get(url, data)
         self.assertEqual(response.code, 302)
         user_cookie = self.decode_cookie_value('user', response.headers['Set-Cookie'])
         cookie = 'user=%s;' % user_cookie

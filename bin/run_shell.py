@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
 import code, re
-import os, sys
-if os.path.abspath(os.curdir) not in sys.path:
-    sys.path.insert(0, os.path.abspath(os.curdir))
+import here
 
 if __name__ == '__main__':
 

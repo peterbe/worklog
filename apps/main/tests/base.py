@@ -8,7 +8,8 @@ from tornado.testing import LogTrapTestCase, AsyncHTTPTestCase
 import app
 from apps.main.models import User, Event, UserSettings, Share, \
   FeatureRequest, FeatureRequestComment
-from utils.http_test_client import HTTPClientMixin
+from tornado_utils.http_test_client import TestClient, HTTPClientMixin
+
 
 class BaseModelsTestCase(unittest.TestCase):
     _once = False
@@ -43,6 +44,8 @@ class BaseHTTPTestCase(AsyncHTTPTestCase, LogTrapTestCase, HTTPClientMixin):
 
         self._app.settings['email_backend'] = 'utils.send_mail.backends.locmem.EmailBackend'
         self._app.settings['email_exceptions'] = False
+        self.client = TestClient(self)
+
 
     def _emptyCollections(self):
         db = self.get_db()

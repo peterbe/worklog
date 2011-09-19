@@ -6,7 +6,7 @@
       <span class="implemented">Implemented!</span>
       {% else %}
       <p class="voteup"><a href="#" title="Click to vote up if you think this is very important"
-      ><img src="{{ modules.StaticURL("images/thumbup.png") }}" alt="Vote up"></a></p>
+      ><img src="{% module StaticURL("images/thumbup.png") %}" alt="Vote up"></a></p>
       {% end %}
     {% end %}
     <p class="title">{{ feature_request.title }}</p>
@@ -15,7 +15,7 @@
   
   <div class="description">
      {% if feature_request.description %}
-     {{ modules.RenderText(feature_request.description, feature_request.description_format) }}
+     {% module RenderText(feature_request.description, feature_request.description_format) %}
      {% end %}
      <div class="metadata centered">
         <p class="vote_weight">
@@ -27,9 +27,9 @@
           {% end %}
           </span>
         </p>
-        <p>Added {{ modules.TimeSince(feature_request.add_date) }} ago
+        <p>Added {% module TimeSince(feature_request.add_date) %} ago
         {% if feature_request.author.first_name %}
-        by {{ modules.ShowUserName(feature_request.author, first_name_only=True, anonymize_email=True) }}
+        by {% module ShowUserName(feature_request.author, first_name_only=True, anonymize_email=True) %}
         {% end %}
         </p>
      </div>
@@ -40,7 +40,7 @@
     <p><strong>Comments:</strong></p>
     {% for comment in comments %}
     <div class="comment">
-      {{ modules.RenderText(comment['comment']) }}
+      {% module RenderText(comment['comment']) %}
       {% if comment['first_name'] %}
       <p class="metadata">Added by {{ comment['first_name'] }}</p>
       {% end %}
@@ -52,6 +52,6 @@
   {% if feature_request.response %}
   <div class="response">
     <p><strong>Response:</strong></p>
-    {{ modules.RenderText(feature_request.response, feature_request.response_format) }}
+    {% module RenderText(feature_request.response, feature_request.response_format) %}
   </div>
   {% end %}  

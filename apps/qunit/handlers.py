@@ -2,7 +2,7 @@ from glob import glob
 import os
 import tornado.web
 
-from utils.routes import route
+from tornado_utils.routes import route
 
 @route('/qunit/?')
 class QUnitHandler(tornado.web.RequestHandler):

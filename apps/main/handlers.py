@@ -19,7 +19,7 @@ import tornado.auth
 import tornado.web
 
 # app
-from utils.routes import route, route_redirect
+from tornado_utils.routes import route, route_redirect
 from models import *
 from utils.datatoxml import dict_to_xml
 from utils.send_mail import send_email
@@ -28,7 +28,7 @@ from utils import parse_datetime, niceboolean, \
   DatetimeParseError, valid_email, random_string, \
   all_hash_tags, all_atsign_tags, generate_random_color, \
   stats, title_to_tags
-from utils.timesince import smartertimesince
+from tornado_utils.timesince import smartertimesince
 from ui_modules import EventPreview
 from config import *
 from apps.eventlog import log_event, actions, contexts

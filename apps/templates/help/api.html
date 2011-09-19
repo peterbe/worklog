@@ -17,7 +17,7 @@
   </p>
   {% if can_https %}
   <p>And, because you're a <strong>premium</strong> user you can use HTTPS on all your API calls!
-  <img src="{{ modules.StaticURL("images/premium.png") }}" alt="Premium badge">
+  <img src="{% module StaticURL("images/premium.png") %}" alt="Premium badge">
   </p>
   {% end %}
 {% else %}
@@ -101,7 +101,7 @@ github.com</a>) or use your favorite package manager to install (e.g.
 <code>pip</code> or <code>easy_install</code>).</p>
 
 <div class="code">
-{{ modules.Syntax(code_pythondonecal_1, "python") }}
+{% module Syntax(code_pythondonecal_1, "python") %}
 </div>
 
 
@@ -110,7 +110,7 @@ github.com</a>) or use your favorite package manager to install (e.g.
 {% end %}
 
 {% block extrajs %}
-<script type="text/javascript">
+<script>
 $(function() {
 
   $('.readmores a').click(function() {

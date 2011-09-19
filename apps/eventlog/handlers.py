@@ -3,7 +3,7 @@ from pymongo import ASCENDING, DESCENDING
 from pprint import pprint
 from utils.decorators import login_required
 from apps.main.handlers import BaseHandler
-from utils.routes import route, route_redirect
+from tornado_utils.routes import route, route_redirect
 import constants
 
 route_redirect('/log$', '/log/')

@@ -15,7 +15,7 @@ Already <strong>have an account</strong>
 <label>&nbsp;</label>
 <input type="submit" value="Log in">
 </div>
-{{ xsrf_form_html() }}
+{% module xsrf_form_html() %}
 </form>
 
 <p class="openid" style="float:right">
@@ -58,5 +58,5 @@ Create a <strong>new account</strong>
 <input type="submit" value="Create account">
 </div>
 
-{{ xsrf_form_html() }}
+{% module xsrf_form_html() %}
 </form>

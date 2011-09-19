@@ -47,7 +47,7 @@ for collname in collnames:
     total = collection.count()
 
     # use map/reduce to count the frequency of each field
-    result = collection.map_reduce(map_fn, reduce_fn)
+    result = collection.map_reduce(map_fn, reduce_fn, 'output')
 
     # print out the summary data
     print collname.center(60, '=')

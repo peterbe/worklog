@@ -3,7 +3,7 @@
 {% block title %}Activity log{% end %}
 
 {% block extra_head %}
-{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/logs.css") }}
+{% module Static("css/ext/jquery.jqplot.min.css", "css/logs.css") %}
 {% end %}
 
 
@@ -24,8 +24,8 @@
 
 {% block extrajs %}
 <script>
-var jqplot_dateaxisrenderer = '{{ modules.StaticURL("ext/jqplot.dateAxisRenderer.min.js") }}';
+var jqplot_dateaxisrenderer = '{% module StaticURL("ext/jqplot.dateAxisRenderer.min.js") %}';
 head.js(JS_URLS.jqplot, jqplot_dateaxisrenderer);
 </script>
-{{ modules.Static("activitylog.js") }}
+{% module Static("activitylog.js") %}
 {% end %}

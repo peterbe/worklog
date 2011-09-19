@@ -2,9 +2,7 @@
 import pyflakes.checker
 import compiler, sys
 import os
-
-if os.path.abspath(os.curdir) not in sys.path:
-    sys.path.insert(0, os.path.abspath(os.curdir))
+import here
 
 def check(codeString, filename):
     """

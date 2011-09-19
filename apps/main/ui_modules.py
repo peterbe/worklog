@@ -1,11 +1,13 @@
 import datetime
 import tornado.web
 import tornado.escape
-from utils.timesince import smartertimesince
-from utils import format_time_ampm
+from tornado_utils.timesince import smartertimesince
+from tornado_utils import format_time_ampm
 from utils.truncate import truncate_words
 import markdown
-from utils.tornado_static import *
+from tornado_utils.tornado_static import (
+  StaticURL, Static, PlainStaticURL, PlainStatic, Static64
+)
 
 try:
     import pygments

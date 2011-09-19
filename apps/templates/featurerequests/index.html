@@ -3,7 +3,7 @@
 {% block title %}Feature requests - DoneCal{% end %}
 
 {% block extra_head %}
-{{ modules.Static("css/ext/jquery.qtip.css", "css/featurerequests.css") }}
+{% module Static("css/ext/jquery.qtip.css", "css/featurerequests.css") %}
 {% end %}
 
 {% block sidebar %}
@@ -19,7 +19,7 @@
 <div id="requests" class="centered">
 {% for feature_request in feature_requests %}
 <div class="request" id="feature--{{ feature_request._id }}">
-  {{ modules.ShowFeatureRequest(feature_request) }}
+  {% module ShowFeatureRequest(feature_request) %}
 </div>
 {% end %}
 </div>
@@ -37,7 +37,7 @@
   <input type="submit" value="Submit">
   </div>
 
-  {{ xsrf_form_html() }}
+  {% module xsrf_form_html() %}
 </form>
 {% else %}
   <div class="centered">
@@ -56,7 +56,7 @@
   <input type="button" class="cancel" value="Cancel">
 
   </div>
-  {{ xsrf_form_html() }}
+  {% module xsrf_form_html() %}
 </form>
 </div>
 
@@ -66,7 +66,7 @@
 <script type="text/javascript">
 var HAVE_VOTED = {{ json_encode(have_voted_features) }};
 </script>
-{{ modules.Static("ext/jquery.validate.min.js", "ext/jquery.qtip.min.js", "featurerequests.js") }}
+{% module Static("ext/jquery.validate.min.js", "ext/jquery.qtip.min.js", "featurerequests.js") %}
 {% if have_voted_features %}
 {% end %}
 {% end %}

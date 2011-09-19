@@ -3,7 +3,7 @@
 {% block title %}Event Log{% end %}
 
 {% block extra_head %}
-{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/logs.css") }}
+{% module Static("css/ext/jquery.jqplot.min.css", "css/logs.css") %}
 {% end %}
 
 
@@ -38,13 +38,13 @@
   {% for entry in event_logs %}
   <tr>
       {% if superuser %}
-      <td>{{ modules.VerboseEventLog(entry, 'user') }}</td>
+      <td>{% module VerboseEventLog(entry, 'user') %}</td>
       {% end %}
-      <td>{{ modules.VerboseEventLog(entry, 'event') }}</td>
-      <td>{{ modules.VerboseEventLog(entry, 'action') }}</td>
+      <td>{% module VerboseEventLog(entry, 'event') %}</td>
+      <td>{% module VerboseEventLog(entry, 'action') %}</td>
       <td>{{ entry.context }}</td>
-      <td>{{ modules.VerboseEventLog(entry, 'date') }}</td>
-      <td>{{ modules.VerboseEventLog(entry, 'comment') }}</td>
+      <td>{% module VerboseEventLog(entry, 'date') %}</td>
+      <td>{% module VerboseEventLog(entry, 'comment') %}</td>
     <td>
   </tr>
 {% end %}
@@ -69,9 +69,9 @@
 
 {% block extrajs %}
 <script>
-//var jquery_jqplot = '{{ modules.StaticURL("ext/jquery.jqplot.min.js") }}';
-var jqplot_pierenderer = '{{ modules.StaticURL("ext/jqplot.pieRenderer.min.js") }}';
+//var jquery_jqplot = '{% module StaticURL("ext/jquery.jqplot.min.js") %}';
+var jqplot_pierenderer = '{% module StaticURL("ext/jqplot.pieRenderer.min.js") %}';
 head.js(JS_URLS.jqplot, jqplot_pierenderer);
 </script>
-{{ modules.Static("eventlog.js") }}
+{% module Static("eventlog.js") %}
 {% end %}
