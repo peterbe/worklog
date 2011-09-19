@@ -306,9 +306,18 @@ class ReceiveEmailReminder(EventsHandler):
                     message_body = part.get_payload(decode=True)
                     if isinstance(message_body, str):
                         for charset in part.get_charsets():
+                            if not charset:
+                                charset = 'utf8'
                             message_body = unicode(message_body, charset)
                             character_set = charset
                             break
+                    #print "BODY"
+                    #print repr(message_body)
+                    #print message_body
+                    # If it's a multipart email, only use the first part
+                    break
+
+
         else:
             # not a multipart message then it's easy
             message_body = msg.get_payload(decode=True)
@@ -320,7 +329,6 @@ class ReceiveEmailReminder(EventsHandler):
                 message_body = unicode(message_body, character_set)
             else:
                 message_body = unicode(message_body, 'utf-8')
-
 
         if not from_user:
             # only bother to reply if the email appears to be sent from
@@ -480,6 +488,7 @@ class ReceiveEmailReminder(EventsHandler):
                 first_hour = user_settings['first_hour']
             time_ = (first_hour - tz_offset_h, 0 - tz_offset_m)
 
+        text = text.strip()
 
         if len(text.splitlines()) > 1:
             title = text.splitlines()[0]
