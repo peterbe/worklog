@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import unittest
+import here
 
 TEST_MODULES = [
     'apps.main.tests.test_handlers',
@@ -21,7 +22,7 @@ def all():
             for m in TEST_MODULES:
                 __import__(m, globals(), locals())
         raise
-        
+
 
 if __name__ == '__main__':
     import tornado.testing
