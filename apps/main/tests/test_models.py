@@ -70,28 +70,30 @@ class ModelsTestCase(BaseModelsTestCase):
 
     def test_user_settings(self):
         user = self.db.User()
+        user.save()
         settings = self.db.UserSettings()
 
         self.assertRaises(RequireFieldError, settings.save)
-        settings.user = user
+        settings.user = user._id
         settings.save()
 
         self.assertFalse(settings.monday_first)
         self.assertFalse(settings.hide_weekend)
 
         model = self.db.UserSettings
-        self.assertEqual(model.find({'user.$id': user._id}).count(), 1)
+        self.assertEqual(model.find({'user': user._id}).count(), 1)
 
     def test_create_share(self):
         user = self.db.User()
+        user.save()
         share = self.db.Share()
-        share.user = user
+        share.user = user._id
         share.save()
 
         self.assertEqual(share.tags, [])
 
         from apps.main.models import Share
-        new_key = Share.generate_new_key(self.db[Share.__collection__], min_length=4)
+        new_key = Share.generate_new_key(self.db.Share.collection, min_length=4)
         self.assertTrue(len(new_key) == 4)
         share.key = new_key
         share.save()
@@ -104,7 +106,7 @@ class ModelsTestCase(BaseModelsTestCase):
         user.save()
 
         feature_request = self.db.FeatureRequest()
-        feature_request.author = user
+        feature_request.author = user._id
         #self.assertRaises(RequireFieldError, feature_request.save)
         #feature_request.description = u"Bla bla"
         feature_request.save()
@@ -127,7 +129,7 @@ class ModelsTestCase(BaseModelsTestCase):
         user.save()
 
         user_settings = self.db.UserSettings()
-        user_settings.user = user
+        user_settings.user = user._id
         user_settings.save()
         self.assertTrue(user_settings.first_hour) # set to something
 

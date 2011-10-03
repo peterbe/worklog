@@ -187,15 +187,15 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
 
         if not user:
             raise ValueError("Can't get settings when there is no user")
-        _search = {'user.$id': user['_id']}
+        _search = {'user': user['_id']}
         if fast:
-            return self.db[UserSettings.__collection__].one(_search) # skip mongokit
+            return self.db.UserSettings.collection.one(_search) # skip mongokit
         else:
             return self.db.UserSettings.one(_search)
 
     def create_user_settings(self, user, **default_settings):
         user_settings = self.db.UserSettings()
-        user_settings.user = user
+        user_settings.user = user._id
         for key in default_settings:
             setattr(user_settings, key, default_settings[key])
         user_settings.save()
@@ -266,6 +266,9 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         base_search = {
           'user.$id': user._id,
         }
+        base_search_slim = {
+          'user': user._id,
+        }
 
         def get_checked_tags(event_tags, new_tag):
             checked_tags = []
@@ -288,6 +291,9 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                     # before we can save it
                     event_obj = self.db.Event(event)
                     event_obj.save()
+
+            search = dict(base_search_slim,
+                          tags=re.compile(re.escape(tag), re.I))
 
             for share in self.db.Share.collection.find(search):
                 checked_tags = get_checked_tags(share['tags'], tag)
@@ -360,7 +366,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         if not shares:
             shares = ''
         keys = [x for x in shares.split(',') if x]
-        return self.db[Share.__collection__].find({'key':{'$in':keys}})
+        return self.db.Share.collection.find({'key':{'$in':keys}})
 
     def get_all_available_tags(self, user):
         tags = set()
@@ -430,12 +436,12 @@ class HomeHandler(BaseHandler):
             else:
                 shared_keys = [x.strip() for x in shared_keys.split(',')
                                if x.strip() and \
-                               self.db[Share.__collection__].one(dict(key=x))]
+                               self.db.Share.collection.one(dict(key=x))]
 
             key = self.get_argument('share')
             share = self.db.Share.one(dict(key=key))
             user = self.get_current_user()
-            if user and user == share.user:
+            if user and user._id == share.user._id:
                 # could flash a message or something here
                 pass
             elif share.key not in shared_keys:
@@ -463,7 +469,7 @@ class HomeHandler(BaseHandler):
             hidden_shares = ''
         hidden_keys = [x for x in hidden_shares.split(',') if x]
         hidden_shares = []
-        for share in self.db[Share.__collection__].find({'key':{'$in':hidden_keys}}):
+        for share in self.db.Share.collection.find({'key':{'$in':hidden_keys}}):
             className = 'share-%s' % share['user'].id
             hidden_shares.append(dict(key=share['key'],
                                       className=className))
@@ -539,7 +545,7 @@ class EventsHandler(BaseHandler):
                         '#668CB3,#DD5511,#D6AE00,#668CD9,#3640AD'.split(',')
         _share_colors = iter(_share_colors)
         for share in self.share_keys_to_share_objects(shares):
-            share_user = self.db.User.collection.one(dict(_id=share['user'].id))
+            share_user = self.db.User.collection.one(dict(_id=share['user']))
             search['user.$id'] = share_user['_id']
             if share['tags']:
                 search['tags'] = {'$in': share['tags']}
@@ -928,9 +934,9 @@ class BaseEventHandler(BaseHandler):
             # Find out if for any of the shares we have access to the owner of
             # the share is the same as the owner of the event
             for share in self.share_keys_to_share_objects(shares):
-                if share['user'].id == event['user']['_id']:
+                if share['user'] == event['user']['_id']:
                     if share['users']:
-                        if user['_id'] in [x.id for x in share['users']]:
+                        if user['_id'] in [x for x in share['users']]:
                             break
                     else:
                         break
@@ -1231,7 +1237,7 @@ class UserSettingsHandler(BaseHandler):
                 default['first_hour'] = getattr(user_settings, 'first_hour', 8)
             else:
                 user_settings = self.db.UserSettings()
-                user_settings.user = user
+                user_settings.user = user._id
                 user_settings.save()
 
         if format == '.js':
@@ -1256,7 +1262,7 @@ class UserSettingsHandler(BaseHandler):
             offline_mode = getattr(user_settings, 'offline_mode', False)
         else:
             user_settings = self.db.UserSettings()
-            user_settings.user = user
+            user_settings.user = user._id
             user_settings.save()
 
         for key in ('monday_first', 'hide_weekend', 'disable_sound',
@@ -1289,7 +1295,7 @@ class SharingHandler(BaseHandler):
             self.render("sharing/cant-share-yet.html")
             return
 
-        shares = self.db.Share.find({'user.$id': user._id})
+        shares = self.db.Share.find({'user': user._id})
         count = shares.count()
         if count:
             if count == 1:
@@ -1298,9 +1304,9 @@ class SharingHandler(BaseHandler):
                 raise NotImplementedError
         else:
             share = self.db.Share()
-            share.user = user
+            share.user = user._id
             # might up this number in the future
-            share.key = Share.generate_new_key(self.db[Share.__collection__], min_length=7)
+            share.key = Share.generate_new_key(self.db.Share.collection, min_length=7)
             share.save()
 
         share_url = "/share/%s" % share.key
@@ -1352,7 +1358,7 @@ class EditSharingHandler(SharingHandler):
 
         user = self.get_current_user()
         try:
-            share = self.db.Share.one({'_id': ObjectId(_id), 'user.$id': user._id})
+            share = self.db.Share.one({'_id': ObjectId(_id), 'user': user._id})
             if not share:
                 raise tornado.web.HTTPError(404, "Share not found")
         except Invalid:
@@ -2360,13 +2366,12 @@ class StatisticsDataHandler(BaseHandler): # pragma: no cover
               'hash_tags': "Tag with #",
               'ampm_format': "AM/PM format",
             }
-            total_count = self.db[UserSettings.__collection__].find().count()
+            total_count = self.db.UserSettings.collection.find().count()
             for key in UserSettings.get_bool_keys():
                 if key in ('offline_mode'):
                     # skip these
                     continue
-                count_true = self.db[UserSettings.__collection__].find({key:True}).count()
-                #count_false = self.db[UserSettings.__collection__].find({key:False}).count()
+                count_true = self.db.UserSettings.collection.find({key:True}).count()
                 p = int(100. * count_true / total_count)
                 try:
                     label = _translations[key]
@@ -2484,7 +2489,7 @@ class FeatureRequestsHandler(BaseHandler):
         if user:
             _search = {'user.$id': user._id}
             for feature_request_comment in \
-              self.db[FeatureRequestComment.__collection__].find(_search):
+              self.db.FeatureRequestComment.collection.find(_search):
                 options['have_voted_features'].append(
                   'feature--%s' % feature_request_comment['feature_request'].id
                 )
@@ -2541,7 +2546,7 @@ class FeatureRequestsHandler(BaseHandler):
             raise tornado.web.HTTPError(403, "Not logged in")
 
         feature_request = self.db.FeatureRequest()
-        feature_request.author = user
+        feature_request.author = user._id
         feature_request.title = title
         if description:
             feature_request.description = description
@@ -2557,7 +2562,7 @@ class FeatureRequestsHandler(BaseHandler):
 
         feature_request_comment = self.db.FeatureRequestComment()
         feature_request_comment.feature_request = feature_request
-        feature_request_comment.user = user
+        feature_request_comment.user = user._id
         feature_request_comment.comment = u''
         feature_request_comment.vote_weight = voting_weight
         feature_request_comment.save()
@@ -2609,7 +2614,7 @@ class VoteUpFeatureRequestHandler(FeatureRequestsHandler, FeatureRequestHandler)
 
         # remove any previous comments
         _search = {'feature_request.$id': feature_request._id,
-                   'user.$id': user._id}
+                   'user': user._id}
         if self.db.FeatureRequestComment.one(_search):
             # this applies indepdent of direction
             feature_request.vote_weight -= voting_weight
@@ -2621,7 +2626,7 @@ class VoteUpFeatureRequestHandler(FeatureRequestsHandler, FeatureRequestHandler)
         if direction == 'up':
             fr_comment = self.db.FeatureRequestComment()
             fr_comment.comment = comment
-            fr_comment.user = user
+            fr_comment.user = user._id
             fr_comment.feature_request = feature_request
             fr_comment.vote_weight = voting_weight
             fr_comment.save()
@@ -2639,7 +2644,7 @@ class VoteUpFeatureRequestHandler(FeatureRequestsHandler, FeatureRequestHandler)
 
     def get_all_feature_request_vote_weights(self):
         data = dict()
-        for feature_request in self.db[FeatureRequest.__collection__].find():
+        for feature_request in self.db.FeatureRequest.collection.find():
             data[str(feature_request['_id'])] = feature_request['vote_weight']
         return data
 

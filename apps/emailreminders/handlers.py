@@ -43,7 +43,7 @@ class EmailRemindersHandler(BaseHandler):
         email_reminder_ids = set()
         user = self.get_current_user()
         if user:
-            _base_search = {'user.$id': user._id}
+            _base_search = {'user': user._id}
             weekday_reminders = dict()
             for weekday in EmailReminder.WEEKDAYS:
                 _reminders = self.db.EmailReminder\
@@ -121,7 +121,7 @@ class EmailRemindersHandler(BaseHandler):
             email_reminder = edit_reminder
         else:
             email_reminder = self.db.EmailReminder()
-            email_reminder.user = user
+            email_reminder.user = user._id
         email_reminder.weekdays = weekdays
         email_reminder.time = (time_hour, time_minute)
         email_reminder.tz_offset = tz_offset

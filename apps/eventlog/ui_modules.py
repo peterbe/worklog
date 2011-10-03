@@ -21,24 +21,28 @@ class VerboseEventLog(tornado.web.UIModule):
             else:
                 return '*deleted*'
         elif what == 'user':
-            if isinstance(entry.user, dict):
-                user = entry.user
-            else:
-                user = self._get_user(entry.user)
+            #print "ENTRY.USER"
+            #print entry.user
+            user = entry.user
+            #if isinstance(entry.user, dict):
+            #    user = entry.user
+            #else:
+            #    user = entry.user
+
             if user:
                 return self._brief_email(user['email'])
             else:
                 return '*deleted*'
         else:
             raise NotImplementedError(what)
-        
+
     def _brief_email(self, email):
         return email
-        
+
     def _get_user(self, ref):
-        return self.handler.db[User.__collection__].one({'_id': ref.id})
+        print "REF", repr(ref)
+
+        return self.handler.db.User.collection.one({'_id': ref.id})
 
     def _get_event(self, ref):
-        return self.handler.db[Event.__collection__].one({'_id': ref.id})
-    
-        
+        return self.handler.db.Event.collection.one({'_id': ref.id})

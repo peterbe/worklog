@@ -46,11 +46,10 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
 
         email_reminder = db.EmailReminder.one()
         self.assertEqual(email_reminder.user._id, peter._id)
-        self.assertEqual(email_reminder.weekdays, [EmailReminder.MONDAY,
-                                                   EmailReminder.WEDNESDAY])
+        self.assertEqual(email_reminder.weekdays,
+                         [EmailReminder.MONDAY, EmailReminder.WEDNESDAY])
         self.assertEqual(email_reminder.time, [13,0])
         self.assertEqual(email_reminder.tz_offset, -3)
-
         edit_url = "?edit=%s" % email_reminder._id
 
         # reload the page again and expect to see something about this reminder
@@ -70,7 +69,6 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         assert response.code == 200
         self.assertTrue(bob.email in response.body)
 
-
     def test_editing_setup_reminder(self):
         db = self.get_db()
         bob = db.User()
@@ -79,7 +77,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (10,0)
@@ -112,7 +110,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         greg.save()
 
         email_reminder2 = db.EmailReminder()
-        email_reminder2.user = greg
+        email_reminder2.user = greg._id
         today = datetime.date.today()
         email_reminder2.weekdays = [unicode(today.strftime('%A'))]
         email_reminder2.time = (11,0)
@@ -182,7 +180,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
 
         # set one up!
         email_reminder = self.db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (11,30)
@@ -231,7 +229,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (11,30)
@@ -272,7 +270,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (11,30)
@@ -309,7 +307,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (11,30)
@@ -349,7 +347,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (11,30)
@@ -386,7 +384,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (11,30)
@@ -428,12 +426,12 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.first_name = u"Bob"
         bob.save()
         bob_settings = db.UserSettings()
-        bob_settings.user = bob
+        bob_settings.user = bob._id
         bob_settings.first_hour = 6
         bob_settings.save()
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (11,30)
@@ -472,7 +470,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (10,0)
@@ -515,7 +513,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (10,0)
@@ -556,7 +554,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (10,0)
@@ -583,13 +581,13 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         user_settings = db.UserSettings()
-        user_settings.user = bob
+        user_settings.user = bob._id
         user_settings.ampm_format = True
         user_settings.save()
 
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (10,0)
@@ -705,13 +703,12 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         bob.save()
 
         user_settings = db.UserSettings()
-        user_settings.user = bob
+        user_settings.user = bob._id
         user_settings.ampm_format = True
         user_settings.save()
 
-
         email_reminder = db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (19,0)
@@ -809,7 +806,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         # got to set up an email reminder that we can attach this reply to
         # This is in the sample email <reminder+4d32343474a1f87fa2000000@donecal.com>
         email_reminder = db.EmailReminder()
-        email_reminder.user = user
+        email_reminder.user = user._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (8,0)
@@ -844,7 +841,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('Not a reply to an email reminder' in response.body)
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = user
+        email_reminder.user = user._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (8,0)
@@ -878,7 +875,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('Not a reply to an email reminder' in response.body)
 
         email_reminder = self.db.EmailReminder()
-        email_reminder.user = user
+        email_reminder.user = user._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (8,0)
@@ -915,7 +912,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('Not a reply to an email reminder' in response.body)
 
         email_reminder = self.db.EmailReminder()
-        email_reminder.user = user
+        email_reminder.user = user._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (8,0)
@@ -957,7 +954,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('Not a reply to an email reminder' in response.body)
 
         email_reminder = db.EmailReminder()
-        email_reminder.user = user
+        email_reminder.user = user._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (8,0)
@@ -996,7 +993,7 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
         self.assertTrue('Not a reply to an email reminder' in response.body)
 
         email_reminder = self.db.EmailReminder()
-        email_reminder.user = bob
+        email_reminder.user = bob._id
         today = datetime.date.today()
         email_reminder.weekdays = [unicode(today.strftime('%A'))]
         email_reminder.time = (11,30)

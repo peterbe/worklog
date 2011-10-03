@@ -2,7 +2,7 @@ import logging
 def log_event(db, user, event, action, context, comment=None):
     try:
         event_log = db.EventLog()
-        event_log.user = user
+        event_log.user = user._id
         event_log.event = event
         event_log.action = action
         event_log.context = context

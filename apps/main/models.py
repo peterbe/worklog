@@ -1,8 +1,16 @@
 from hashlib import md5
 import uuid
 import datetime
-from mongokit import Document, ValidationError
+from pymongo.objectid import ObjectId
+from mongokit import Connection, Document, ValidationError
 from utils import encrypt_password
+
+from mongokit import Connection
+connection = Connection()
+def register(cls):
+    connection.register([cls])
+    return cls
+
 
 class BaseDocument(Document):
     structure = {
@@ -17,6 +25,7 @@ class BaseDocument(Document):
     use_autorefs = True
     use_dot_notation = True
 
+@register
 class User(BaseDocument):
     __collection__ = 'users'
     structure = {
@@ -56,10 +65,11 @@ class User(BaseDocument):
         else:
             raise NotImplementedError("No checking clear text passwords")
 
+@register
 class UserSettings(BaseDocument):
     __collection__ = 'user_settings'
     structure = {
-      'user': User,
+      'user': ObjectId,
       'monday_first': bool,
       'hide_weekend': bool,
       'disable_sound': bool,
@@ -92,13 +102,17 @@ class UserSettings(BaseDocument):
     #   'unique': True},
     #]
 
+    @property
+    def user(self):
+        return self.db.User.find_one({'_id': self['user']})
+
     @staticmethod
     def get_bool_keys():
         return [key for (key, value)
                 in UserSettings.structure.items()
                 if value is bool]
 
-
+@register
 class Event(BaseDocument):
     __collection__ = 'events'
     structure = {
@@ -132,13 +146,14 @@ class Event(BaseDocument):
         if save:
             self.save()
 
+@register
 class Share(BaseDocument):
     __collection__ = 'shares'
     structure = {
-      'user': User,
+      'user': ObjectId,
       'key': unicode,
       'tags': [unicode],
-      'users': [User],
+      'users': [ObjectId],
     }
     default_values = {
       'key': lambda:unicode(md5(unicode(uuid.uuid4())).hexdigest()),
@@ -158,37 +173,51 @@ class Share(BaseDocument):
             new_key = unicode(md5(unicode(uuid.uuid4())).hexdigest()[:min_length])
         return new_key
 
+    @property
+    def user(self):
+        return self.db.User.find_one({'_id': self['user']})
+
+    @property
+    def users(self):
+        return self.db.User.find({'_id': {'$in': self['users']}})
+
+
+@register
 class FeatureRequest(BaseDocument):
-      __collection__ = 'feature_requests'
-      structure = {
-        'title': unicode,
-        'description': unicode,
-        'vote_weight': int,
-        'description_format': unicode,
-        'response': unicode,
-        'response_format': unicode,
-        'author': User,
-        'implemented': bool,
-      }
+    __collection__ = 'feature_requests'
+    structure = {
+      'title': unicode,
+      'description': unicode,
+      'vote_weight': int,
+      'description_format': unicode,
+      'response': unicode,
+      'response_format': unicode,
+      'author': ObjectId,
+      'implemented': bool,
+    }
 
-      required_fields = [
-        'author',
-      ]
+    required_fields = [
+      'author',
+    ]
 
-      default_values = {
-        'vote_weight': 0,
-        'description_format': u'plaintext',
-        'response_format': u'markdown',
-        'implemented': False,
-      }
+    default_values = {
+      'vote_weight': 0,
+      'description_format': u'plaintext',
+      'response_format': u'markdown',
+      'implemented': False,
+    }
+
+    @property
+    def author(self):
+        return self.db.User.find_one({'_id': self['author']})
 
 
-
+@register
 class FeatureRequestComment(BaseDocument):
     __collection__ = 'feature_request_comments'
     structure = {
       'feature_request': FeatureRequest,
-      'user': User,
+      'user': ObjectId,
       'comment': unicode,
       'vote_weight': int,
     }
@@ -199,3 +228,7 @@ class FeatureRequestComment(BaseDocument):
     default_values = {
       'vote_weight': 1,
     }
+
+    @property
+    def user(self):
+        return self.db.User.find_one({'_id': self['user']})

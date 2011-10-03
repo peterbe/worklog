@@ -1,11 +1,14 @@
 import datetime
-from apps.main.models import BaseDocument, Event, User
+from pymongo.objectid import ObjectId
+from apps.main.models import BaseDocument, Event, register
 
+
+@register
 class EventLog(BaseDocument):
     __collection__ = 'event_log'
     structure = {
       'event': Event,
-      'user': User,
+      'user': ObjectId,
       'action': int,
       'context': unicode,
       'comment': unicode,
@@ -24,3 +27,7 @@ class EventLog(BaseDocument):
         apps.main.models.Event class is because I don't want to clutter the main
         app with something like the eventlog which is much less important."""
         return event.db.EventLog.find({'event':event})
+
+    @property
+    def user(self):
+        return self.db.User.find_one({'_id': self['user']})

@@ -7,6 +7,8 @@ APPS = (
   'qunit',
 )
 
+DATABASE_NAME = "worklog"
+
 LOGIN_URL = "/auth/login"
 
 COOKIE_SECRET = "11o3TzKsxQAGAYdkl5gmGEJJFu4h7EQnp1XdTP10/"

@@ -29,7 +29,7 @@ from utils.git import get_git_revision
 
 define("debug", default=False, help="run in debug mode", type=bool)
 define("port", default=8000, help="run on the given port", type=int)
-define("database_name", default="worklog", help="mongodb database name")
+define("database_name", default=settings.DATABASE_NAME, help="mongodb database name")
 define("prefork", default=False, help="pre-fork across all CPUs", type=bool)
 define("showurls", default=False, help="Show all routed URLs", type=bool)
 define("dont_combine", default=False, help="Don't combine static resources", type=bool)

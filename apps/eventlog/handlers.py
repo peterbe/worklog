@@ -5,6 +5,8 @@ from utils.decorators import login_required
 from apps.main.handlers import BaseHandler
 from tornado_utils.routes import route, route_redirect
 import constants
+import settings
+
 
 route_redirect('/log$', '/log/')
 @route('/log/$')
@@ -15,9 +17,9 @@ class EventLogHandler(BaseHandler):
     def get(self):
         options = self.get_base_options()
         user = self.get_current_user()
-        superuser = user.email == 'peterbe@gmail.com'
+        superuser = user.email in settings.ADMIN_EMAILS
 
-        search = {'user.$id': user._id}
+        search = {'user': user._id}
         if superuser:
             search = {}
 
@@ -31,9 +33,13 @@ class EventLogHandler(BaseHandler):
         options['page'] = page
         options['skip'] = skip
         options['pages'] = range(1, 1 + options['count_event_logs'] / batch_size)
-        options['event_logs'] = list(event_logs.sort('add_date', DESCENDING).skip(skip).limit(batch_size))
+        options['event_logs'] = list(event_logs
+                                     .sort('add_date', DESCENDING)
+                                     .skip(skip)
+                                     .limit(batch_size))
 
         self.render("eventlog/index.html", **options)
+
 
 @route('/log/stats\.json$')
 class StatsEventLogHandler(BaseHandler):
@@ -48,7 +54,6 @@ class StatsEventLogHandler(BaseHandler):
         action_keys = constants.ACTIONS_HUMAN_READABLE.keys()
         action_keys.remove(0) # skip the "READ" action since it's not in use
         for key in sorted(action_keys):
-            #pprint(self.db.EventLog.find({'action': key}).explain())
             actions.append((constants.ACTIONS_HUMAN_READABLE[key],
                             self.db.EventLog.find({'action': key}).count()))
         return actions
