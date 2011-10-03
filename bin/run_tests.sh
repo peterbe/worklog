@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python _run_tests.py $@
+python bin/_run_tests.py --logging=error $@
