@@ -1,7 +1,7 @@
 {% extends "../base.html" %}
 
 {% block extra_head %}
-{{ modules.Static("css/ext/jquery.jqplot.min.css", "css/smoothness/jquery-ui-1.8.6.slider.datepicker.css", "css/stats.css") }}
+{% module Static("css/ext/jquery.jqplot.min.css", "css/smoothness/jquery-ui-1.8.6.slider.datepicker.css", "css/stats.css") %}
 {% end %}
 
 {% block title %}Statistics on DoneCal{% end %}
@@ -57,17 +57,17 @@ or
 
 
 {% block extrajs %}
-<script type="text/javascript">
+<script>
 var minDate = new Date({{ first_date.year }}, {{ first_date.month }}-1, {{ first_date.day }});
 var maxDate = new Date({{ last_date.year }}, {{ last_date.month }}-1, {{ last_date.day }});
 
-JS_URLS.jquery_ui_datepicker = '{{ modules.StaticURL("ext/jquery-ui-1.8.6.slider.datepicker.min.js") }}';
-JS_URLS.jqplot_category_axis = '{{ modules.StaticURL("ext/jqplot.categoryAxisRenderer.min.js") }}';
-JS_URLS.jqplot_date_axis = '{{ modules.StaticURL("ext/jqplot.dateAxisRenderer.min.js") }}';
-JS_URLS.jqplot_point_labels = '{{ modules.StaticURL("ext/jqplot.pointLabels.min.js") }}';
-JS_URLS.jqplot_bar_renderer = '{{ modules.StaticURL("ext/jqplot.barRenderer.min.js") }}';
-JS_URLS.jqplot_highlighter = '{{ modules.StaticURL("ext/jqplot.highlighter.min.js") }}';
-JS_URLS.stats = '{{ modules.StaticURL("stats.js") }}';
+JS_URLS.jquery_ui_datepicker = '{% module StaticURL("ext/jquery-ui-1.8.6.slider.datepicker.min.js") %}';
+JS_URLS.jqplot_category_axis = '{% module StaticURL("ext/jqplot.categoryAxisRenderer.min.js") %}';
+JS_URLS.jqplot_date_axis = '{% module StaticURL("ext/jqplot.dateAxisRenderer.min.js") %}';
+JS_URLS.jqplot_point_labels = '{% module StaticURL("ext/jqplot.pointLabels.min.js") %}';
+JS_URLS.jqplot_bar_renderer = '{% module StaticURL("ext/jqplot.barRenderer.min.js") %}';
+JS_URLS.jqplot_highlighter = '{% module StaticURL("ext/jqplot.highlighter.min.js") %}';
+JS_URLS.stats = '{% module StaticURL("stats.js") %}';
 
 head.js(JS_URLS.jquery_ui_datepicker, 
         JS_URLS.jqplot, 

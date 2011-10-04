@@ -28,7 +28,7 @@
         <!-- Mobile Internet Explorer allows us to activate ClearType technology for smoothing fonts for easy reading -->
         <meta http-equiv="cleartype" content="on">
 
-        {{ modules.Static("css/ext/jquery.mobile/jquery.mobile-1.0a4.1.min.css") }}
+        {% module Static("css/ext/jquery.mobile/jquery.mobile-1.0a4.1.min.css") %}
         <style type="text/css">
         dt { font-weight: bold; margin: 2em 0 .5em; }
         span.dayname { font-weight:normal; padding-left:10px; }
@@ -36,17 +36,16 @@
         /*dt code, dd code { font-size:1.3em; line-height:150%; }*/
         </style>
 
-	{{ modules.Static("ext/json2.js") }}
+	{% module Static("ext/json2.js") %}
         {% if debug %}
-        {{ modules.Static("ext/jquery-1.5.2.min.js") }}
+        {% module Static("ext/jquery-1.5.2.min.js") %}
         {% else %}
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js" type="text/javascript"></script>
         {% end %}
 
-	{{ modules.Static("ext/jquery.store.js") }}
-
-        {{ modules.Static("smartphone.js") }}
-        {{ modules.Static("ext/jquery.mobile-1.0a4.1.js") }}
+	{% module Static("ext/jquery.store.js") %}
+        {% module Static("smartphone.js") %}
+        {% module Static("ext/jquery.mobile-1.0a4.1.js") %}
 
 </head>
 <body>

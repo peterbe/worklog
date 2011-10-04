@@ -80,10 +80,10 @@
 {% end %}
 {% block extrajs %}
 <script>
-var jquery_ui_datepicker = '{{ modules.StaticURL("ext/jquery-ui-1.8.6.slider.datepicker.min.js") }}';
-var jqplot_dateaxisrenderer = '{{ modules.StaticURL("ext/jqplot.dateAxisRenderer.min.js") }}';
-var jqplot_highlighter = '{{ modules.StaticURL("ext/jqplot.highlighter.min.js") }}';
-var report = '{{ modules.StaticURL("report.js") }}';
+var jquery_ui_datepicker = '{% module StaticURL("ext/jquery-ui-1.8.6.slider.datepicker.min.js") %}';
+var jqplot_dateaxisrenderer = '{% module StaticURL("ext/jqplot.dateAxisRenderer.min.js") %}';
+var jqplot_highlighter = '{% module StaticURL("ext/jqplot.highlighter.min.js") %}';
+var report = '{% module StaticURL("report.js") %}';
 head.js(jquery_ui_datepicker, JS_URLS.jqplot, jqplot_dateaxisrenderer, jqplot_highlighter, report);
 
 var minDate = new Date({{ first_date.year }}, {{ first_date.month }}-1, {{ first_date.day }});

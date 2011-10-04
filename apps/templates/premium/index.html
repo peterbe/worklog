@@ -57,7 +57,7 @@
 {% for product in products %}
 <div id="{{ product['code'] }}">
   <h3>{{ product['description'] }}</h3>
-  {{ modules.CheckoutCode(product['code'], currency) }}
+  {% module CheckoutCode(product['code'], currency) %}
   {% if product.get('discount') %}
     <p><strong>Discount:</strong>
        {{ product['discount'] }}
