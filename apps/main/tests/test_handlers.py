@@ -1568,6 +1568,50 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user = self.db.User.one({'guid':guid})
         self.assertEqual(user.first_name, u'H\xc3\xbcseyin')
 
+    def test_render_report_basic(self):
+        url = self.reverse_url('report')
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        self.assertTrue('Error' in response.body)
+        self.assertTrue('need to be logged in' in response.body)
+
+        user = self.db.User()
+        user.email = u"test@test.com"
+        user.set_password('secret')
+        user.save()
+
+        data = dict(email=user.email, password="secret")
+        response = self.client.post('/auth/login/', data)
+        self.assertEqual(response.code, 302)
+
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        self.assertTrue('Error' in response.body)
+        self.assertTrue('until you have some events entered' in response.body)
+
+        today = datetime.datetime.today()
+        yesterday = today - datetime.timedelta(days=1)
+        tomorrow = today + datetime.timedelta(days=1)
+
+        event = self.db.Event()
+        event.user = user
+        event.title = u"Testing @at"
+        event.all_day = True
+        event.start = yesterday
+        event.end = yesterday
+        event.save()
+
+        event = self.db.Event()
+        event.user = user
+        event.title = u"Tomorrow"
+        event.all_day = True
+        event.start = tomorrow
+        event.end = tomorrow
+        event.save()
+
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        self.assertTrue('Error' not in response.body)
 
 import mock_data
 def mocked_get_authenticated_user(self, callback):

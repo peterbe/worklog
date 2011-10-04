@@ -57,6 +57,7 @@ class BaseHTTPTestCase(AsyncHTTPTestCase, LogTrapTestCase, HTTPClientMixin):
     @property
     def db(self):
         return self.get_db()
+
     def get_db(self):
         return self._app.con[self._app.database_name]
 
@@ -70,3 +71,6 @@ class BaseHTTPTestCase(AsyncHTTPTestCase, LogTrapTestCase, HTTPClientMixin):
             return re.findall('%s=([\w=\|]+);' % key, cookie_value)[0]
         except IndexError:
             raise ValueError("couldn't find %r in %r" % (key, cookie_value))
+
+    def reverse_url(self, *args, **kwargs):
+        return self._app.reverse_url(*args, **kwargs)

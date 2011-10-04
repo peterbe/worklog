@@ -2032,7 +2032,7 @@ class Bookmarklet(EventsHandler):
             #        )
 
 
-@route(r'/report/$')
+@route(r'/report/$', name='report')
 class ReportHandler(BaseHandler):
 
     def get(self):
@@ -2043,10 +2043,17 @@ class ReportHandler(BaseHandler):
 
         search = {'user.$id': user._id}
         try:
-            first_event = self.db[Event.__collection__].find(search).sort('start', 1).limit(1)[0]
-            last_event = self.db[Event.__collection__].find(search).sort('start', -1).limit(1)[0]
-        except IndexError:
-            return self.write("Error. Sorry, can't use this until you have some events entered")
+            first_event, = (self.db.Event.collection
+                            .find(search, fields=['start'])
+                            .sort('start', 1).limit(1))
+            last_event, = (self.db.Event.collection
+                           .find(search, fields=['start'])
+                           .sort('start', -1).limit(1))
+        except ValueError:
+            if not self.db.Event.find(search).count():
+                return self.write("Error. Sorry, can't use this until you have"
+                                  " some events entered")
+            raise
 
         options['first_date'] = first_event['start']
         options['last_date'] = last_event['start']
