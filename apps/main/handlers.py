@@ -2202,8 +2202,10 @@ class GeneralStatisticsHandler(BaseHandler): # pragma: no cover
         options = self.get_base_options()
         user = self.get_current_user()
 
-        first_event = self.db[Event.__collection__].find().sort('add_date', 1).limit(1)[0]
-        #last_event = self.db[Event.__collection__].find().sort('add_date', -1).limit(1)[0]
+        first_event, = (self.db.Event.collection
+                        .find(fields=['start'])
+                        .sort('add_date', 1)
+                        .limit(1))
 
         options['first_date'] = first_event['start']
         #options['last_date'] = last_event['start']
