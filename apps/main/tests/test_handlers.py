@@ -15,6 +15,17 @@ from tornado_utils.http_test_client import TestClient
 
 class ApplicationTestCase(BaseHTTPTestCase):
 
+    def _login(self, email=u"test@test.com"):
+        user = self.db.User()
+        user.email = unicode(email)
+        user.set_password('secret')
+        user.save()
+
+        data = dict(email=user.email, password="secret")
+        response = self.client.post('/auth/login/', data)
+        assert response.code == 302
+        return user
+
     def test_homepage(self):
         response = self.client.get('/')
         self.assertTrue('id="calendar"' in response.body)
@@ -1612,6 +1623,211 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.client.get(url)
         self.assertEqual(response.code, 200)
         self.assertTrue('Error' not in response.body)
+
+    def test_report_export(self):
+        url = self.reverse_url('report_export', '.xls')
+        response = self.client.get(url)
+        self.assertEqual(response.code, 403)
+
+        user = self.db.User()
+        user.email = u"test@test.com"
+        user.set_password('secret')
+        user.save()
+
+        data = dict(email=user.email, password="secret")
+        response = self.client.post('/auth/login/', data)
+        self.assertEqual(response.code, 302)
+
+        # create some events
+        today = datetime.datetime.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        yesterday = today - datetime.timedelta(days=1)
+        event1 = self.db.Event()
+        event1.user = user
+        event1.title = u"Testing @at"
+        event1.all_day = True
+        event1.start = yesterday
+        event1.end = yesterday
+        event1.save()
+
+        event2 = self.db.Event()
+        event2.user = user
+        event2.title = u"Tomorrow"
+        event2.all_day = True
+        event2.start = tomorrow
+        event2.end = tomorrow
+        event2.save()
+
+        event3 = self.db.Event()
+        event3.user = user
+        event3.title = u"Long Time Ago"
+        event3.all_day = True
+        event3.start = yesterday - datetime.timedelta(days=2)
+        event3.end = yesterday - datetime.timedelta(days=2)
+        event3.save()
+
+        response = self.client.get(url)
+        self.assertEqual(response.code, 400)
+
+        today = datetime.date.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        data = {
+          'start': mktime(yesterday.timetuple()),
+          'end': mktime((tomorrow + datetime.timedelta(days=1)).timetuple()),
+        }
+        response = self.client.get(url, data)
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-type'],
+                         'application/vnd.ms-excel; charset=UTF-8')
+
+        url = self.reverse_url('report_export', '.csv')
+        response = self.client.get(url, data)
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-type'],
+                         'application/msexcel-comma; charset=UTF-8')
+        self.assertTrue(event1.title in response.body)
+        self.assertTrue(event2.title in response.body)
+        self.assertTrue(event3.title not in response.body)
+
+    def test_report_data(self):
+        url = self.reverse_url('report_data', '.json')
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+
+        user = self._login()
+
+        # create some events
+        today = datetime.datetime.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        yesterday = today - datetime.timedelta(days=1)
+        event1 = self.db.Event()
+        event1.user = user
+        event1.title = u"Testing @at"
+        event1.all_day = True
+        event1.start = yesterday
+        event1.end = yesterday
+        event1.save()
+
+        event2 = self.db.Event()
+        event2.user = user
+        event2.title = u"Tomorrow #Boston"
+        event2.tags = [u'Boston']
+        event2.all_day = True
+        event2.start = tomorrow
+        event2.end = tomorrow
+        event2.save()
+
+        event3 = self.db.Event()
+        event3.user = user
+        event3.title = u"Long Time Ago"
+        event3.all_day = True
+        event3.start = yesterday - datetime.timedelta(days=2)
+        event3.end = yesterday - datetime.timedelta(days=2)
+        event3.save()
+
+        event4 = self.db.Event()
+        event4.user = user
+        event4.title = u"Long Time Ago @washington"
+        event4.tags = [u'washington']
+        event4.all_day = False
+        event4.start = datetime.datetime.now()
+        event4.end = datetime.datetime.now() + datetime.timedelta(hours=1)
+        event4.save()
+
+        today = datetime.date.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        data = {
+#          'start': mktime(yesterday.timetuple()),
+#          'end': mktime((tomorrow + datetime.timedelta(days=1)).timetuple()),
+        }
+        response = self.client.get(url, data)
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-type'],
+                         'application/json; charset=UTF-8')
+        struct = json.loads(response.body)
+        self.assertEqual(struct['hours_spent'], [['washington', 1.0]])
+        self.assertEqual(struct['days_spent'], [
+          ['<em>Untagged</em>', 2.0],
+          ['Boston', 1.0],
+        ])
+
+        data['start'] = mktime(today.timetuple())
+        response = self.client.get(url, data)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['days_spent'], [
+          ['Boston', 1.0],
+        ])
+
+        data['end'] = mktime(tomorrow.timetuple())
+        response = self.client.get(url, data)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['days_spent'], [])
+        self.assertEqual(struct['hours_spent'], [['washington', 1.0]])
+
+        data['with_colors'] = 'yes'
+        response = self.client.get(url, data)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertTrue(struct['hours_colors'])
+        self.assertTrue(not struct['days_colors'])
+
+        data['interval'] = '1 week'
+        response = self.client.get(url, data)
+        self.assertEqual(response.code, 200)
+        struct = json.loads(response.body)
+        self.assertEqual(struct['ticks'], [1])
+        self.assertEqual(struct['data'], [[1.0], [0]])
+        self.assertEqual(struct['tags'],
+                         ['washington', '<em>Untagged</em>'])
+
+        del data['interval']
+        url = self.reverse_url('report_data', '.js')
+        response = self.client.get(url, data)
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-type'],
+                         'text/javascript; charset=UTF-8')
+
+        url = self.reverse_url('report_data', '.xml')
+        del data['with_colors']
+        response = self.client.get(url, data)
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-type'],
+                         'text/xml; charset=UTF-8')
+
+        url = self.reverse_url('report_data', '.txt')
+        response = self.client.get(url, data)
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-type'],
+                         'text/plain; charset=UTF-8')
+        self.assertTrue('washington' in response.body)
+
+        del data['start']
+        response = self.client.get(url, data)
+        self.assertTrue('*Untagged*' in response.body)
+
+    def test_get_user_settings_javascript(self):
+        url = self.reverse_url('user_settings', '.js')
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Content-type'],
+                         'text/javascript; charset=UTF-8')
+        self.assertTrue('"ampm_format": false' in response.body)
+
+        self._login()
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        self.assertTrue('"ampm_format": false' in response.body)
+
+        user_settings, = self.db.UserSettings.find()
+        user_settings.ampm_format = True
+        user_settings.save()
+
+        response = self.client.get(url)
+        self.assertEqual(response.code, 200)
+        self.assertTrue('"ampm_format": true' in response.body)
+
 
 import mock_data
 def mocked_get_authenticated_user(self, callback):

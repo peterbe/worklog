@@ -1210,7 +1210,7 @@ class EventStatsHandler(BaseHandler):
         return data
 
 
-@route('/user/settings(\.js|/)$')
+@route('/user/settings(\.js|/)$', name='user_settings')
 class UserSettingsHandler(BaseHandler):
     def get(self, format=None):
         # default initials
@@ -1546,17 +1546,17 @@ class BaseAuthHandler(BaseHandler):
         return next
 
     def notify_about_new_user(self, user, extra_message=None):
-        return # temporarily commented out
+        #return # temporarily commented out
         if self.application.settings['debug']:
             return
         try:
             self._notify_about_new_user(user, extra_message=extra_message)
-        except:
+        except:  # pragma: no cover
             # I hate to have to do this but I don't want to make STMP errors
             # stand in the way of getting signed up
             logging.error("Unable to notify about new user", exc_info=True)
 
-    def _notify_about_new_user(self, user, extra_message=None):
+    def _notify_about_new_user(self, user, extra_message=None):  # pragma: no cover
         subject = "[DoneCal] New user!"
         email_body = "%s %s\n" % (user.first_name, user.last_name)
         email_body += "%s\n" % user.email
@@ -2060,7 +2060,7 @@ class ReportHandler(BaseHandler):
 
         self.render("report/index.html", **options)
 
-@route(r'/report/export(\.xls|\.csv)$')
+@route(r'/report/export(\.xls|\.csv)$', name='report_export')
 class ExportHandler(ReportHandler):
 
     @tornado.web.asynchronous
@@ -2079,20 +2079,21 @@ class ExportHandler(ReportHandler):
 
     def get_events(self):
         user = self.get_current_user()
+        if not user:
+            raise tornado.web.HTTPError(403, "Not logged in")
         start = parse_datetime(self.get_argument('start'))
         end = parse_datetime(self.get_argument('end'))
         search = {}
         search['start'] = {'$gte': start}
         search['end'] = {'$lte': end}
         search['user.$id'] = user['_id']
+        return self.db.Event.collection.find(search).sort('start')
 
-        return self.db[Event.__collection__].find(search).sort('start')
 
-
-@route(r'/report(\.xls|\.json|\.js|\.xml|\.txt)?')
+@route(r'/report(\.xls|\.json|\.js|\.xml|\.txt)?', name='report_data')
 class ReportDataHandler(EventStatsHandler):
     def get(self, format=None):
-        user = self.get_current_user()
+        #user = self.get_current_user()
         if self.get_argument('interval', None):
             stats = self.get_lumped_stats_data(
               self.get_argument('interval'))
