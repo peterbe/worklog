@@ -246,6 +246,12 @@ body {
         margin-left:10px;
 	margin-right:10px;
 }
+@media only screen and (min-width: 568px) and (max-width: 959px) {
+    #footer .creds a {
+    	  margin-left:4px;
+          margin-right:4px;
+    }
+}
 
 /*
 Genesis child themes need to accomodate multiple
