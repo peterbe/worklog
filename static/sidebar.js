@@ -68,6 +68,7 @@ function _big_display() {
    if (sidebar_hidden) {
       //L("    show sidebar");
       $('#sidebar:hidden').show();
+      $('#underbar:visible').hide();
       $('#wrap').css('width','95%');
       $('#content').css('width','70%');
       $('.footer-stats:hidden','#footer').show();
@@ -84,6 +85,7 @@ function _small_dislay() {
    //L("SMALL");
    if (!sidebar_hidden) {
       $('#sidebar').hide();
+      $('#underbar').show();
       $('#wrap').css('width','100%');
       $('#content').css('width','100%');
       $('#calendar').fullCalendar('render');
@@ -95,71 +97,76 @@ function _small_dislay() {
 
 var jqplot_loaded = false;
 head.ready(function() {
-   head.js(JS_URLS.jqplot, JS_URLS.jqplot_pierenderer, function() {
-      $.jqplot.config.enablePlugins = true;
+  // copy all links from the sidebar to the underbar
+  $('#settings-box a').each(function() {
+    $(this).clone().appendTo($('<li>').appendTo('#underbar ul'));
+  });
 
-      jqplot_loaded = true;
-      var resize_timer;
-      $(window).resize(function() {
-	 //L($(window).width());
-	 clearTimeout(resize_timer);
-	 resize_timer = setTimeout(function() {
-	    if ($(window).width() > 1200) {
-	       _big_display();
-	    } else {
-	       _small_dislay();
-	    }
-	 }, 1000);
+  head.js(JS_URLS.jqplot, JS_URLS.jqplot_pierenderer, function() {
+    $.jqplot.config.enablePlugins = true;
+
+    jqplot_loaded = true;
+    var resize_timer;
+    $(window).resize(function() {
+      //L($(window).width());
+      clearTimeout(resize_timer);
+      resize_timer = setTimeout(function() {
+        if ($(window).width() > 1200) {
+          _big_display();
+        } else {
+          _small_dislay();
+        }
+      }, 1000);
+    });
+    if ($(window).width() > 1100) {
+      var view = $('#calendar').fullCalendar('getView');
+      _big_display();
+    } else {
+      _small_dislay();
+    }
+  });
+
+  $('a.user-settings').fancybox({
+    'width': '75%',
+    'height': '75%',
+    'scrolling': 'no',
+    'transitionIn': 'none',
+    'transitionOut': 'none',
+    //'type': 'iframe',
+    onComplete: function() {
+      //location.href='/'; // works but not ideal
+      if (location.hash) {
+        $('<input name="anchor" type="hidden">').val(location.hash).appendTo($('form.user-settings'));
+      }
+    }
+  });
+
+  $('a.vimeovideo').fancybox({
+    'width': '60%',
+    'height': '65%',
+    'transitionIn': 'none',
+    'transitionOut': 'none',
+    'type': 'iframe',
+    onClosed: function() {
+      if ($('#introduction-video:visible').size()) {
+        $('#introduction-video').hide();
+        $('#introduction-video-after').show('slow');
+      }
+    }
+  });
+
+  $('a.share').fancybox({
+    'width': '75%',
+    'height': '75%',
+    'scrolling': 'no',
+    'transitionIn': 'none',
+    'transitionOut': 'none',
+    onComplete: function(array, index, opts) {
+      $.getScript(JS_URLS.jquery_form, function() {
+        $.getScript(JS_URLS.jquery_ui_droppable, function() {
+          $.getScript(JS_URLS.share);
+        });
       });
-      if ($(window).width() > 1100) {
-	 var view = $('#calendar').fullCalendar('getView');
-	 _big_display();
-      } else {
-	 _small_dislay();
-      }
-   });
-
-   $('a.user-settings').fancybox({
-      'width': '75%',
-      'height': '75%',
-      'scrolling': 'no',
-      'transitionIn': 'none',
-      'transitionOut': 'none',
-      //'type': 'iframe',
-      onComplete: function() {
-	 //location.href='/'; // works but not ideal
-         if (location.hash) {
-            $('<input name="anchor" type="hidden">').val(location.hash).appendTo($('form.user-settings'));
-         }
-      }
-   });
-
-   $('a.vimeovideo').fancybox({
-      'width': '60%',
-      'height': '65%',
-      'transitionIn': 'none',
-      'transitionOut': 'none',
-      'type': 'iframe',
-      onClosed: function() {
-	 if ($('#introduction-video:visible').size()) {
-	    $('#introduction-video').hide();
-	    $('#introduction-video-after').show('slow');
-	 }
-      }
-   });
-
-   $('a.share').fancybox({
-      'width': '75%',
-      'height': '75%',
-      'scrolling': 'no',
-      'transitionIn': 'none',
-      'transitionOut': 'none',
-      onComplete: function(array, index, opts) {
-         $.getScript(JS_URLS.jquery_form, function() {
-            $.getScript(JS_URLS.jquery_ui_droppable, function() {
-               $.getScript(JS_URLS.share);
-            });
-         });
-      }
-   });
+    }
+  });
 });

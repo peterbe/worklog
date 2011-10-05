@@ -18,7 +18,7 @@ h2.fc-header-title {
           margin-top:50px;
         }
 	a.share-hider {
-	  font-size:10px; 
+	  font-size:10px;
 	  float:right;
 	}
 	.ui-tooltip, .qtip { max-width:540px; }
@@ -26,4 +26,3 @@ h2.fc-header-title {
           background-color:#EEEEEE;
           border-color:#cdcdcd;
         }
-
