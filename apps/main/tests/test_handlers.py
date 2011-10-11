@@ -1844,7 +1844,17 @@ class ApplicationTestCase(BaseHTTPTestCase):
         assert share.key
 
         url = self.reverse_url('share_key', share.key)
-        self.assertEqual(response.code, 200)
+        response = self.client.get(url)
+        self.assertEqual(response.code, 302)
+        self.assertTrue(self.client.cookies.get('shares') is None)
+        # log in as someone else and use the same URL
+        self._login(email=u'other@person.com')
+        response = self.client.get(url)
+        self.assertEqual(response.code, 302)
+        self.assertTrue(self.client.cookies.get('shares') is not None)
+        shares_cookie = self.client.cookies.get('shares').value
+        self.assertEqual(base64.b64decode(shares_cookie.split('|')[0]),
+                         share.key)
 
 
 import mock_data

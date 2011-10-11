@@ -1382,7 +1382,7 @@ class SharingAddHandler(BaseHandler):
                            if x.strip() and \
                            self.db.Share.collection.one(dict(key=x))]
 
-        share = self.db.Share.one(dict(key=key))
+        share = self.db.Share.find_one({'key': key})
         if not share:
             raise tornado.web.HTTPError(404, "Share key not found")
 
