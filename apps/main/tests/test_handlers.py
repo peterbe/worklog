@@ -1828,6 +1828,24 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(response.code, 200)
         self.assertTrue('"ampm_format": true' in response.body)
 
+    def test_share_key_not_found(self):
+        url = self.reverse_url('share_key', 'junk')
+        response = self.client.get(url)
+        self.assertEqual(response.code, 404)
+        # same if you're logged in
+        self._login()
+        response = self.client.get(url)
+        self.assertEqual(response.code, 404)
+
+        user, = self.db.User.find()
+        share = self.db.Share()
+        share.user = user._id
+        share.save()
+        assert share.key
+
+        url = self.reverse_url('share_key', share.key)
+        self.assertEqual(response.code, 200)
+
 
 import mock_data
 def mocked_get_authenticated_user(self, callback):

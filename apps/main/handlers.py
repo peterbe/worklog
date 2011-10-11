@@ -354,7 +354,7 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         undoer = self.get_undoer_user()
         if undoer:
             search['user.$id'] = {'$ne': undoer._id}
-        return self.db[Event.__collection__].find(search).count()
+        return self.db.Event.collection.find(search).count()
 
     def share_keys_to_share_objects(self, shares):
         if not shares:
@@ -1363,7 +1363,7 @@ class EditSharingHandler(SharingHandler):
 
         self.write("OK")
 
-@route('/share/(\w+)$')
+@route('/share/(\w+)$', name='share_key')
 class SharingAddHandler(BaseHandler):
 
     def get(self, key):
@@ -1377,6 +1377,9 @@ class SharingAddHandler(BaseHandler):
                            self.db.Share.collection.one(dict(key=x))]
 
         share = self.db.Share.one(dict(key=key))
+        if not share:
+            raise tornado.web.HTTPError(404, "Share key not found")
+
         user = self.get_current_user()
         if user and user == share.user:
             # could flash a message or something here
@@ -2777,7 +2780,6 @@ class PoweruserHandler(PowerusersHandler): #pragma: no cover
             user = self.db.User.one({'email': email})
             options['user'] = user
             options.update(self._extend_user_stats(user))
-
             return self.render(filename, **options)
 
         raise tornado.web.HTTPError(404, "Unknown page")
