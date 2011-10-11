@@ -13,7 +13,11 @@ for msg in db.EventLog.find():
         pass
     else:
         if isinstance(msg, dict):
-            msg['user'] = msg['user']['_id']
+            try:
+                msg['user'] = msg['user']['_id']
+            except TypeError:
+                # a DBRef
+                msg['user'] = msg['user'].id
             msg.save()
             c += 1
         else:
