@@ -1,0 +1,29 @@
+{% extends "../base.html" %}
+
+{% block extra_head %}
+{% end %}
+
+{% block content_inner %}
+
+<h1>Test Sound</h1>
+
+<button id="play-delete">Play delete</button>
+<button id="play-add">Play add</button>
+
+{% end %}
+
+
+{% block extrajs %}
+{% module Static("play-sounds.js") %}
+<script>
+head.ready(function() {
+  preload_sound('add');
+  $('#play-delete').click(function() {
+    play_sound('delete');
+  });
+  $('#play-add').click(function() {
+    play_sound('add');
+  });
+});
+</script>
+{% end %}

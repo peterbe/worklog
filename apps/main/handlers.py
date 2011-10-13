@@ -2826,3 +2826,9 @@ class PoweruserHandler(PowerusersHandler): #pragma: no cover
         stats['events_per_week'] = '%.1f' % (stats['no_events'] / (days/7.0))
 
         return stats
+
+@route('/testsound')
+class TestSoundHandler(BaseHandler):
+    def get(self):
+        options = self.get_base_options()
+        self.render('sound/test.html', **options)

@@ -122,7 +122,7 @@ head.js(JS_URLS.fullcalendar,
    Calendar.load();
 });
 
-head.js(JS_URLS.qtip, JS_URLS.fancybox, JS_URLS.jquery_ui_fullcalendar, JS_URLS.jquery_autocomplete, JS_URLS.soundmanager, JS_URLS.sidebar);
+head.js(JS_URLS.qtip, JS_URLS.fancybox, JS_URLS.jquery_ui_fullcalendar, JS_URLS.play_sounds, JS_URLS.jquery_autocomplete, JS_URLS.sidebar);
 head.ready(function() {
     $('a.account').fancybox({
          'autoDimensions': false,
@@ -133,13 +133,6 @@ head.ready(function() {
          onComplete: function(array, index, opts) {
             $.getScript(JS_URLS.account);
          }
-    });
-    soundManager.onready(function(status) {
-      if (status.success) {
-        soundManager.createSound('pling', '{% module StaticURL("sounds/glass.mp3") %}');
-      } else {
-        SETTINGS.disable_sound = true;
-      }
     });
 });
 

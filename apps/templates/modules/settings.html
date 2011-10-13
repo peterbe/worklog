@@ -19,6 +19,12 @@ var JS_URLS = {
   {% if 0 %}jquery_ui_draggable_resizable: '{% module StaticURL("ext/jquery-ui-1.8.4.draggable-resizable.min.js") %}',{% end %}
   jquery_ui_fullcalendar: '{% module StaticURL("ext/jquery-ui-1.8.9.fullcalendar.min.js") %}',
   jquery_autocomplete: '{% module StaticURL("ext/jquery.autocomplete.pack.js") %}',
-  soundmanager: '{% module StaticURL("ext/soundmanager2-nodebug-jsmin.js") %}'
+  play_sounds: '{% module StaticURL("play-sounds.js") %}'
 };
+
+var SOUND_URLS = {
+  delete: '{% module StaticURL('sounds/delete.ogg') %}',
+  add: '{% module StaticURL('sounds/add.ogg') %}'
+};
+
 </script>

@@ -103,22 +103,22 @@ function unbind_esc_key() {
 }
 
 function bind_esc_key() {
-   function handleOnkeyup(e){
-      var evtobj=window.event? event : e;
-      var unicode=evtobj.charCode? evtobj.charCode : evtobj.keyCode;
+  function handleOnkeyup(e){
+    var evtobj=window.event? event : e;
+    var unicode=evtobj.charCode? evtobj.charCode : evtobj.keyCode;
 
-      // Close bookmarklet on Escape
-      if (unicode == 27){
-	 close_current_tooltip();
-	 unbind_esc_key();
-      }
-   }
+    // Close bookmarklet on Escape
+    if (unicode == 27){
+      close_current_tooltip();
+      unbind_esc_key();
+    }
+  }
 
-   // Preserve original onkeyup handler
-   g_origKeyUp = document.onkeyup;
+  // Preserve original onkeyup handler
+  g_origKeyUp = document.onkeyup;
 
-   // Substitute new onkeyup
-   document.onkeyup = handleOnkeyup;
+  // Substitute new onkeyup
+  document.onkeyup = handleOnkeyup;
 }
 
 var current_tooltip;
@@ -138,9 +138,9 @@ function _day_clicked(date, allDay, jsEvent, view) {
 	   text: $('#add-form-container').html()
       },
      position: {
-          my: 'bottom middle',
-	  at: 'center',
- 	 // important so it doesn't move when move the mouse
+        my: 'bottom middle',
+         at: 'center',
+         // important so it doesn't move when move the mouse
           //target: 'event'
           target: this
       },
@@ -161,9 +161,6 @@ function _day_clicked(date, allDay, jsEvent, view) {
       events: {
         render: function(event, api) {
            $('form:visible').submit(function() {
-	      //if (!SETTINGS.disable_sound && soundManager.enabled) {
-              //    soundManager.play('pling');
-              // }
               _setup_ajaxsubmit(this);
               return false;
            });
@@ -176,139 +173,144 @@ function _day_clicked(date, allDay, jsEvent, view) {
    current_tooltip = $(this);
    current_tooltip.qtip(qtip_options);
    bind_esc_key();
+  if (!SETTINGS.disable_sound)
+    preload_sound('add');
 }
 
 function _event_clicked(event, jsEvent, view) {
-   // by default events don't have the 'editable' attribute. It's usually only
-   // set when the event is explcitely *not* editable.
-   var is_editable = true;
-   if (typeof event.editable != 'undefined') {
-      is_editable = event.editable;
-   }
+  // by default events don't have the 'editable' attribute. It's usually only
+  // set when the event is explcitely *not* editable.
+  var is_editable = true;
+  if (typeof event.editable != 'undefined') {
+    is_editable = event.editable;
+  }
 
-   if (is_editable) {
-      var url = '/event.json?id=' + event.id;
-   } else {
-      var url = '/event.html?id=' + event.id;
-   }
-   function _prepare_edit_event(container) {
-      $('form', container).submit(function() {
-         _setup_ajaxsubmit(this, event.id);
-         return false;
-      });
-      if ($('input[name="title"]', container).size()) {
-	 __setup_tag_autocomplete($('input[name="title"]', container));
-	 $('input[name="title"]', container).focus();
+  if (is_editable) {
+    var url = '/event.json?id=' + event.id;
+  } else {
+    var url = '/event.html?id=' + event.id;
+  }
+  function _prepare_edit_event(container) {
+    $('form', container).submit(function() {
+      _setup_ajaxsubmit(this, event.id);
+      return false;
+    });
+    if ($('input[name="title"]', container).size()) {
+      __setup_tag_autocomplete($('input[name="title"]', container));
+      $('input[name="title"]', container).focus();
+    } else {
+      // it hasn't been loaded yet :(
+      setTimeout(function() {
+        __setup_tag_autocomplete($('input[name="title"]', container));
+        $('input[name="title"]', container).focus();
+      }, 500);
+    }
+
+    if (!$('input[name="external_url"]', container).val()) {
+      $('input[name="external_url"]', container)
+        .addClass('placeholdervalue')
+          .val($('input[name="placeholdervalue_external_url"]', container).val());
+    }
+
+    $('a.more-editing', container).click(function() {
+      if ($('div.more-editing:visible', container).length) {
+        $('div.more-editing', container).hide();
+        $(this).text('More options?');
       } else {
-	 // it hasn't been loaded yet :(
-	 setTimeout(function() {
-	    __setup_tag_autocomplete($('input[name="title"]', container));
-	    $('input[name="title"]', container).focus();
-	 }, 500);
+        $('div.more-editing', container).show();
+        $(this).text('Less options?');
       }
+      return false;
+    });
 
-      if (!$('input[name="external_url"]', container).val()) {
-         $('input[name="external_url"]', container)
-           .addClass('placeholdervalue')
-             .val($('input[name="placeholdervalue_external_url"]', container).val());
-      }
-
-      $('a.more-editing', container).click(function() {
-         if ($('div.more-editing:visible', container).length) {
-            $('div.more-editing', container).hide();
-            $(this).text('More options?');
-         } else {
-            $('div.more-editing', container).show();
-            $(this).text('Less options?');
-         }
-         return false;
+    $('a.delete', container).click(function() {
+      close_current_tooltip();
+      $.post('/event/delete/', {_xsrf:XSRF, id: event.id}, function() {
+        decrement_total_no_events();
+        $('#calendar').fullCalendar('removeEvents', event.id);
+        var view = $('#calendar').fullCalendar('getView');
+        Calendar.display_sidebar_stats(view);
+        Sharing.hide_hidden();
+        show_undo_delete("UNDO last delete", event.id);
       });
+      play_sound('delete');
+      return false;
+    });
+  }
 
-      $('a.delete', container).click(function() {
-         close_current_tooltip();
-         $.post('/event/delete/', {_xsrf:XSRF, id: event.id}, function() {
-            decrement_total_no_events();
-            $('#calendar').fullCalendar('removeEvents', event.id);
-            var view = $('#calendar').fullCalendar('getView');
-            Calendar.display_sidebar_stats(view);
-            Sharing.hide_hidden();
-            show_undo_delete("UNDO last delete", event.id);
-         });
-         return false;
-      });
-   }
+  /* This function is called when the qtip has opened for previewing */
+  function _prepare_preview_event() {
 
-   /* This function is called when the qtip has opened for previewing */
-   function _prepare_preview_event() {
+  }
 
-   }
+  var qtip_options = {
+     content: {
+        ajax: {
+           url: url,
+            success: function(data, status) {
+              if (is_editable) {
+                var clone = $('#edit-form-container').clone();
+                $('input[name="title"]', clone).val(data.title);
+                $('input[name="id"]', clone).val(data.id);
+                if (data.external_url) {
+                  $('input[name="external_url"]', clone).val(data.external_url);
+                } else {
+                  $('input[name="external_url"]', clone)
+                    .addClass('placeholdervalue')
+                      .val($('input[name="placeholdervalue_external_url"]', clone).val());
+                }
+                if (data.description) {
+                  $('textarea[name="description"]', clone).val(data.description);
+                } else {
+                  $('textarea[name="description"]', clone)
+                    .addClass('placeholdervalue')
+                      .val($('input[name="placeholdervalue_description"]', clone).val());
+                }
+                // reason for this:
+                // http://craigsworks.com/projects/forums/thread-can-t-remove-the-word-loading-with-this-set-content-text
+                this.set('content.text', '&nbsp;');
+                _prepare_edit_event(clone);
+                this.set('content.text', clone);
 
-   var qtip_options = {
-      content: {
-          ajax: {
-            url: url,
-               success: function(data, status) {
-                  if (is_editable) {
-                     var clone = $('#edit-form-container').clone();
-                     $('input[name="title"]', clone).val(data.title);
-                     $('input[name="id"]', clone).val(data.id);
-                     if (data.external_url) {
-                        $('input[name="external_url"]', clone).val(data.external_url);
-                     } else {
-                        $('input[name="external_url"]', clone)
-                          .addClass('placeholdervalue')
-                            .val($('input[name="placeholdervalue_external_url"]', clone).val());
-                     }
-                     if (data.description) {
-                        $('textarea[name="description"]', clone).val(data.description);
-                     } else {
-                        $('textarea[name="description"]', clone)
-                          .addClass('placeholdervalue')
-                          .val($('input[name="placeholdervalue_description"]', clone).val());
-                     }
-                     // reason for this:
-                     // http://craigsworks.com/projects/forums/thread-can-t-remove-the-word-loading-with-this-set-content-text
-                     this.set('content.text', '&nbsp;');
-                     _prepare_edit_event(clone);
-                     this.set('content.text', clone);
+                // doing this after because a.more-editing is not visible until it's
+                // gone into the qtip
+                if (data.description || data.external_url) {
+                  $('a.more-editing').click();
+                }
 
-                     // doing this after because a.more-editing is not visible until it's
-                     // gone into the qtip
-                     if (data.description || data.external_url) {
-                        $('a.more-editing').click();
-                     }
-
-                  } else {
-                     this.set('content.text', data);
-                  }
-                  return false;
-               }
-          }
-      },
-     position: {
-          my: 'bottom middle',
-	  at: 'center',
-          target: this
-      },
-      hide: {
-         event: false
-      },
-      show: {
-           solo: true,
-           ready: true,
-           event: 'click'
-      },
-      style: {
-          classes: 'ui-tooltip-shadow',
-          tip: {
-              corner: 'middle bottom'
-          }
-      }
-   };
-   //qtip_options = $.extend(qtip_options, __standard_qtip_options());
-   current_tooltip = $(this);
-   current_tooltip.qtip(qtip_options);
-   bind_esc_key();
+              } else {
+                this.set('content.text', data);
+              }
+              return false;
+            }
+        }
+     },
+    position: {
+       my: 'bottom middle',
+        at: 'center',
+        target: this
+    },
+    hide: {
+       event: false
+    },
+    show: {
+       solo: true,
+        ready: true,
+        event: 'click'
+    },
+    style: {
+       classes: 'ui-tooltip-shadow',
+        tip: {
+           corner: 'middle bottom'
+        }
+    }
+  };
+  //qtip_options = $.extend(qtip_options, __standard_qtip_options());
+  current_tooltip = $(this);
+  current_tooltip.qtip(qtip_options);
+  bind_esc_key();
+  if (!SETTINGS.disable_sound)
+    preload_sound('delete');
 }
 
 function _event_resized(event,dayDelta,minuteDelta,revertFunc, jsEvent, ui, view) {
@@ -359,13 +361,13 @@ function __setup_tag_autocomplete(jelement) {
 }
 
 function _setup_ajaxsubmit(element, event_id) {
-   $.getScript(JS_URLS.jquery_form, function() {
-      if (is_offline) {
-	 __inner_setup_ajaxsubmit_offline(element, event_id);
-      } else {
-	 __inner_setup_ajaxsubmit(element, event_id);
-      }
-   });
+  $.getScript(JS_URLS.jquery_form, function() {
+    if (is_offline) {
+      __inner_setup_ajaxsubmit_offline(element, event_id);
+    } else {
+      __inner_setup_ajaxsubmit(element, event_id);
+    }
+  });
 }
 
 function __inner_setup_ajaxsubmit_offline(element, event_id) {
@@ -402,48 +404,48 @@ function __beforeSubmit_form_validate(arr, form, options) {
 }
 
 function __inner_setup_ajaxsubmit(element, event_id) {
-      $(element).ajaxSubmit({
-         beforeSubmit: __beforeSubmit_form_validate,
-         success: function(response) {
+  $(element).ajaxSubmit({
+    beforeSubmit: __beforeSubmit_form_validate,
+    success: function(response) {
 	    if (response.error) {
-	       alert(response.error);
-	       return;
+        alert(response.error);
+        return;
 	    }
 
-	    if (!event_id && !SETTINGS.disable_sound && soundManager.enabled) {
-                  soundManager.play('pling');
-            }
-            if (!event_id) {
-               increment_total_no_events();
+	    if (!event_id && !SETTINGS.disable_sound) {
+        play_sound('add');
+      }
+      if (!event_id) {
+        increment_total_no_events();
 
-               if ($('#introduction-video, #introduction-video-after').size()) {
-                  $('#introduction-video:visible').hide('slow');
-                  $('#introduction-video-after:visible').hide('slow');
-                  if ($('#report-link:hidden').size()) {
-                     $('#report-link').show('slow');
-                  }
-               }
-            }
+        if ($('#introduction-video, #introduction-video-after').size()) {
+          $('#introduction-video:visible').hide('slow');
+          $('#introduction-video-after:visible').hide('slow');
+          if ($('#report-link:hidden').size()) {
+            $('#report-link').show('slow');
+          }
+        }
+      }
 
 	    // close any open qtip
-            close_current_tooltip();
+      close_current_tooltip();
 
-            if (response.tags) {
-              $.each(response.tags, function(i, tag) {
-                if ($.inArray(tag, AVAILABLE_TAGS) == -1)
-                   AVAILABLE_TAGS.push(tag);
-              });
-            }
+      if (response.tags) {
+        $.each(response.tags, function(i, tag) {
+          if ($.inArray(tag, AVAILABLE_TAGS) == -1)
+            AVAILABLE_TAGS.push(tag);
+        });
+      }
 
 	    if (event_id)
 	      $('#calendar').fullCalendar('removeEvents', event_id);
 
 	    $('#calendar').fullCalendar('renderEvent', response.event);
 	    var view = $('#calendar').fullCalendar('getView');
-            Calendar.display_sidebar_stats(view);
-            Sharing.hide_hidden();
-	 }
-      });
+      Calendar.display_sidebar_stats(view);
+      Sharing.hide_hidden();
+    }
+  });
 }
 
 var undo_delete_timer;
@@ -456,8 +458,8 @@ function show_undo_delete(text, event_id) {
    $('#undo-delete')
      .append($('<a href="#"></a>').text(text).click(function() {
         $.post('/event/undodelete/', {_xsrf:XSRF, id:event_id}, function(response) {
-           if (!SETTINGS.disable_sound && soundManager.enabled) {
-              soundManager.play('pling');
+           if (!SETTINGS.disable_sound) {
+              play_sound('add');
            }
            increment_total_no_events();
            $('#calendar').fullCalendar('renderEvent', response.event);
