@@ -308,11 +308,9 @@ class ApplicationTestCase(BaseHTTPTestCase):
         response = self.client.post('/events/', data)
         self.assertEqual(response.code, 200)
 
-        #guid_cookie = self.decode_cookie_value('guid', response.headers['Set-Cookie'])
-        #cookie = 'guid=%s;' % guid_cookie
-
         response = self.client.get('/events/stats.json')
         self.assertEqual(response.code, 200)
+
         struct = json.loads(response.body)
         self.assertEqual(struct.get('hours_spent'), [])
         self.assertTrue(struct.get('days_spent'))

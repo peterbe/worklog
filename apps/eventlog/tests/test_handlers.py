@@ -2,7 +2,7 @@ from time import mktime
 from pymongo.objectid import ObjectId
 import datetime
 from apps.main.tests.base import BaseHTTPTestCase
-from utils.http_test_client import TestClient
+from tornado_utils.http_test_client import TestClient
 from apps.eventlog.constants import *
 
 class EventLogsTestCase(BaseHTTPTestCase):

@@ -8,7 +8,7 @@ from urlparse import urlparse
 from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import InvalidId, ObjectId
-from time import mktime, sleep
+from time import mktime, sleep, time
 import datetime
 import os.path
 import re
@@ -165,6 +165,10 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
     def db(self):
         return self.application.con[self.application.database_name]
 
+    @property
+    def redis(self):
+        return self.application.redis
+
     def get_current_user(self):
         # the 'user' cookie is for securely logged in people
         guid = self.get_secure_cookie("user")
@@ -258,6 +262,9 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
                 data[key] = mktime(value.timetuple())
         return data
 
+    def reset_tags_cache(self, user):
+        redis_key = 'all_available_tags:%s' % user['_id']
+        self.redis.delete(redis_key)
 
     def case_correct_tags(self, tags, user):
         # the new correct case for these tags is per the parameter 'tags'
@@ -368,13 +375,23 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         keys = [x for x in shares.split(',') if x]
         return self.db.Share.collection.find({'key':{'$in':keys}})
 
-    def get_all_available_tags(self, user):
+    def get_all_available_tags(self, user, refresh=False):
+        redis_key = 'all_available_tags:%s' % user['_id']
+        if refresh:
+            return self._get_all_available_tags(user, redis_key)
+        if self.redis.exists(redis_key):
+            return self.redis.smembers(redis_key)
+        return self._get_all_available_tags(user, redis_key)
+
+    def _get_all_available_tags(self, user, redis_key):
         tags = set()
         search = {'user.$id': user['_id'],
                   'tags': {'$ne': []}}
         for event in self.db.Event.collection.find(search):
             for tag in event['tags']:
                 tags.add(tag)
+        for tag in tags:
+            self.redis.sadd(redis_key, tag)
         return tags
 
     def get_undoer_user(self, create_if_necessary=False):
@@ -488,7 +505,6 @@ class EventsHandler(BaseHandler):
     def get(self, format=None):
         user = self.get_current_user()
         shares = self.get_secure_cookie('shares')
-
         data = self.get_events_data(user, shares,
                            include_tags=self.get_argument('include_tags', None),
                            include_hidden_shares=\
@@ -736,6 +752,7 @@ class EventsHandler(BaseHandler):
                     user_settings.save()
 
         self.case_correct_tags(tags, user)
+        self.reset_tags_cache(user)
 
         event = self.db.Event.one({
           'user.$id': user._id,
@@ -816,8 +833,29 @@ class APIEventsHandler(APIHandlerMixin, EventsHandler):
 
         shares = self.get_argument('shares', u'')#self.get_secure_cookie('shares')
 
+        redis_key = None
+        if not self.get_argument('refresh', False) and format == '.json':
+            # then we can aggressively cache for a short time
+            redis_key = 'api_event_json:%s:%s:%s:%s' % (
+              user['_id'],
+              shares,
+              start,
+              end
+            )
+            data = self.redis.get(redis_key)
+            if data is not None:
+                self.set_header("Content-Type",
+                                "application/json; charset=UTF-8")
+                self.write(data)
+                return
+
         data = self.get_events_data(user, shares,
             include_tags=self.get_argument('include_tags', None))
+
+        if redis_key is not None:
+            # caching for a very short time because it's hard to invalid a
+            # piece of cache data like this
+            self.redis.setex(redis_key, tornado.escape.json_encode(data), 30)
 
         if format == '.js':
             # pack the dict into a tuple instead.
@@ -1089,9 +1127,7 @@ class EditEventHandler(BaseEventHandler):
 @route('/events/stats(\.json|\.xml|\.txt|/)?')
 class EventStatsHandler(BaseHandler):
     def get(self, format):
-
         stats = self.get_stats_data()
-
         if format == '.json':
             self.write_json(stats)
         elif format == '.xml':
@@ -1109,38 +1145,37 @@ class EventStatsHandler(BaseHandler):
             self.write_txt(out.getvalue())
 
     def get_stats_data(self):
+        user = self.get_current_user()
+        if not user:
+            return dict(hours_spent=[], days_spent=[])
+
         days_spent = defaultdict(float)
         hours_spent = defaultdict(float)
-        user = self.get_current_user()
-        with_colors = niceboolean(self.get_argument('with_colors', False))
+        start = self.get_argument('start', None)
+        end = self.get_argument('end', None)
 
-        if user:
-            search = {'user.$id': user._id}
-
-            if self.get_argument('start', None):
-                start = parse_datetime(self.get_argument('start'))
-                search['start'] = {'$gte': start}
-            if self.get_argument('end', None):
-                end = parse_datetime(self.get_argument('end'))
-                search['end'] = {'$lt': end}
-
-            for entry in self.db.Event.collection.find(search):
-                if entry['all_day']:
-                    days = 1 + (entry['end'] - entry['start']).days
-                    if entry['tags']:
-                        for tag in entry['tags']:
-                            days_spent[tag] += days
-                    else:
-                        days_spent[u''] += days
-
+        search = {'user.$id': user['_id']}
+        if start:
+            start = parse_datetime(start)
+            search['start'] = {'$gte': start}
+        if end:
+            end = parse_datetime(end)
+            search['end'] = {'$lt': end}
+        for entry in self.db.Event.collection.find(search):
+            if entry['all_day']:
+                days = 1 + (entry['end'] - entry['start']).days
+                if entry['tags']:
+                    for tag in entry['tags']:
+                        days_spent[tag] += days
                 else:
-                    hours = (entry['end'] - entry['start']).seconds / 60.0 / 60
-                    if entry['tags']:
-                        for tag in entry['tags']:
-                            hours_spent[tag] += round(hours, 1)
-                    else:
-                        hours_spent[u''] += round(hours, 1)
-
+                    days_spent[u''] += days
+            else:
+                hours = (entry['end'] - entry['start']).seconds / 60.0 / 60
+                if entry['tags']:
+                    for tag in entry['tags']:
+                        hours_spent[tag] += round(hours, 1)
+                else:
+                    hours_spent[u''] += round(hours, 1)
 
         _has_untagged_events = False
 
@@ -1160,19 +1195,17 @@ class EventStatsHandler(BaseHandler):
             return cmp(one.lower(), two.lower())
 
         # flatten as a list
-
         days_spent = days_spent.items()
         days_spent.sort(lambda x,y: cmp_tags(x[0], y[0]))
 
         hours_spent = [(x, round(y, 1)) for (x, y) in hours_spent.items() if y]
         hours_spent.sort(lambda x,y: cmp_tags(x[0], y[0]))
 
-
         data = dict(days_spent=days_spent,
                     hours_spent=hours_spent)
-        if with_colors:
-            # then define 'days_colors' and 'hours_colors'
 
+        if niceboolean(self.get_argument('with_colors', False)):
+            # then define 'days_colors' and 'hours_colors'
             color_series = list()
             if _has_untagged_events:
                 color_series.append(UNTAGGED_COLOR)
@@ -1214,6 +1247,7 @@ class EventStatsHandler(BaseHandler):
             #data['tag_colors'] = _map
 
         return data
+
 
 
 @route('/user/settings(\.js|/)$', name='user_settings')

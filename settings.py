@@ -11,6 +11,9 @@ DATABASE_NAME = "worklog"
 
 LOGIN_URL = "/auth/login"
 
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+
 COOKIE_SECRET = "11o3TzKsxQAGAYdkl5gmGEJJFu4h7EQnp1XdTP10/"
 
 WEBMASTER = 'noreply@donecal.com'

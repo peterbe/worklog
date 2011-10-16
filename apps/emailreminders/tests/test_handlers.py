@@ -3,7 +3,7 @@ import re
 from time import mktime
 import datetime
 from apps.main.tests.base import BaseHTTPTestCase
-from utils.http_test_client import TestClient
+from tornado_utils.http_test_client import TestClient
 from utils import format_time_ampm
 import utils.send_mail as mail
 

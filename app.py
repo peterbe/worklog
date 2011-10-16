@@ -12,6 +12,7 @@ site.addsitedir(path('vendor'))
 import re
 from mongokit import Connection, Document as mongokit_Document
 import logging
+import redis
 
 # tornado
 import tornado.httpserver
@@ -108,6 +109,8 @@ class Application(tornado.web.Application):
         # Have one global connection to the blog DB across all handlers
         self.database_name = database_name and database_name or options.database_name
         self.con = Connection()
+        self.redis = redis.client.Redis(settings.REDIS_HOST,
+                                        settings.REDIS_PORT)
 
         model_classes = []
         for app_name in settings.APPS:
@@ -127,8 +130,6 @@ class Application(tornado.web.Application):
 
 for app_name in settings.APPS:
     __import__('apps.%s' % app_name, globals(), locals(), ['handlers'], -1)
-
-
 
 def main(): # pragma: no cover
     tornado.options.parse_command_line()

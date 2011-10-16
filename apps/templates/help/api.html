@@ -11,7 +11,7 @@
   {% if user_name %}
   For you, {{ user_name }},
   {% else %}
-  For you, 
+  For you,
   {% end %}
   it's <code style="font-size:16px;font-weight:bold;">{{ guid }}</code>
   </p>
@@ -23,7 +23,7 @@
 {% else %}
   <p>You will get a <code>guid</code> once you've created some events in the calendar or
    if you have created an account and logged in.</p>
-  
+
 {% end %}
 
 <h3>To get your events</h3>
@@ -54,7 +54,7 @@ The format (<code>.json</code>, <code>.xml</code> or <code>.txt</code>) is optio
      <li>example <code>6e5b6de</code> - will include all non-editable events of that share key</li>
      <li>another example <code>6e5b6de,b322n0</code> - multiple share keys comma separated</li>
    </ul>
-  </li>  
+  </li>
 </ul>
 
 
@@ -81,8 +81,8 @@ The format (<code>.json</code>, <code>.xml</code> or <code>.txt</code>) is optio
 
 <div id="rules-for-posting" style="display:none">
 <h2>About dates when posting</h2>
-<p>You can either just send the single parameter <code>date</code> or you send can send <code>start</code> and 
-<code>end</code>. If you use <code>start</code> <strong>and</strong> <code>end</code> the <code>end</code> 
+<p>You can either just send the single parameter <code>date</code> or you send can send <code>start</code> and
+<code>end</code>. If you use <code>start</code> <strong>and</strong> <code>end</code> the <code>end</code>
 date has to greater or equal to the <code>start</code> date if it's <code>all_day=true</code> and if it's
 <code>all_day=false</code> the <code>end</code> date must be at least {{ minimum_day_minutes }} minutes apart.
 </p>
@@ -111,7 +111,7 @@ github.com</a>) or use your favorite package manager to install (e.g.
 
 {% block extrajs %}
 <script>
-$(function() {
+head.ready(function() {
 
   $('.readmores a').click(function() {
     if ($($(this).attr('href') + ':hidden').size()) {
@@ -120,7 +120,7 @@ $(function() {
       $($(this).attr('href') + ':visible').hide();
     }
   });
-  
+
   if (location.hash) {
     $('.readmores a').each(function(i, e) {
       if ($(e).attr('href') == location.hash) {
