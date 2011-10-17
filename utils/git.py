@@ -12,10 +12,11 @@ def _get_git_revision():
                   shell=True, stdout=PIPE, stderr=PIPE)
     output = proc.communicate()
     try:
+        commit = re.findall('commit (\w+)', output[0])[0]
         date = [x.split('Date:')[1].split('+')[0].strip() for x in
                 output[0].splitlines() if x.startswith('Date:')][0]
         date_wo_tz = re.split('-\d{4}', date)[0].strip()
-        return date_wo_tz
+        return '%s (%s)' % (commit, date_wo_tz)
     except IndexError:
         logging.debug("OUTPUT=%r" % output[0], exc_info=True)
         logging.debug("ERROR=%r" % output[1])
