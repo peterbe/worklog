@@ -356,11 +356,34 @@ class BaseHandler(tornado.web.RequestHandler, HTTPSMixin):
         options['settings'] = settings
 
         options['git_revision'] = self.application.settings['git_revision']
-        options['total_no_events'] = self._get_total_no_events()
+        options['total_no_events'] = self.get_total_no_events()
         options['debug'] = self.application.settings['debug']
         options['xsrf_token'] = self.xsrf_token
 
         return options
+
+    def get_total_no_events(self, refresh=False):
+        redis_key = 'total_no_events'
+        if not refresh and self.redis.exists(redis_key):
+            return self.redis.get(redis_key)
+
+        total_no_events = self._get_total_no_events()
+        self.redis.setex(redis_key, total_no_events, 60)
+        return total_no_events
+
+    def incr_total_no_events(self):
+        redis_key = 'total_no_events'
+        if self.redis.exists(redis_key):
+            self.redis.incr(redis_key)
+        else:
+            self.get_total_no_events(refresh=True)
+
+    def decr_total_no_events(self):
+        redis_key = 'total_no_events'
+        if self.redis.exists(redis_key):
+            self.redis.decr(redis_key)
+        else:
+            self.get_total_no_events(refresh=True)
 
     def _get_total_no_events(self):
         search = dict()
@@ -492,10 +515,7 @@ class HomeHandler(BaseHandler):
                                       className=className))
 
         #options['settings']['hidden_shares'] = hidden_shares
-        self.render("calendar.html",
-          #
-          **options
-        )
+        self.render("calendar.html", **options)
 
 
 
@@ -753,6 +773,7 @@ class EventsHandler(BaseHandler):
 
         self.case_correct_tags(tags, user)
         self.reset_tags_cache(user)
+        self.incr_total_no_events()
 
         event = self.db.Event.one({
           'user.$id': user._id,
@@ -1101,7 +1122,7 @@ class EditEventHandler(BaseEventHandler):
             # the special "undoer" user
             undoer = self.get_undoer_user(create_if_necessary=True)
             event.chown(undoer, save=True)
-
+            self.decr_total_no_events()
             log_event(self.db, user, event,
                       actions.ACTION_DELETE,
                       contexts.CONTEXT_CALENDAR)
@@ -1110,7 +1131,7 @@ class EditEventHandler(BaseEventHandler):
 
         elif action == 'undodelete':
             event.chown(user, save=True)
-
+            self.incr_total_no_events()
             log_event(self.db, user, event, actions.ACTION_RESTORE,
                       contexts.CONTEXT_CALENDAR)
         else:

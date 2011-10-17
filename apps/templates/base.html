@@ -101,7 +101,7 @@
 <!-- basics needed to render the calendar -->
 {% block corejs %}
 {% module Static("ext/head.load.min.js") %}
-<script type="text/javascript">
+<script>
 var XSRF = '{{ xsrf_token }}';
 var total_no_events = {{ total_no_events }};
 head.js(JS_URLS.jquery, JS_URLS.base);
