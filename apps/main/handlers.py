@@ -514,8 +514,26 @@ class HomeHandler(BaseHandler):
             hidden_shares.append(dict(key=share['key'],
                                       className=className))
 
+        options['first_time'] = False
+        if not user and not self.get_secure_cookie('no-splash'):
+            options['first_time'] = True
+
         #options['settings']['hidden_shares'] = hidden_shares
         self.render("calendar.html", **options)
+
+@route(r'/splash', name='splash')
+class SplashHandler(BaseHandler):
+
+    def get(self):
+        options = self.get_base_options()
+        self.render('splash.html', **options)
+
+    def check_xsrf_cookie(self):
+        pass
+
+    def post(self):
+        self.set_secure_cookie('no-splash', '1', expires_days=1)
+        self.write("Thanks")
 
 
 

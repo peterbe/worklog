@@ -1,0 +1,35 @@
+<style>
+h1 { text-align:center; font-size:2em; font-weight:bold; }
+img { border: 1px solid #ccc; padding:5px;  }
+p.thumbnail { clear:both; }
+p.thumbnail img.left { float:left; margin:0 20px 20px 0; }
+p.thumbnail img.right { float:right; margin:0 0 20px 20px; }
+p.begin { float:right; font-size:0.8em; font-weight:bold; }
+</style>
+<h1>Welcome to DoneCal, first timer!</h1>
+
+<p>You can immediately start adding events, change them and export and report on them in many different ways.</p>
+
+<p class="thumbnail"><strong>1.</strong>
+<img class="left" src="{{ static_url('images/splash/take-1.png') }}" alt="Click any day cell">
+To get started, <strong>click on any day cell</strong> and create an event.
+</p>
+
+<p class="thumbnail"><strong>2.</strong>
+<img class="right" src="{{ static_url('images/splash/take-2.png') }}" alt="Type in a single line title (fully description can come later)">
+Tag events by prefixing words with a <code>#</code> or a <code>@</code> sign.
+</p>
+
+<p class="thumbnail"><strong>3.</strong>
+<img class="left" src="{{ static_url('images/splash/take-3.png') }}" alt="Once added you can move it, resize it, edit it or remove it">
+Once added you can move it, resize it, edit it or remove it
+</p>
+
+
+<p style="clear:left">
+There are many other ways to get events in such as by email or API. <br>
+See the <a href="/help/">Help</a> if you ever get stuck.
+</p>
+
+<p class="begin">Let's begin! <a href="/" onclick="parent.$.fancybox.close();return false">Close this</a></p>
+<script>

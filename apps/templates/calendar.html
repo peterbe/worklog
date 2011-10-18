@@ -15,6 +15,10 @@
 
               <div class="" id="settings-box">
 	        <p>
+                  {% if first_time %}
+                  <a class="splash first-time-splash" href="{{ reverse_url('splash') }}" rel="nofollow">Show welcome screen</a>
+                  <br>
+                  {% end %}
                   <a class="user-settings" href="/user/settings/" rel="nofollow">Change your settings</a>
                   <br>
                   <a class="share" href="/share/" rel="nofollow">Share your calendar</a>
@@ -112,7 +116,7 @@
 
 {% block corejs %}
 {% module Static("ext/head.load.min.js") %}
-<script type="text/javascript">
+<script>
 var total_no_events = {{ total_no_events }};
 var XSRF = '{{ xsrf_token }}';
 head.js(JS_URLS.jquery, JS_URLS.base);
@@ -134,13 +138,32 @@ head.ready(function() {
             $.getScript(JS_URLS.account);
          }
     });
+
+    $('a.splash').fancybox({
+      'autoDimensions': false,
+      'width'         : 800,
+      'height'        : 600,
+      onClosed: function() {
+        $.post('/splash');
+      }
+    });
+
+    if ($('.first-time-splash').size()) {
+      L($('.first-time-splash'));
+      setTimeout(function() {
+        $('.first-time-splash').trigger('click');
+        //$('.first-time-splash').removeClass('first-time-splash');
+      }, 1000);
+    }
+
+
 });
 
 </script>
 
-  {% if settings.get('offline_mode') %}
-  {% module Static("ext/jquery.store.js", "ext/json2.js", "ajaxproxy.js") %}
-  {% else %}<script type="text/javascript">var is_offline=false;</script>
-  {% end %}
+{% if settings.get('offline_mode') %}
+{% module Static("ext/jquery.store.js", "ext/json2.js", "ajaxproxy.js") %}
+{% else %}<script type="text/javascript">var is_offline=false;</script>
+{% end %}
 
 {% end %}
