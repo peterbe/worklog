@@ -1,11 +1,13 @@
 import os
 import re
+from urlparse import urlparse
 from time import mktime
 import datetime
 from apps.main.tests.base import BaseHTTPTestCase
 from tornado_utils.http_test_client import TestClient
 from utils import format_time_ampm
 import utils.send_mail as mail
+import settings
 
 class LoginError(Exception):
     pass
@@ -86,7 +88,18 @@ class EmailRemindersTestCase(BaseHTTPTestCase):
 
         url = '/emailreminders/?edit=%s' % email_reminder._id
         response = self.client.get(url)
-        self.assertEqual(response.code, 403) # because you're not logged in
+        self.assertEqual(response.code, 302) # because you're not logged in
+        self.assertEqual(urlparse(response.headers['location']).path,
+                         settings.LOGIN_URL)
+
+        elsa = db.User()
+        elsa.email = u'elsa@test.com'
+        elsa.set_password('secret')
+        elsa.save()
+        self.client.login('elsa@test.com', 'secret')
+        response = self.client.get(url)
+        self.assertEqual(response.code, 403)
+
         self.client.login(bob.email, 'secret')
 
         url = '/emailreminders/?edit=%s' % email_reminder._id

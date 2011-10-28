@@ -9,7 +9,7 @@ APPS = (
 
 DATABASE_NAME = "worklog"
 
-LOGIN_URL = "/auth/login"
+LOGIN_URL = "/auth/login/"
 
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379

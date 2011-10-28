@@ -55,7 +55,7 @@ p#addresses {
 {% if count_reminders %}
 <h3>Tip!</h3>
 <p id="addresses">The reminder{% if count_reminders > 1 %}s{% end %} will come from:
-{{ ', '.join(['<code>%s</code>' % x for x in email_reminders_addresses]) }}
+{% raw ', '.join(['<code>%s</code>' % x for x in email_reminders_addresses]) %}
 <br>
 You might want to add this to your addressbook to avoid it getting trapped as spam.
 </p>
@@ -69,10 +69,10 @@ You might want to add this to your addressbook to avoid it getting trapped as sp
 
 {% if not count_reminders %}
 <p>Email reminders are emails that are sent to you at a particular time of the day
-<strong>asking you want you've been up to</strong>. 
-By simply replying you can quickly enter events into your 
+<strong>asking you want you've been up to</strong>.
+By simply replying you can quickly enter events into your
 calendar. If you prefer you can have the reminder sent at the end of the working day or
-at the begining of the next day. 
+at the begining of the next day.
 </p>
 <p>Once set up instructions will be included in the email reminder sent to you. </p>
 {% end %}
@@ -101,7 +101,7 @@ at the begining of the next day.
   {% else %}
   <h3>Set up a new email reminder</h3>
   {% end %}
-  
+
   <div>
   <strong>Every:</strong>
   {% for weekday in weekdays %}
@@ -114,7 +114,7 @@ at the begining of the next day.
   > {{ weekday }}</label>
   {% end %}
   </div>
-  
+
   <div>
   <strong>Time:</strong>
   <select name="time_hour" id="id_time_hour">
@@ -160,7 +160,7 @@ at the begining of the next day.
   </label>
   </div>
   {% end %}
-  
+
   <div>
   {% if edit_reminder %}
   <input type="hidden" name="edit" value="{{ edit_reminder._id }}">
@@ -168,9 +168,9 @@ at the begining of the next day.
   <input type="submit" name="delete" value="Delete">
   <input type="button" name="cancel" value="Cancel">
   {% else %}
-  <p>If the time is before noon (12:00 on the 24 hour clock) the email reminder will 
+  <p>If the time is before noon (12:00 on the 24 hour clock) the email reminder will
   ask you <em>"What did you do yesterday?"</em>.
-  If it's after noon the email reminder will ask you 
+  If it's after noon the email reminder will ask you
   <em>"What did you do today?"</em>.</p>
   <input type="submit" value="Set up email reminder">
   {% end %}

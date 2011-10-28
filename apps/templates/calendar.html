@@ -148,12 +148,15 @@ head.ready(function() {
       }
     });
 
-    if ($('.first-time-splash').size()) {
-      L($('.first-time-splash'));
+
+    if (location.hash.search(/#forcelogin/) > -1) {
+      setTimeout(function() {
+        $('a.account').click();
+      }, 500);
+    } else if ($('.first-time-splash').size()) {
       setTimeout(function() {
         $('.first-time-splash').trigger('click');
-        //$('.first-time-splash').removeClass('first-time-splash');
-      }, 1000);
+      }, 500);
     }
 
 

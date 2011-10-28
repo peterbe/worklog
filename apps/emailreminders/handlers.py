@@ -18,7 +18,7 @@ from reminder_utils import ParseEventError, parse_time, \
   parse_duration, parse_email_line
 from settings import EMAIL_REMINDER_SENDER, EMAIL_REMINDER_NOREPLY
 from tornado_utils.timesince import smartertimesince
-
+import settings
 
 @route('/emailreminders/$')
 class EmailRemindersHandler(BaseHandler):
@@ -29,7 +29,17 @@ class EmailRemindersHandler(BaseHandler):
         weekdays = list(EmailReminder.WEEKDAYS)
         monday_first = False
 
-        edit_reminder = self.get_edit_reminder()
+        if self.get_argument('edit', None):
+            # then you must be logged in
+            if not self.get_current_user():
+                next = self.request.path + '?' + self.request.query
+                self.redirect(settings.LOGIN_URL + '?next=%s' % next)
+                return
+
+        if self.get_current_user():
+            edit_reminder = self.get_edit_reminder()
+        else:
+            edit_reminder = None
 
         # default
         options['weekday_reminders'] = dict()
@@ -80,11 +90,9 @@ class EmailRemindersHandler(BaseHandler):
 
     def get_edit_reminder(self):
         edit_reminder = None
-        #print 'self.get_current_user()', self.get_current_user()
         if self.get_argument('edit', None):
             user = self.get_current_user()
-            if not user:
-                raise tornado.web.HTTPError(403, "not logged in")
+            assert user
 
             try:
                 edit_reminder = self.db.EmailReminder\
@@ -96,7 +104,7 @@ class EmailRemindersHandler(BaseHandler):
                 raise tornado.web.HTTPError(404, "Not found")
 
             if edit_reminder.user._id != user._id:
-                raise tornado.web.HTTPError(404, "Not yours")
+                raise tornado.web.HTTPError(403, "Not yours")
 
         return edit_reminder
 

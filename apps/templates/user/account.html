@@ -1,9 +1,5 @@
-<form action="/auth/login/" method="post" class="login standard">
-<!--<p><strong>Yes!</strong>
-I have a login.</p>-->
+<form action="{{ reverse_url('auth_login') }}" method="post" class="login standard">
 <p>
-<!--<strong>No</strong>
-But I would like one.-->
 Already <strong>have an account</strong>
 </p>
 
@@ -19,7 +15,7 @@ Already <strong>have an account</strong>
 </form>
 
 <p class="openid" style="float:right">
-Or just use... 
+Or just use...
 <a style="padding-left:5px" href="/auth/openid/google/" title="Google"><img style="vertical-align:bottom" src="{% module StaticURL("images/google_openid.png") %}" alt="Google OpenID"></a>
 </p>
 

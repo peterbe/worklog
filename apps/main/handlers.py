@@ -5,6 +5,7 @@ import httplib
 from hashlib import md5
 from cStringIO import StringIO
 from urlparse import urlparse
+from urllib import quote as urllib_quote
 from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import InvalidId, ObjectId
@@ -518,7 +519,6 @@ class HomeHandler(BaseHandler):
         if not user and not self.get_secure_cookie('no-splash'):
             options['first_time'] = True
 
-        #options['settings']['hidden_shares'] = hidden_shares
         self.render("calendar.html", **options)
 
 @route(r'/splash', name='splash')
@@ -1748,8 +1748,16 @@ class AuthLoggedInHandler(BaseAuthHandler):
 class CredentialsError(Exception):
     pass
 
-@route('/auth/login/$')
+@route('/auth/login/$', name='auth_login')
 class AuthLoginHandler(BaseAuthHandler):
+
+    def get(self):
+        url = '/'
+        if self.get_argument('next', None):
+            next = self.get_argument('next')
+            assert next.startswith('/')
+            url += '?next=%s' % urllib_quote(next)
+        self.redirect(url + '#forcelogin')
 
     def check_credentials(self, email, password):
         user = self.find_user(email)
