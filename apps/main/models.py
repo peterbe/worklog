@@ -45,12 +45,9 @@ class User(BaseDocument):
       'premium': False,
     }
 
-    #indexes = [
-    #  {'fields': 'guid',
-    #   'unique': True},
-    #]
-
     def set_password(self, raw_password):
+        if isinstance(raw_password, unicode):
+            raw_password = raw_password.encode('utf8')
         self.password = encrypt_password(raw_password)
 
     def check_password(self, raw_password):
@@ -60,7 +57,10 @@ class User(BaseDocument):
         """
         if '$bcrypt$' in self.password:
             import bcrypt
-            hashed = self.password.split('$bcrypt$')[-1].encode('utf8')
+            password = self.password
+            hashed = password.split('$bcrypt$')[-1].encode('utf8')
+            if isinstance(raw_password, unicode):
+                raw_password = raw_password.encode('utf8')
             return hashed == bcrypt.hashpw(raw_password, hashed)
         else:
             raise NotImplementedError("No checking clear text passwords")

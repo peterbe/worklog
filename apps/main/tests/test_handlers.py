@@ -1854,6 +1854,21 @@ class ApplicationTestCase(BaseHTTPTestCase):
         self.assertEqual(base64.b64decode(shares_cookie.split('|')[0]),
                          share.key)
 
+    def test_create_account_nonascii_password(self):
+        data = dict(email="peterbe@gmail.com",
+                    password=u'\xe7test',
+                    first_name="Peter",
+                    last_name="Bengtsson")
+        response = self.client.post('/user/signup/', data, follow_redirects=False)
+        self.assertEqual(response.code, 302)
+
+        data.pop('password')
+        user = self.db.users.User.one(data)
+        self.assertTrue(user)
+        assert user.check_password(u'\xe7test')
+
+
+
 
 import mock_data
 def mocked_get_authenticated_user(self, callback):
