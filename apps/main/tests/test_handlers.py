@@ -1,4 +1,5 @@
 import base64
+import time
 from pprint import pprint
 from time import mktime
 import re
@@ -7,7 +8,6 @@ import simplejson as json
 
 from base import BaseHTTPTestCase
 from utils import encrypt_password
-#from apps.main.models import Event, User, Share
 import utils.send_mail as mail
 from apps.main.config import MINIMUM_DAY_SECONDS
 from tornado_utils.http_test_client import TestClient
@@ -1866,6 +1866,35 @@ class ApplicationTestCase(BaseHTTPTestCase):
         user = self.db.users.User.one(data)
         self.assertTrue(user)
         assert user.check_password(u'\xe7test')
+
+    def test_load_hidden_shares(self):
+        self._login()
+        user2 = self.db.User()
+        user2.email = u"else@test.com"
+        user2.save()
+        share = self.db.Share()
+        share.user = user2._id
+        share.save()
+        #self.client.cookies['hidden_shares'] = '%s,' % share.key
+        response = self.client.get('/share/%s' % share.key)
+        self.assertEqual(response.code, 302)
+
+        response = self.client.post('/share/', {'key': share.key})
+        self.assertEqual(response.body, 'Ok')
+
+        response = self.client.get('/')
+        self.assertEqual(response.code, 200)
+
+        today = time.time()
+        response = self.client.get('/events.json', {
+          'start':int(today),
+          'end': int(today + 1000),
+          'include_hidden_shares': True,
+        })
+        self.assertEqual(response.code, 200)
+
+
+
 
 
 

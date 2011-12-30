@@ -511,7 +511,7 @@ class HomeHandler(BaseHandler):
         hidden_keys = [x for x in hidden_shares.split(',') if x]
         hidden_shares = []
         for share in self.db.Share.collection.find({'key':{'$in':hidden_keys}}):
-            className = 'share-%s' % share['user'].id
+            className = 'share-%s' % share['user']
             hidden_shares.append(dict(key=share['key'],
                                       className=className))
 
@@ -572,7 +572,7 @@ class EventsHandler(BaseHandler):
             hidden_keys = [x for x in hidden_shares.split(',') if x]
             hidden_shares = []
             for share in self.db.Share.collection.find({'key':{'$in':hidden_keys}}):
-                className = 'share-%s' % share['user'].id
+                className = 'share-%s' % share['user']
                 hidden_shares.append(dict(key=share['key'],
                                           className=className))
 
@@ -1466,7 +1466,7 @@ class SharingAddHandler(BaseHandler):
         elif share.key not in shared_keys:
             shared_keys.append(share.key)
         if shared_keys:
-            self.set_secure_cookie("shares", ','.join(shared_keys), expires_days=70)
+            self.set_secure_cookie('shares', ','.join(shared_keys), expires_days=70)
         url = '/'
         if user and user['premium']:
             url = self.httpsify_url(url)
