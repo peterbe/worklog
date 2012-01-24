@@ -793,13 +793,13 @@ class EventsHandler(BaseHandler):
         self.reset_tags_cache(user)
         self.incr_total_no_events()
 
-        event = self.db.Event.one({
-          'user.$id': user._id,
-          'title': title,
-          'start': start,
-          'end': end
-        })
-        if event:
+        for event in self.db.Event.find({
+            'user.$id': user._id,
+            'title': title,
+            'start': start,
+            'end': end
+          }):
+            # return out on the first one no matter how many there are
             return event, False
 
         event = self.db.Event()
@@ -1629,7 +1629,7 @@ class BaseAuthHandler(BaseHandler):
 
     def notify_about_new_user(self, user, extra_message=None):
         #return # temporarily commented out
-        if self.application.settings['debug']:
+        if 1 or self.application.settings['debug']:
             return
         try:
             self._notify_about_new_user(user, extra_message=extra_message)
