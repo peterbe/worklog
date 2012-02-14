@@ -35,7 +35,8 @@ if __name__ == '__main__':
 
     db = connection[settings.DATABASE_NAME]
     print "AVAILABLE:"
-    print '\n'.join(['\t%s'%x for x in locals().keys()
+    print '\n'.join(['\t%s'%x for x in
+                     sorted(locals().keys(), lambda x,y: cmp(x.lower(), y.lower()))
                      if re.findall('[A-Z]\w+|db|con', x)])
     print "Database available as 'db'"
     code.interact(local=locals())

@@ -65,6 +65,7 @@ class User(BaseDocument):
         else:
             raise NotImplementedError("No checking clear text passwords")
 
+
 @register
 class UserSettings(BaseDocument):
     __collection__ = 'user_settings'

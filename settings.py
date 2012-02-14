@@ -5,6 +5,7 @@ APPS = (
   'emailreminders',
   'eventlog',
   'qunit',
+  'github',
 )
 
 DATABASE_NAME = "worklog"

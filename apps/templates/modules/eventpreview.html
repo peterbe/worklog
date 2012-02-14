@@ -4,15 +4,21 @@
 </p>
 
 {% if event.external_url %}
-<p>
+<p class="event-external_url">
 <a href="{{ event.external_url }}">{{ event.external_url }}</a>
+</p>
+{% end %}
+
+{% if event.description %}
+<p class="event-description">
+  {{ event.description }}
 </p>
 {% end %}
 
 <form style="float:right"><input type="button" class="cancel" value="Close"></form>
 
-<p style="font-size:10px">
-Added {{ add_ago }} ago 
+<p class="event-metadata">
+Added {{ add_ago }} ago
 {% if user_name %}
 by {{ user_name }}
 {% end %}

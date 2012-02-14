@@ -1028,3 +1028,14 @@ input.cancel { font-size:0.8em;}
   #wrap #content { width: 95%; }
   /* should I perhaps import some print css thing for fullcalender? */
 }
+
+/* For the event.html pop up */
+p.event-external_url a {
+  font-size: 0.9em;
+}
+p.event-description {
+  font-size: 0.8em;
+}
+p.event-metadata {
+  font-size: 0.9em;
+}
