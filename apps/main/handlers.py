@@ -1254,7 +1254,10 @@ class EventStatsHandler(BaseHandler):
             days_colors = []
             _map = {}
             for tag, __ in days_spent:
-                color = color_series.pop()
+                try:
+                    color = color_series.pop()
+                except IndexError:
+                    color = generate_random_color()
                 _map[tag] = color
                 days_colors.append(color)
 
