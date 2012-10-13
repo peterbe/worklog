@@ -1,4 +1,4 @@
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 from apps.main.models import connection
 import apps.eventlog.models
 import settings

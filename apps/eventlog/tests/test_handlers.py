@@ -1,5 +1,5 @@
 from time import mktime
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 import datetime
 from apps.main.tests.base import BaseHTTPTestCase
 from tornado_utils.http_test_client import TestClient

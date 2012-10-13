@@ -1,5 +1,5 @@
 import datetime
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 from apps.main.models import BaseDocument, register
 #git log master --date=short --pretty=format:"%h%x09%an%x09%ad%x09%s"
 

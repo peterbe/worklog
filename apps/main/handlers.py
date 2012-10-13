@@ -8,7 +8,7 @@ from urlparse import urlparse
 from urllib import quote as urllib_quote
 from pprint import pprint
 from collections import defaultdict
-from pymongo.objectid import InvalidId, ObjectId
+from bson.objectid import ObjectId, InvalidId
 from time import mktime, sleep, time
 import datetime
 import os.path

@@ -2,7 +2,7 @@ from pprint import pprint
 import datetime
 from time import mktime
 from dateutil import relativedelta
-from pymongo.objectid import InvalidId, ObjectId
+from bson.objectid import ObjectId, InvalidId
 import tornado.web
 from tornado_utils.routes import route, route_redirect
 from apps.main.handlers import BaseHandler, AuthLoginHandler, \

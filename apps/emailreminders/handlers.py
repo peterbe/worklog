@@ -1,7 +1,7 @@
 import re
 from cStringIO import StringIO
 import datetime
-from pymongo.objectid import InvalidId, ObjectId
+from bson.objectid import ObjectId, InvalidId
 import tornado.web
 import logging
 from email import Parser

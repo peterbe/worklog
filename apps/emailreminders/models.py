@@ -1,5 +1,5 @@
 import datetime
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 from mongokit import ValidationError
 from apps.main.models import BaseDocument, register
 

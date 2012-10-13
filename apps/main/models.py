@@ -1,7 +1,7 @@
 from hashlib import md5
 import uuid
 import datetime
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 from mongokit import Connection, Document, ValidationError
 from utils import encrypt_password
 

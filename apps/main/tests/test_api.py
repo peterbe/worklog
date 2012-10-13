@@ -1,4 +1,4 @@
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 import datetime
 import simplejson as json
 from time import mktime

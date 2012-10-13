@@ -11,7 +11,7 @@ if __name__ == '__main__':
     from apps.eventlog.models import EventLog
     from apps.emailreminders.models import EmailReminder
     from mongokit import Connection, Document as mongokit_Document
-    from pymongo.objectid import InvalidId, ObjectId
+    from bson.objectid import InvalidId, ObjectId
     from apps.main.models import connection
 
     import settings
